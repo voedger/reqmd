@@ -47,27 +47,27 @@ Markdown body is a sequence of different text elements, the tool processes:
 
 - RequirementID
 - RequirementSite
-- CoveringFootnote
+- CoverageFootnote
 
 RequirementID is Identifier and looks like: `~Post.handler~` (of course may be just `~SomeName~`).
 
 RequirementSite is RequirementID with CoverageAnnotation (CoverageAnnotation is added by the reqmd tool). An example:
 
 ```markdown
-- APIv2 implementation shall provide a handler for POST requests. `~Post.handler~`coverers[^~Post.handler~].
+- APIv2 implementation shall provide a handler for POST requests. `~Post.handler~`coverage[^~Post.handler~].
 ```
 
-CoveringFootnote contains CoveringFootnoteHint and optional list of Coverers. Coverer contains "[" CoverageLabel "]"  followed by "(" CoverageURL ")". An example:
+CoverageFootnote contains CoverageFootnoteHint and optional list of Coverers. Coverer contains "[" CoverageLabel "]"  followed by "(" CoverageURL ")". An example:
 
 ```markdown
 [^~Post.handler~]: `[~server.api.v2~impl]`[folder1/filename1:line1:impl](CoverageURL1), [folder2/filename2:line2:test](CoverageURL2)...
 
 Where:
-- `[~server.api.v2~impl]` - CoveringFootnoteHint
-- [folder1/filename1:line1:impl](CoverageURL1) - Coverer
+- [~server.api.v2~impl] - CoverageFootnoteHint
+- `[folder1/filename1:line1:impl](CoverageURL1)` - Coverer
    - `folder1/filename1:line1:impl` - CoverageLabel
    - `CoverageURL1` - CoverageURL
-- [folder2/filename2:line2:test](CoverageURL2) - Coverer
+- `[folder2/filename2:line2:test](CoverageURL2)` - Coverer
    - `folder2/filename2:line2:test` - CoverageLabel
    - `CoverageURL2` - CoverageURL
 
