@@ -77,7 +77,22 @@ CoverageURL is defined as:
 CoverageURL  = FileURL [?plain=1] "#" CoverageArea;
 ```
 
-FileURL contains RepositoryURL, CommitHash and Path. An example:
+FileURL:
+
+```ebnf
+
+FileURL = GitHubURL | GitLabURL
+
+/* GitHub URL Structure */
+GitHubURL           = GitHubBaseURL "/blob/" CommitHash "/" FilePath
+GitHubBaseURL       = "https://github.com/" Owner "/" Repository
+
+/* GitLab URL Structure */
+GitLabURL           = GitLabBaseURL "/-/blob/" CommitHash "/" FilePath
+GitLabBaseURL       = "https://gitlab.com/" Owner "/" Repository
+```
+
+An example:
 
 ```text
 https://github.com/voedger/voedger/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/pkg/sys/sys.vsql#L4
@@ -86,10 +101,9 @@ https://github.com/voedger/voedger/blob/979d75b2c7da961f94396ce2b286e7389eb73d75
 Where:
 
 - `https://github.com/voedger/voedger/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/pkg/sys/sys.vsql` - FileURL
-- 979d75b2c7da961f94396ce2b286e7389eb73d75 - CommitHash
-- L4 - CoverageArea
-
-CoverageURL domain may be github.com or gitlab.com:
+- `pkg/sys/sys.vsql` - FilePath
+- `979d75b2c7da961f94396ce2b286e7389eb73d75` - CommitHash
+- `L4` - CoverageArea
 
 ## Input Files
 
