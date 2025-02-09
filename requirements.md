@@ -169,7 +169,7 @@ Command:
 reqmd trace <path-to-markdowns> [<path-to-cloned-repo>...]
 ```
 
-Where `<path-to-markdowns>` and `<path-to-cloned-repo>` forms InputFiles.
+Where `<path-to-markdowns>` and `<path-to-cloned-repo>` are the InputFiles.
 
 Arguments:
 
@@ -179,7 +179,7 @@ Arguments:
 Upon execution, the tool shall:
 
 - Create or update `reqmdfiles.json` in the `<path-to-markdowns>` and its subdirectories
-  - `reqmdfiles.json` is created/updated only if mardown files are found in the directory and they contain FileURLs.
+  - `reqmdfiles.json` is created/updated only if markdown files are found in the directory and they contain FileURLs.
 - Convert all BareRequirementNames into corresponding RequirementSites by appending the appropriate CoverageAnnotation.
 - Generate/Update CoverageFootnotes for each RequirementSite that possesses matching CoverageTags.
   - Coveres are updated only if the file addressed by the correspoding FileURL has hash different from the one in `reqmdfiles.json`.
