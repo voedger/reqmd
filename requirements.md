@@ -21,8 +21,6 @@ This is a footnote reference[^1].
 
 Input files consist of markdown files and source files.
 
-The tool processes input text files to obtain a list of requirements and coverage tags.
-
 ## Lexical elements
 
 ```ebnf
