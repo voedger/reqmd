@@ -1,8 +1,8 @@
-# Requirements Tracing Tool Specification
+# reqmd requirements
 
 ## Overview
 
-This document defines the specifications for a command-line tool that traces requirements from Markdown files to their corresponding coverage in source files. The tool establishes traceability links between requirement identifiers and coverage tags, automatically generating footnotes that link requirement identifiers to coverage tags.
+This document defines the requirements for a command-line tool that traces requirements from Markdown files to their corresponding coverage in source files. The tool establishes traceability links between requirement identifiers and coverage tags, automatically generating footnotes that link requirement identifiers to coverage tags.
 
 ## Markdown elements
 
@@ -43,15 +43,21 @@ reqmd.package: server.api.v2
 
 Markdown body is a sequence of different text elements. The tool processes:
 
-- BareRequirementID
+- BareRequirementName
 - RequirementSite
 - CoverageFootnote
 
-RequirementID is an Identifier and looks like: `~Post.handler~` (it can also be as simple as `~SomeName~`).
+RequirementName is an Identifier and looks like: `~Post.handler~` (it can also be as simple as `~SomeName~`).
 
-BareRequirementID is a RequirementID without CoverageAnnotation.
+RequirementID is formed as PackageID "/" RequirementName.
 
-RequirementSite is a RequirementID with CoverageAnnotation (CoverageAnnotation is added by the reqmd tool). An example:
+RequirementID shall be unique within all MarkdownFiles.
+
+```markdown
+
+BareRequirementName is a RequirementName without CoverageAnnotation.
+
+RequirementSite is a RequirementName with CoverageAnnotation (CoverageAnnotation is added by the reqmd tool). An example:
 
 ```markdown
 - APIv2 implementation shall provide a handler for POST requests. `~Post.handler~`coverage[^~Post.handler~].
@@ -112,21 +118,22 @@ Each InputFile may contain multiple CoverageTags in its text.
 CoverageTag is specified as explained in the following example:
 
 ```go
-// [~server.api.v2/Post~impl]
+// [~server.api.v2/Post.handler~impl]
 func handlePostRequest(w http.ResponseWriter, r *http.Request) {
     // Implementation
 }
 
-// [~server.api.v2/Post~test]
+// [~server.api.v2/Post.handler~test]
 func handlePostRequestTest(t *testing.T) {
     // Test
 }
 ```
 
-Breakdown of the `[~server.api.v2/Post~test]`:
+Breakdown of the `[~server.api.v2/Post.handler~test]`:
 
+- `server.api.v2/Post` is RequirementID
 - `server.api.v2` is the PackageID.
-- `Post` is the RequirementID.
+- `Post.handler` is the RequirementName.
 - `test` is the CoverageType that is Name.
 
 ## reqmdfiles.json
@@ -155,19 +162,55 @@ go install github.com/voedger/reqmd@latest
 
 ### Tracing
 
-To trace requirements and generate coverage:
+Requirement: The tool shall support tracing of requirements and generation of coverage mapping.  
+Command:
 
 ```bash
-reqmd trace <path-to-markdowns> [path-to-cloned-repo]...
+reqmd trace <path-to-markdowns> [<path-to-cloned-repo>...]
 ```
+
+Where `<path-to-markdowns>` and `<path-to-cloned-repo>` forms InputFiles.
 
 Arguments:
 
-- `path-to-markdowns`: Required. Directory containing markdown files to process
-- `path-to-cloned-repo`: Optional. Path to local repository clone for coverage analysis
+- `<path-to-markdowns>` (Required): Directory containing the markdown files to be processed.
+- `<path-to-cloned-repo>` (Optional): Path to a local clone of the repository for additional coverage analysis.
 
-The tool will:
+Upon execution, the tool shall:
 
-1. Generate or update `reqmdfiles.json` in specified markdown directories where FileURLs are found
-2. Convert all BareRequirementIDs into RequirementSites
-3. Generate CoverageFootnotes for each RequirementSite with matching CoverageTags
+- Create or update `reqmdfiles.json` in the `<path-to-markdowns>` and its subdirectories
+  - `reqmdfiles.json` is created/updated only if mardown files are found in the directory and they contain FileURLs.
+- Convert all BareRequirementNames into corresponding RequirementSites by appending the appropriate CoverageAnnotation.
+- Generate/Update CoverageFootnotes for each RequirementSite that possesses matching CoverageTags.
+  - Coveres are updated only if the file addressed by the correspoding FileURL has hash different from the one in `reqmdfiles.json`.
+
+#### Processing requirements
+
+Concepts:
+
+- Action:
+  - Type: Add, Update, Delete
+  - What: reqmdfiles.json, RequirementSite, CoverageFootnote
+  - FilePath: path of the file where the action is performed
+  - Line: line number where the action is performed
+  - Data: New data
+- SyntaxError: currently syntax errors are not defined (empty list)
+- SemanticError:
+  - requirement id shall be unique within all MarkdownFiles
+
+Phases:
+
+- Scan
+  - Parse all InputFiles and generate FileStructures and the list of SyntaxErrors.
+  - InputFiles shall be processed per-subfolder by the goroutines pool.
+- Analyze
+  - If there are SyntaxErrors the processing is stopped
+  - Parse all FileStructures and generate list of SemanticErrors and list of Actions.
+- Apply
+  - If there are SemanticErrors the processing is stopped
+  - Apply all Actions to the InputFiles.
+
+## Construction requirements
+
+- The tool shall be implemented in Go.
+- All files shall be in one folder (together with go.mod)
