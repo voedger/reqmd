@@ -17,6 +17,7 @@ Design of the reqmd tool.
   - Generate models.go and interfaces.go
   - Copilot: o1: Suggest mdparser implementation. :(
   - Copilot: claude: Implement mdparser.go :)
+  - Copilot: generate tests and testdata for mdparser.go
 
 Analysis
 
