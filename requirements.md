@@ -127,58 +127,36 @@ Breakdown of the `[~server.api.v2/Post~test]`:
 
 - `server.api.v2` is the PackageID.
 - `Post` is the RequirementID.
-- `test` is the CoverageType.
-
-CoverageType is Name
+- `test` is the CoverageType that is Name.
 
 ## reqmdfiles.json
 
-This file lists 
+This file maps FileURL->FileHash for all FileURLs in all markdown files in the folder. FileURL must be ordered lexically to avoid merge conflicts.
 
-## Processing requirements
+Example:
 
-## Tracing mechanism
+```json
+{
+    "https://github.com/voedger/voedger/blob/main/pkg/api/handler.go": "979d75b2c7da961f94396ce2b286e7389eb73d75",
+    "https://github.com/voedger/voedger/blob/main/pkg/api/handler_test.go": "845a23c8f9d6a8b7e9c2d4f5a6b7c8d9e0f1a2b3",
+    "https://gitlab.com/myorg/project/-/blob/main/src/core/processor.ts": "123f45e6c7d8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
+}
+```
 
-### Concepts
+## Use Cases
 
-RequirementIdentifierEntry:
+### Installation
 
-- RequrementIdentifier
-- Location
-
-RequirementIdentifierEntry:
-
-- RequrementIdentifier
-- Location
-
-Location
-
-- Repository URL
-- Path in Repository
-- Hash
-
-The tool follows these steps to establish traceability.
+- `go install github.com/voedger/reqmd@latest`
 
 ### Tracing
 
-- Scan all `InputFile`s and identify `RequirementIdentifierEntry`s and `CoverageTagEntry`s
+Command:
 
+- reqmd trace PathToMarkdowns {PathToClonedRepo}
 
-1. **Scans** all specified files to detect requirement identifiers and coverage tags.
-2. For each **requirement identifier**:
-   - Identifies all corresponding coverage tags.
-   - Generates footnotes referencing each coverage.
-   - Creates links within the footnotes pointing to the corresponding coverage locations.
+Output:
 
-## Output Format
-
-The tool produces structured documentation with the following characteristics:
-
-- Each requirement may have multiple footnotes.
-- Each footnote corresponds to a single coverage tag.
-- Footnotes contain clickable links to the respective coverage locations.
-
-## EBNF
-
-Core:
-
+- reqmdfiles.json in PathToMarkdowns and its subdirectories if FileURLs are present in the markdown files.
+- RequirementSite for each RequirementID in the markdown files.
+- CoverageFootnote for each RequirementSite that has matched CoverageTags
