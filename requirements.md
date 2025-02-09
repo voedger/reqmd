@@ -197,6 +197,9 @@ Concepts:
 - SyntaxError: currently syntax errors are not defined (empty list)
 - SemanticError:
   - requirement id shall be unique within all MarkdownFiles
+- FileStructure:
+  - Path
+  - Merge of the MarkdownFile and InputFile properties
 
 Phases:
 
