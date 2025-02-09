@@ -11,208 +11,176 @@ Design of the reqmd tool.
   - Generate internal/models.go
   - Generate internal/interfaces.go
     - Fix package names
+  - Oops, FileStructure was not defined
+  - o1
+  - Suggest the architecture of the solution using SOLID principles. Don't generate any code yet. Provide a list of files, key functions, structures, and their responsibilities.
+  - Generate models.go and interfaces.go
+
+Analysis
+
+- "Suggest the design of the solution", not "architecture".
 
 ## Overview
 
-The solution is designed as a modular command-line tool that traces requirements from Markdown files to their corresponding coverage in source files. It follows SOLID principles to ensure that each component has a single responsibility, is easily testable, and can be extended without modifying existing code. Here’s a high-level overview of the design:
+Below is the desgin that follows **SOLID** principles. The solution is split into a CLI entry point (`main.go`) and an internal package (`internal/`). Within `internal/`, each file, structure, and function has a focused responsibility. All data structures are centralized in `models.go`, and all interfaces in `interfaces.go`. Implementations are named by removing the `I` prefix.
 
-- **Modular Architecture:**  
-  The system is divided into several components, each responsible for a specific phase in the processing pipeline:
-  - **Scanning:** Traverses directories, locates Markdown and source files, and parses them into structured models.
-  - **Analysis:** Validates the parsed data for semantic correctness (e.g., uniqueness of RequirementIDs) and produces a list of actions that need to be performed.
-  - **Application:** Executes the generated actions by updating Markdown files and the `reqmdfiles.json` file.
-  - **File Hashing:** Calculates file hashes using the `git hash-object` command to determine if files have changed.
+---
 
-- **Central Orchestration with the Tracer:**  
-  A dedicated tracer component acts as the central coordinator that orchestrates the complete workflow (Scan → Analyze → Apply). It implements the `ITracer` interface and is responsible for injecting dependencies, managing execution flow, and handling errors.
-
-- **Interface-Driven Design:**  
-  Key functionalities are abstracted into interfaces (e.g., `ITracer`, `IScanner`, `IAnalyzer`, `IApplicator`, `IFileHasher`) which:
-  - **Ensure Dependency Inversion:** High-level modules depend on abstractions rather than concrete implementations.
-  - **Promote Flexibility:** Concrete implementations can be easily swapped, extended, or mocked during testing.
-  - **Encourage Interface Segregation:** Each interface is fine-grained, exposing only the methods required by its consumers.
-
-- **Separation of Data Models:**  
-  All shared data structures (such as Markdown files, requirements, coverage footnotes, and actions) are defined in a central `models.go` file. This provides a single source of truth and ensures consistent usage across all modules.
-
-- **File Organization:**  
-  - **`main.go`:** Serves as the entry point of the application, parsing command-line arguments, initializing dependencies, and starting the tracing process.
-  - **`internal/`:** Contains all the core components and logic. Files such as `interfaces.go`, `models.go`, `scanner.go`, `analyzer.go`, `applicator.go`, `hasher.go`, and `tracer.go` are organized to reflect distinct phases and responsibilities of the application.
-
-- **Adherence to SOLID Principles:**
-  - **Single Responsibility:** Each file and component handles one specific aspect of the tracing process.
-  - **Open/Closed:** The system can be extended with new functionalities (like additional parsing rules or output formats) without modifying the existing code.
-  - **Liskov Substitution:** Implementations can be substituted with no adverse effects as long as they adhere to the defined interfaces.
-  - **Interface Segregation:** Clients only depend on the methods they need from each interface.
-  - **Dependency Inversion:** High-level modules (like the tracer) rely on abstract interfaces, promoting loose coupling between components.
-
-Overall, this design ensures that the tool is robust, maintainable, and flexible enough to accommodate future enhancements or modifications while maintaining clear, testable boundaries between its components.
-
-## File Structure
+## File structure
 
 ```text
-reqmd/
+.
 ├── main.go
-└── internal/
+└── internal
     ├── interfaces.go
     ├── models.go
     ├── tracer.go
     ├── scanner.go
     ├── analyzer.go
-    ├── applicator.go
-    └── hasher.go
+    ├── applier.go
+    ├── mdparser.go
+    ├── srccoverparser.go
+    ├── filehash.go
+    └── utils.go
 ```
 
----
+Explanation of each file:
 
-## File and Component Details
+1. **main.go**  
+   - **Purpose**: CLI entry point.  
+   - **Responsibilities**:  
+     - Parse command-line arguments (e.g., `reqmd trace <path-to-markdowns> [<path-to-cloned-repo>...]`).  
+     - Construct a `Tracer` (using `NewTracer`) with the required dependencies.  
+     - Invoke the high-level operations (`Scan`, `Analyze`, `Apply`).  
+     - Handle application-level logging/errors.  
 
-### **main.go**
+2. **interfaces.go**  
+   - **Purpose**: Define all interfaces (start with `I`).  
+   - **Responsibilities**:  
+     - `ITracer`: Orchestrates the main steps (Scan, Analyze, Apply).  
+     - `IScanner`: Scans input directories/files to build a high-level model (`FileStructure` objects, coverage tags, etc.).  
+     - `IAnalyzer`: Performs semantic checks, identifies required transformations, and generates a list of `Actions`.  
+     - `IApplier`: Applies transformations (e.g., updating coverage footnotes, generating `reqmdfiles.json`).  
+     - Any additional smaller interfaces if needed (e.g., `IMarkdownParser`, `ISourceCoverageParser`), or you can keep these as separate or internal to the scanner if you wish.  
 
-- **Responsibilities:**
-  - Parse command-line arguments (e.g., the `trace` command with `<path-to-markdowns>` and optional `<path-to-cloned-repo>` paths).
-  - Initialize dependencies and inject them into the tracer (i.e., create concrete implementations of the interfaces).
-  - Start the tracing process and handle any errors.
-- **Key Functions:**
-  - `main()`: Application entry point.
-  - `parseArgs()`: Parses CLI arguments and returns the necessary paths.
+3. **models.go**  
+   - **Purpose**: Define all data structures shared across the application.  
+   - **Key structures**:  
+     - `FileStructure`: represents an input file, including path and parsed details (e.g., for Markdown or source).  
+     - `Action`: describes a transformation: type (`Add`, `Update`, `Delete`), target file, line number, and new data.  
+     - `SyntaxError`: structure containing details about syntax errors (if any).  
+     - `SemanticError`: structure describing higher-level semantic issues (e.g., requirement ID collisions).  
+     - `CoverageTag`: stores found coverage annotation details (e.g., requirement ID, coverage type).  
+     - `CoverageFootnote`: stores the requirement footnote details including coverage references.  
+     - `ReqmdfilesMap`: representation of the `reqmdfiles.json` data (mapping from `FileURL` -> `FileHash`).  
+     - (Optional) Additional smaller structs like `RequirementID`, `PackageID`, `RequirementName`, etc., if you want to model them more explicitly.  
 
----
+4. **tracer.go**  
+   - **Purpose**: Implements `ITracer`. This is the **facade** that orchestrates the scanning, analyzing, and applying phases.  
+   - **Key functions**:  
+     - `NewTracer(scanner IScanner, analyzer IAnalyzer, applier IApplier) *Tracer`: constructor to inject dependencies.  
+     - `Scan(paths []string) ([]FileStructure, []SyntaxError)`: orchestrates scanning by delegating to `IScanner`.  
+     - `Analyze(files []FileStructure) ([]Action, []SemanticError)`: delegates to `IAnalyzer`.  
+     - `Apply(actions []Action) error`: delegates to `IApplier`.  
+   - **Responsibilities**:  
+     - High-level workflow control.  
+     - Enforce the steps: if syntax errors exist, abort; if semantic errors exist, abort; otherwise apply actions.  
+     - Depend on **abstractions** (`IScanner`, `IAnalyzer`, `IApplier`), not on concrete implementations.  
 
-### **internal/interfaces.go**
+5. **scanner.go**  
+   - **Purpose**: Implements `IScanner`.  
+   - **Key functions**:  
+     - `Scan(paths []string) ([]FileStructure, []SyntaxError)`:  
+       - Recursively discover Markdown and source files.  
+       - Delegate parsing to specialized components (`mdparser.go`, `srccoverparser.go`).  
+       - Build a unified list of `FileStructure` objects for each file.  
+       - Collect any `SyntaxError`s.  
+   - **Responsibilities**:  
+     - Single responsibility: collecting raw data (files, coverage tags, requirement references) and building the domain model.  
+     - Potential concurrency (goroutines) for scanning subfolders.  
 
-- **Responsibilities:**
-  - Define all the interfaces that abstract the core functionalities of the tool.
-  - Enforce naming conventions (interface names start with `I`).
-- **Key Interfaces:**
-  - **ITracer**
-    - **Method:** `Trace(markdownPaths []string, repoPaths []string) error`
-    - **Responsibility:** Orchestrates the entire tracing process by coordinating scanning, analyzing, and applying changes.
-  - **IScanner**
-    - **Method:** `Scan(directory string) ([]*models.MarkdownFile, error)`
-    - **Responsibility:** Recursively traverses directories to find markdown and source files, and parses them.
-  - **IParser** *(optional, or part of the scanner)*
-    - **Method:** `ParseMarkdown(filePath string) (*models.MarkdownFile, error)`
-    - **Responsibility:** Converts a markdown file’s content into structured data.
-  - **IAnalyzer**
-    - **Method:** `Analyze(files []*models.MarkdownFile) (actions []*models.Action, semanticErrors []*models.SemanticError, error)`
-    - **Responsibility:** Validates file structures (e.g., uniqueness of RequirementIDs) and generates actions (e.g., updating requirement sites and footnotes).
-  - **IApplicator**
-    - **Method:** `Apply(actions []*models.Action) error`
-    - **Responsibility:** Applies generated actions to update markdown files and `reqmdfiles.json`.
-  - **IFileHasher**
-    - **Method:** `Hash(fileURL string) (string, error)`
-    - **Responsibility:** Calculates file hashes using the `git hash-object` command.
+6. **analyzer.go**  
+   - **Purpose**: Implements `IAnalyzer`.  
+   - **Key functions**:  
+     - `Analyze(files []FileStructure) (actions []Action, errs []SemanticError)`:  
+       - Perform semantic checks (e.g., unique `RequirementID`s).  
+       - Determine which coverage footnotes need to be updated or created.  
+       - Identify which bare requirement names need coverage annotations appended.  
+       - Compare file hashes in `reqmdfiles.json` to actual `git hash-object` results to see if coverage references are stale.  
+       - Construct the list of `Action` items describing needed transformations.  
+   - **Responsibilities**:  
+     - Single responsibility: interpret the domain data, detect required changes, produce actionable tasks.  
 
----
+7. **applier.go**  
+   - **Purpose**: Implements `IApplier`.  
+   - **Key functions**:  
+     - `Apply(actions []Action) error`:  
+       - For each `Action`, open the target file, apply the transformation (insert footnotes, update coverage lines, etc.).  
+       - Update or create `reqmdfiles.json`.  
+     - Ensures that changes are made **only** when no semantic or syntax errors are present.  
+   - **Responsibilities**:  
+     - Single responsibility: physically write changes (like footnote references or coverage annotations) to the files.  
 
-### **internal/models.go**
+8. **mdparser.go** (optional name—could be integrated into `scanner.go` if you prefer fewer files)  
+   - **Purpose**: Specialized logic for parsing Markdown files (headers, footnote references, requirement names, etc.).  
+   - **Key functions** (example):  
+     - `ParseMarkdown(path string) (MarkdownFileStructure, []SyntaxError)`: parse package headers, requirement names, footnotes.  
+   - **Responsibilities**:  
+     - Single responsibility: read a Markdown file, produce domain objects (`FileStructure` details) or syntax errors.  
 
-- **Responsibilities:**
-  - Define all the data structures and models used across the application.
-  - Serve as the single source of truth for shared types.
-- **Key Structures:**
-  - **MarkdownFile**
-    - Represents a markdown file, including its header (with PackageID) and body.
-  - **FileStructure**
-    - Represents the parsed content of an input file (markdown or source).
-  - **Requirement / RequirementSite**
-    - Represents requirements in the document (including BareRequirementName and RequirementSite with coverage annotations).
-  - **CoverageFootnote & Coverer**
-    - Models for the generated footnotes and coverers (including CoverageLabel and CoverageURL).
-  - **Action**
-    - Describes an update action (Type: Add, Update, Delete) along with metadata (file path, line number, new data).
-  - **SyntaxError** and **SemanticError**
-    - Represent issues encountered during parsing and validation.
+9. **srccoverparser.go** (optional name—could be integrated into `scanner.go` if you prefer fewer files)  
+   - **Purpose**: Specialized logic for parsing coverage tags from source files.  
+   - **Key functions**:  
+     - `ParseSourceCoverage(path string) (SourceFileStructure, []SyntaxError)`: parse coverage tags like `[~server.api.v2/Post.handler~test]`.  
+   - **Responsibilities**:  
+     - Single responsibility: read a source file, find coverage tags, produce domain objects.  
 
----
+10. **filehash.go**  
+    - **Purpose**: Query Git for file hashes using `git hash-object`.  
+    - **Key functions**:  
+      - `GetFileHash(path string) (string, error)`: calculates the hash.  
+    - **Responsibilities**:  
+      - Encapsulate how file hashing is performed so it’s easy to maintain or replace.  
 
-### **internal/tracer.go**
-
-- **Responsibilities:**
-  - Implement the `ITracer` interface.
-  - Act as the central coordinator, following the three processing phases:
-    - **Scan:** Parse input files into structured models.
-    - **Analyze:** Validate models (e.g., ensure uniqueness of RequirementIDs) and produce a list of actions.
-    - **Apply:** Execute the actions by updating the source markdown files and the `reqmdfiles.json`.
-- **Key Functions:**
-  - `NewTracer(scanner IScanner, analyzer IAnalyzer, applicator IApplicator, fileHasher IFileHasher) *Tracer`
-    - Constructor that injects the required interfaces.
-  - `Trace(markdownPaths []string, repoPaths []string) error`
-    - Executes the overall tracing process.
-
----
-
-### **internal/scanner.go**
-
-- **Responsibilities:**
-  - Implement the `IScanner` interface.
-  - Scan directories to discover markdown files and source files.
-  - Delegate parsing of files to helper functions or an embedded parser.
-- **Key Functions:**
-  - `Scan(directory string) ([]*models.MarkdownFile, error)`
-    - Traverses the given directory and collects markdown files.
-  - `parseMarkdownFile(filePath string) (*models.MarkdownFile, error)`
-    - Reads a markdown file and converts it into a `MarkdownFile` model.
-  - *(Optional)* Functions to parse source files for CoverageTags.
-
----
-
-### **internal/analyzer.go**
-
-- **Responsibilities:**
-  - Implement the `IAnalyzer` interface.
-  - Analyze the parsed file structures to:
-    - Detect any semantic errors (e.g., duplicate RequirementIDs).
-    - Generate a list of actions needed to transform BareRequirementNames into RequirementSites and update CoverageFootnotes.
-- **Key Functions:**
-  - `Analyze(files []*models.MarkdownFile) (actions []*models.Action, semanticErrors []*models.SemanticError, error)`
-    - Performs validation and generates update actions.
-  - Helper functions to validate:
-    - Uniqueness of RequirementIDs.
-    - Correct formation of CoverageFootnotes.
+11. **utils.go**  
+    - **Purpose**: Collect small helper functions that do not belong in the main business logic (string manipulations, logging helpers, sorting, etc.).  
+    - **Responsibilities**:  
+      - Common or cross-cutting concerns without creating cyclical dependencies.  
 
 ---
 
-### **internal/applicator.go**
+## How SOLID principles are applied
 
-- **Responsibilities:**
-  - Implement the `IApplicator` interface.
-  - Apply the actions generated during the analysis phase by modifying the markdown files and updating `reqmdfiles.json`.
-- **Key Functions:**
-  - `Apply(actions []*models.Action) error`
-    - Iterates through and applies each action.
-  - `updateMarkdownFile(filePath string, actions []*models.Action) error`
-    - Updates a specific markdown file according to the action list.
-  - `updateReqmdFilesJson(directory string, fileHashes map[string]string) error`
-    - Creates or updates the `reqmdfiles.json` file with the latest file hashes.
+1. **Single Responsibility Principle**  
+   - Each component (scanner, analyzer, applier) is responsible for exactly one stage of the process.  
+   - `mdparser.go` deals **only** with parsing Markdown; `srccoverparser.go` deals **only** with source coverage tags.  
 
----
+2. **Open/Closed Principle**  
+   - New features can be added by creating new parsers or new analysis rules without modifying existing, stable components.  
+   - For example, if a new coverage system is added, you can create a new parser that returns coverage tags in the same data model.  
 
-### **internal/hasher.go**
+3. **Liskov Substitution Principle**  
+   - Interfaces (`IScanner`, `IAnalyzer`, `IApplier`) can be replaced with new implementations as long as they respect the same contracts.  
 
-- **Responsibilities:**
-  - Implement the `IFileHasher` interface.
-  - Calculate file hashes by interfacing with the `git hash-object` command.
-- **Key Functions:**
-  - `Hash(fileURL string) (string, error)`
-    - Returns the hash for a file given its URL, used to determine if a file has been modified.
+4. **Interface Segregation Principle**  
+   - Instead of having a single “monolithic” interface, smaller interfaces reflect the actual steps: scanning, analyzing, applying.  
+   - The consumer (the `Tracer`) depends only on the interfaces it needs.  
+
+5. **Dependency Inversion Principle**  
+   - `Tracer` depends on the abstract interfaces (`IScanner`, `IAnalyzer`, `IApplier`), not on specific implementations.  
+   - Concrete implementations (e.g., `Scanner`, `Analyzer`, `Applier`) are **injected** into `Tracer` via `NewTracer(...)`.  
 
 ---
 
-## SOLID Principles Recap
+## Summary of Responsibilities
 
-- **Single Responsibility:**  
-  Each module (scanner, analyzer, applicator, etc.) has one clear task. For example, `scanner.go` only deals with file discovery and parsing, while `analyzer.go` focuses solely on validating and generating actions.
-
-- **Open/Closed:**  
-  The use of interfaces (e.g., `ITracer`, `IScanner`, `IAnalyzer`, etc.) allows the system to be extended (for instance, adding new types of analysis or different file parsers) without modifying existing code.
-
-- **Liskov Substitution:**  
-  Since high-level modules (like the Tracer) depend on abstractions (interfaces), any compliant implementation can be substituted in tests or for new features.
-
-- **Interface Segregation:**  
-  The interfaces are fine-grained. Consumers depend only on the methods they actually use (for instance, the tracer only requires the methods defined in `IScanner`, `IAnalyzer`, etc., rather than a large, monolithic interface).
-
-- **Dependency Inversion:**  
-  High-level modules (like the Tracer) depend on abstractions rather than concrete implementations. All dependencies are injected during construction (e.g., via `NewTracer`), promoting flexibility and easier testing.
+- **main.go**: CLI orchestration, argument parsing, creation of `Tracer`, top-level error handling.  
+- **interfaces.go**: All high-level contracts (`ITracer`, `IScanner`, `IAnalyzer`, `IApplier`, etc.).  
+- **models.go**: Domain entities and data structures (`FileStructure`, `Action`, errors, coverage descriptors...).  
+- **tracer.go**: Implements `ITracer`, coordinates scanning, analyzing, and applying.  
+- **scanner.go**: Implements `IScanner`, discovers and parses files into structured data.  
+- **mdparser.go / srccoverparser.go**: Specialized parsing logic for Markdown / source coverage tags.  
+- **analyzer.go**: Implements `IAnalyzer`, checks for semantic errors, determines required transformations.  
+- **applier.go**: Implements `IApplier`, applies transformations to markdown and `reqmdfiles.json`.  
+- **filehash.go**: Encapsulates Git-based hashing logic.  
+- **utils.go**: Common helper functions.

@@ -1,101 +1,78 @@
 package internal
 
-// MarkdownFile represents a markdown file that contains a header and a body.
-// The header specifies the PackageID and the body includes requirement references
-// and coverage footnotes.
-type MarkdownFile struct {
-	FilePath     string             // Absolute or relative file path
-	PackageID    string             // Extracted from the header (e.g., "server.api.v2")
-	Header       string             // The raw header content
-	Body         string             // The markdown content excluding the header
-	Requirements []Requirement      // List of requirement references in the file
-	Footnotes    []CoverageFootnote // List of coverage footnotes generated or present in the file
-}
-
-// SourceFile represents a source file that may contain multiple coverage tags.
-type SourceFile struct {
-	FilePath     string        // Absolute or relative file path
-	Content      string        // Raw source code content
-	CoverageTags []CoverageTag // Coverage tags extracted from the file (e.g., [~server.api.v2/Post.handler~test])
-}
-
-// Requirement represents a requirement extracted from a markdown file.
-// It may appear as a bare requirement or as a requirement site (with coverage annotation).
-type Requirement struct {
-	PackageID string // Inherited from the markdown file header (e.g., "server.api.v2")
-	Name      string // The requirement name extracted from the text (e.g., "Post.handler")
-	IsSite    bool   // Indicates if this requirement has a coverage annotation (RequirementSite)
-}
-
-// FullID returns the computed RequirementID, formed as PackageID/RequirementName.
-func (r Requirement) FullID() string {
-	return r.PackageID + "/" + r.Name
-}
-
-// CoverageTag represents a tag found in source files that is used to indicate
-// that the source code covers a particular requirement.
-type CoverageTag struct {
-	// For example, given the tag [~server.api.v2/Post.handler~impl]:
-	// RequirementID would be "server.api.v2/Post.handler"
-	// CoverageType would be "impl" (implementation) or "test"
-	RequirementID string
-	CoverageType  string
-}
-
-// CoverageFootnote represents a footnote in a markdown file that links a requirement
-// to its corresponding coverage tags. It contains a hint and a list of coverers.
-type CoverageFootnote struct {
-	// Hint is typically the CoverageFootnoteHint (e.g., "[~server.api.v2~impl]")
-	Hint string
-	// Coverers is the list of coverers linked in the footnote.
-	Coverers []Coverer
-}
-
-// Coverer represents a coverage mapping element that appears in a footnote.
-// It binds a coverage label to a CoverageURL.
-type Coverer struct {
-	// CoverageLabel is the text label indicating file location and context (e.g., "folder1/filename1:line1:impl")
-	CoverageLabel string
-	// CoverageURL is the URL linking to the file (e.g., a GitHub or GitLab URL with a CoverageArea anchor)
-	CoverageURL string
-}
-
-// ActionType defines the type of action that can be applied to modify files.
-type ActionType int
+// ActionType represents the type of transformation needed.
+type ActionType string
 
 const (
-	// ActionAdd indicates that new data should be added.
-	ActionAdd ActionType = iota
-	// ActionUpdate indicates that existing data should be modified.
-	ActionUpdate
-	// ActionDelete indicates that data should be removed.
-	ActionDelete
+	ActionAdd    ActionType = "Add"
+	ActionUpdate ActionType = "Update"
+	ActionDelete ActionType = "Delete"
 )
 
-// Action represents an update operation to be performed on an input file.
-// It captures the type of change, the location, and the new data involved.
+// Action describes a single transformation (add/update/delete) to be applied in a file.
 type Action struct {
-	Type     ActionType // The type of action (Add, Update, Delete)
-	FilePath string     // Path of the file where the action will be applied
-	Line     int        // The line number in the file where the action applies
-	Data     string     // The new data to insert or update with
+	Type     ActionType // e.g., Add, Update, Delete
+	FilePath string     // which file is changed
+	Line     int        // the line number where the change is applied
+	Data     string     // new data (if any)
 }
 
-// SyntaxError represents an error detected during the parsing (scanning) phase.
+// SyntaxError captures syntax-level errors found while parsing a file.
 type SyntaxError struct {
-	FilePath string // The file in which the error occurred
-	Line     int    // The line number where the error was detected
-	Message  string // A description of the syntax error
+	FilePath string // file that has a syntax error
+	Line     int    // line number where the syntax error is detected
+	Message  string // human-readable description
 }
 
-// SemanticError represents an error related to the semantics of the requirements,
-// such as duplicate RequirementIDs across markdown files.
+// SemanticError captures higher-level domain errors (e.g., duplicate RequirementIDs).
 type SemanticError struct {
-	FilePath string // The file in which the error was detected
-	Line     int    // The line number where the error was detected
-	Message  string // A description of the semantic error
+	FilePath string // file that triggered the semantic error (optional if more general)
+	Message  string // human-readable description
 }
 
-// ReqmdFiles represents a mapping of FileURLs to their corresponding FileHashes.
-// It is used to generate or update the reqmdfiles.json file.
-type ReqmdFiles map[string]string
+// FileType distinguishes between different file categories (Markdown vs source, etc.).
+type FileType int
+
+const (
+	FileTypeMarkdown FileType = iota
+	FileTypeSource
+)
+
+// FileStructure merges the parsed data from an input file (Markdown or source).
+type FileStructure struct {
+	Path         string
+	Type         FileType      // indicates if it's Markdown or source
+	PackageID    string        // parsed from Markdown header (if markdown)
+	Requirements []Requirement // for Markdown: discovered requirements (bare or annotated)
+	CoverageTags []CoverageTag // for source: discovered coverage tags
+	// ... Add more fields if needed for raw file content, line references, etc.
+}
+
+// Requirement represents a single requirement reference discovered in a Markdown file.
+type Requirement struct {
+	ID          string // e.g., "server.api.v2/Post.handler"
+	Line        int    // line number where the requirement is defined/referenced
+	IsAnnotated bool   // true if it already has coverage annotation, false if it’s bare
+}
+
+// CoverageTag represents a coverage marker found in source code.
+type CoverageTag struct {
+	RequirementID string // e.g., "server.api.v2/Post.handler"
+	CoverageType  string // e.g., "impl", "test"
+	Line          int    // line number where the coverage tag was found
+}
+
+// CoverageFootnote represents the footnote in Markdown that references coverage tags.
+type CoverageFootnote struct {
+	RequirementID string // e.g., "server.api.v2/Post.handler"
+	Coverers      []Coverer
+}
+
+// Coverer represents one coverage reference within a footnote, e.g., [folder/file:line:impl](URL)
+type Coverer struct {
+	CoverageLabel string // e.g., "folder/file.go:42:impl"
+	CoverageURL   string // e.g., full URL including commit hash
+}
+
+// ReqmdfilesMap corresponds to the structure in reqmdfiles.json, mapping file URLs to their current hash.
+type ReqmdfilesMap map[string]string
