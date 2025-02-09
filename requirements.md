@@ -43,11 +43,13 @@ reqmd.package: server.api.v2
 
 Markdown body is a sequence of different text elements. The tool processes:
 
-- RequirementID
+- BareRequirementID
 - RequirementSite
 - CoverageFootnote
 
 RequirementID is an Identifier and looks like: `~Post.handler~` (it can also be as simple as `~SomeName~`).
+
+BareRequirementID is a RequirementID without CoverageAnnotation.
 
 RequirementSite is a RequirementID with CoverageAnnotation (CoverageAnnotation is added by the reqmd tool). An example:
 
@@ -145,14 +147,27 @@ Example:
 
 ### Installation
 
-Command: `go install github.com/voedger/reqmd@latest`
+To install the tool:
+
+```bash
+go install github.com/voedger/reqmd@latest
+```
 
 ### Tracing
 
-Command: `reqmd trace PathToMarkdowns {PathToClonedRepo}`
+To trace requirements and generate coverage:
 
-Output:
+```bash
+reqmd trace <path-to-markdowns> [path-to-cloned-repo]...
+```
 
-- reqmdfiles.json in PathToMarkdowns and its subdirectories if FileURLs are present in the markdown files.
-- RequirementSite for each RequirementID in the markdown files.
-- CoverageFootnote for each RequirementSite that has matched CoverageTags
+Arguments:
+
+- `path-to-markdowns`: Required. Directory containing markdown files to process
+- `path-to-cloned-repo`: Optional. Path to local repository clone for coverage analysis
+
+The tool will:
+
+1. Generate or update `reqmdfiles.json` in specified markdown directories where FileURLs are found
+2. Convert all BareRequirementIDs into RequirementSites
+3. Generate CoverageFootnotes for each RequirementSite with matching CoverageTags
