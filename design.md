@@ -7,7 +7,10 @@ Design of the reqmd tool.
 - Attempt 1. ChatGPT o3-mini-high. https://chatgpt.com/c/67a7f223-fcc0-800d-a486-427a3f47c3ed
   - Prompt: Suggest architecture of the solution (Go). Do not generate all code yet. Provide list of files, key functions, structs and their resposibilities.
 - Attempt 2. ChatGPT o3-mini-high. https://chatgpt.com/c/67a7f223-fcc0-800d-a486-427a3f47c3ed
-  - Prompt: Suggest the architecture of the solution using SOLID principles. Don't generate all the code yet. Provide a list of files, key functions, structures, and their responsibilities.
+  - Suggest the architecture of the solution using SOLID principles. Don't generate all the code yet. Provide a list of files, key functions, structures, and their responsibilities.
+  - Generate internal/models.go
+  - Generate internal/interfaces.go
+    - Fix package names
 
 ## Overview
 
