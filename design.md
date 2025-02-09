@@ -15,6 +15,8 @@ Design of the reqmd tool.
   - o1
   - Suggest the architecture of the solution using SOLID principles. Don't generate any code yet. Provide a list of files, key functions, structures, and their responsibilities.
   - Generate models.go and interfaces.go
+  - Copilot: o1: Suggest mdparser implementation. :(
+  - Copilot: claude: Implement mdparser.go :)
 
 Analysis
 
