@@ -19,8 +19,9 @@ This file contains the log of the usage of LLMs for the project.
   - Copilot: claude: Implement mdparser.go: :)
   - Copilot: generate tests and testdata for mdparser.go
   - ChatGPT: o1: Generate cool README.md for this project: :(
-  - ChatGPT: o4: Generate cool README.md for this project: :)
+  - ChatGPT: 4o: Generate cool README.md for this project: :)
 
 Analysis
 
 - "Suggest the design of the solution", not "architecture".
+- ChatGPT 4o is better for generating texts?
