@@ -101,7 +101,7 @@ Explanation of each file:
        - Update or create `reqmdfiles.json`.  
      - Ensures that changes are made **only** when no semantic or syntax errors are present.  
    - **Responsibilities**:  
-     - Single responsibility: physically write changes (like footnote references or coverage annotations) to the files.  
+     - Single responsibility: physically write changes (like footnote references or coverage annotations) to the files.
 
 8. **mdparser.go** (optional name—could be integrated into `scanner.go` if you prefer fewer files)  
    - **Purpose**: Specialized logic for parsing Markdown files (headers, footnote references, requirement names, etc.).  
