@@ -213,4 +213,13 @@ Phases:
 ## Construction requirements
 
 - The tool shall be implemented in Go.
-- All files shall be in one folder (together with go.mod)
+- All files but main.go shall be in `internal` folder
+- File hashes shall be calculated using `git hash-object`
+- Design of the solution shall follow SOLID principles
+  - Tracing shall be abstracted by ITracer interface, implemented by tracer
+  - All necessary intarfaces shall be injected into Tracer during construction (NewTracer)
+- Naming
+  - Interface names shall start with I
+  - Interface implementation names shall be deduced from the interface name by removing the I prefix
+  - All interfaces shall be defined in a separate file interfaces.go
+  - All data structures used across the application shall be defined in thw models.go file.
