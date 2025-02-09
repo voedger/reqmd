@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the specifications for a command-line tool that traces requirements from Markdown files to their corresponding coverage in source files. The tool establishes traceability links between requirement identifiers and coverage tags, automatically generating footnotes that links requirement identifiers and coverage tags.
+This document defines the specifications for a command-line tool that traces requirements from Markdown files to their corresponding coverage in source files. The tool establishes traceability links between requirement identifiers and coverage tags, automatically generating footnotes that link requirement identifiers to coverage tags.
 
 ## Markdown elements
 
@@ -19,9 +19,9 @@ This is a footnote reference[^1].
 
 ## Input files
 
-Input files are markdown files and source files.
+Input files consist of markdown files and source files.
 
-The tool processes input text files and obtain list of requirements and coverage tags.
+The tool processes input text files to obtain a list of requirements and coverage tags.
 
 ## Lexical elements
 
@@ -33,9 +33,9 @@ Identifier = Name {"." Name}
 
 ## Markdown files
 
-MarkdownFile is a text file with `.md` extension. Markdown file contains a header and a body.
+A MarkdownFile is a text file with a `.md` extension. Each Markdown file contains a header and a body.
 
-Header specifies PackageID (which is Identifier), an example:
+The header specifies a PackageID (which is an Identifier), for example:
 
 ```markdown
 ---
@@ -43,21 +43,21 @@ reqmd.package: server.api.v2
 ---
 ```
 
-Markdown body is a sequence of different text elements, the tool processes:
+Markdown body is a sequence of different text elements. The tool processes:
 
 - RequirementID
 - RequirementSite
 - CoverageFootnote
 
-RequirementID is Identifier and looks like: `~Post.handler~` (of course may be just `~SomeName~`).
+RequirementID is an Identifier and looks like: `~Post.handler~` (it can also be as simple as `~SomeName~`).
 
-RequirementSite is RequirementID with CoverageAnnotation (CoverageAnnotation is added by the reqmd tool). An example:
+RequirementSite is a RequirementID with CoverageAnnotation (CoverageAnnotation is added by the reqmd tool). An example:
 
 ```markdown
 - APIv2 implementation shall provide a handler for POST requests. `~Post.handler~`coverage[^~Post.handler~].
 ```
 
-CoverageFootnote contains CoverageFootnoteHint and optional list of Coverers. Coverer contains "[" CoverageLabel "]"  followed by "(" CoverageURL ")". An example:
+CoverageFootnote contains a CoverageFootnoteHint and an optional list of Coverers. A Coverer contains "[" CoverageLabel "]" followed by "(" CoverageURL ")". An example:
 
 ```markdown
 [^~Post.handler~]: `[~server.api.v2~impl]`[folder1/filename1:line1:impl](CoverageURL1), [folder2/filename2:line2:test](CoverageURL2)...
@@ -107,7 +107,7 @@ Where:
 
 ## Input Files
 
-Each InpitFile contains multiple CoverageTag in the text.
+Each InputFile may contain multiple CoverageTags in its text.
 
 CoverageTag is specified as explained in the following example:
 
@@ -131,7 +131,7 @@ Breakdown of the `[~server.api.v2/Post~test]`:
 
 ## reqmdfiles.json
 
-This file maps FileURL->FileHash for all FileURLs in all markdown files in the folder. FileURL must be ordered lexically to avoid merge conflicts.
+This file maps FileURL to FileHash for all FileURLs found in markdown files in the folder. FileURLs must be ordered lexically to avoid merge conflicts.
 
 Example:
 
@@ -147,13 +147,11 @@ Example:
 
 ### Installation
 
-- `go install github.com/voedger/reqmd@latest`
+Command: `go install github.com/voedger/reqmd@latest`
 
 ### Tracing
 
-Command:
-
-- reqmd trace PathToMarkdowns {PathToClonedRepo}
+Command: `reqmd trace PathToMarkdowns {PathToClonedRepo}`
 
 Output:
 
