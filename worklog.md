@@ -31,6 +31,9 @@ This file contains a brief log of the project design and construction.
   - GitHub Copilot: Claude: Generate TestMdParser_ParseCoverageFootnote ❌
   - ChatGPT o3-mini-high: see Prompt_CoverageFootnoteRegex ✅
   - regexps :( 1h
+  - GitHub Copilot: Claude: Rewrite the test using testify/assert👍
+    - Refactor TestMdParser_ParseMarkdownFile to use testify/assert for improved readability and consistency
+
 
 ### Prompt_CoverageFootnoteRegex
 
