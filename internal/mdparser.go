@@ -2,69 +2,22 @@ package internal
 
 import (
 	"bufio"
+	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 )
 
-// mdParser implements IScanner for markdown files
-type mdParser struct{}
-
 // Regular expressions for parsing markdown elements
 var (
-	headerRegex        = regexp.MustCompile(`^reqmd\.package:\s*(.+)$`)
-	coverageAnnotRegex = regexp.MustCompile(`~([^~]+)~coverage\[\^~[^~]+~\]`)
-
-	// RequirementSite
-	//RequirementSiteRegex = regexp.MustCompile("`(~[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)*~)`(?:cov\\[\\^(~[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)*~)\\])?")
+	headerRegex          = regexp.MustCompile(`^reqmd\.package:\s*(.+)$`)
 	RequirementSiteRegex = regexp.MustCompile("`~([^~]+)~`(?:cov\\[\\^~([^~]+)~\\])?")
 )
 
-func NewMarkdownParser() IScanner {
-	return &mdParser{}
-}
-
-func (m *mdParser) Scan(paths []string) ([]FileStructure, []SyntaxError) {
-	var files []FileStructure
-	var errors []SyntaxError
-
-	for _, path := range paths {
-		// Walk through directory
-		err := filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
-			// Skip non-markdown files
-			if !info.IsDir() && strings.HasSuffix(strings.ToLower(filePath), ".md") {
-				file, errs := m.parseFile(filePath)
-				if file != nil {
-					files = append(files, *file)
-				}
-				errors = append(errors, errs...)
-			}
-			return nil
-		})
-
-		if err != nil {
-			errors = append(errors, SyntaxError{
-				FilePath: path,
-				Message:  "Failed to walk directory: " + err.Error(),
-			})
-		}
-	}
-
-	return files, errors
-}
-
-func (m *mdParser) parseFile(filePath string) (*FileStructure, []SyntaxError) {
+func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, []SyntaxError{{
-			FilePath: filePath,
-			Message:  "Failed to open file: " + err.Error(),
-		}}
+		return nil, nil, fmt.Errorf("ParseMarkdownFile: failed to open file: %w", err)
 	}
 	defer file.Close()
 
@@ -102,7 +55,7 @@ func (m *mdParser) parseFile(filePath string) (*FileStructure, []SyntaxError) {
 		}
 
 		// Parse requirements
-		requirements := m.parseRequirements(line, lineNum)
+		requirements := parseRequirements(line, lineNum)
 		structure.Requirements = append(structure.Requirements, requirements...)
 	}
 
@@ -113,10 +66,10 @@ func (m *mdParser) parseFile(filePath string) (*FileStructure, []SyntaxError) {
 		})
 	}
 
-	return structure, errors
+	return structure, errors, nil
 }
 
-func (m *mdParser) parseRequirements(line string, lineNum int) []RequirementSite {
+func parseRequirements(line string, lineNum int) []RequirementSite {
 	var requirements []RequirementSite
 
 	// Find all requirement references
@@ -124,9 +77,10 @@ func (m *mdParser) parseRequirements(line string, lineNum int) []RequirementSite
 	for _, match := range matches {
 		if len(match) > 1 {
 			req := RequirementSite{
-				RequirementName: match[1], // Will be prefixed with PackageID later
+				RequirementName: match[1],
+				ReferenceName:   match[2],
 				Line:            lineNum,
-				IsAnnotated:     coverageAnnotRegex.MatchString(line),
+				IsAnnotated:     match[1] == match[2],
 			}
 			requirements = append(requirements, req)
 		}

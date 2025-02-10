@@ -51,6 +51,7 @@ type FileStructure struct {
 // RequirementSite represents a single requirement reference discovered in a Markdown file.
 type RequirementSite struct {
 	RequirementName string // e.g., "Post.handler"
+	ReferenceName   string // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
 	Line            int    // line number where the requirement is defined/referenced
 	IsAnnotated     bool   // true if it already has coverage annotation, false if it’s bare
 }

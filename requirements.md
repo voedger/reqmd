@@ -221,9 +221,11 @@ Concepts:
   - Line: line number where the action is performed
   - Data: New data
 - SyntaxError:
+  - PackageName shall be an identifier
   - RequirementName shall be an identifier
 - SemanticError:
   - RequirementID shall be unique within all MarkdownFiles
+  - PackageID shall be defined if there are RequirementSites
 - FileStructure:
   - Path
   - Merge of the MarkdownFile and InputFile properties

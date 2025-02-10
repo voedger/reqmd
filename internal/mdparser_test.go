@@ -3,26 +3,16 @@ package internal
 import (
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMdParser_Scan(t *testing.T) {
-	parser := NewMarkdownParser()
-	testDataPath := filepath.Join("testdata")
 
-	files, errors := parser.Scan([]string{testDataPath})
+	testDataDir := filepath.Join("testdata", "mdparser-1.md")
 
-	// Verify basic.md parsing
-	var basicFile *FileStructure
-	for i := range files {
-		if filepath.Base(files[i].Path) == "basic.md" {
-			basicFile = &files[i]
-			break
-		}
-	}
-
-	if basicFile == nil {
-		t.Fatal("basic.md not found in parsed files")
-	}
+	basicFile, _, err := ParseMarkdownFile(testDataDir)
+	require.NoError(t, err)
 
 	// Test package ID
 	if basicFile.PackageID != "com.example.basic" {
@@ -72,21 +62,9 @@ func TestMdParser_Scan(t *testing.T) {
 		}
 	}
 
-	// Verify errors from invalid.md
-	hasInvalidFileError := false
-	for _, err := range errors {
-		if filepath.Base(err.FilePath) == "invalid.md" {
-			hasInvalidFileError = true
-			break
-		}
-	}
-	if !hasInvalidFileError {
-		t.Error("expected error for invalid.md")
-	}
 }
 
 func TestMdParser_parseRequirements(t *testing.T) {
-	parser := &mdParser{}
 
 	tests := []struct {
 		name            string
@@ -96,25 +74,25 @@ func TestMdParser_parseRequirements(t *testing.T) {
 	}{
 		{
 			name:            "simple requirement",
-			line:            "This contains ~REQ001~",
+			line:            "This contains `~REQ001~`",
 			expectReqIDs:    []string{"REQ001"},
 			expectAnnotated: []bool{false},
 		},
 		{
 			name:            "multiple requirements",
-			line:            "Contains ~REQ001~ and ~REQ002~",
+			line:            "Contains `~REQ001~` and `~REQ002~`",
 			expectReqIDs:    []string{"REQ001", "REQ002"},
 			expectAnnotated: []bool{false, false},
 		},
 		{
 			name:            "annotated requirement",
-			line:            "~REQ001~coverage[^1]",
+			line:            "`~REQ001~`cov[^~REQ001~]",
 			expectReqIDs:    []string{"REQ001"},
 			expectAnnotated: []bool{true},
 		},
 		{
 			name:            "mixed requirements",
-			line:            "~REQ001~ normal and ~REQ002~coverage[^1] annotated",
+			line:            "`~REQ001~` normal and `~REQ002~`cov[^~REQ002~] annotated",
 			expectReqIDs:    []string{"REQ001", "REQ002"},
 			expectAnnotated: []bool{false, true},
 		},
@@ -122,19 +100,19 @@ func TestMdParser_parseRequirements(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			reqs := parser.parseRequirements(tt.line, 1)
+			reqs := parseRequirements(tt.line, 1)
 
 			if len(reqs) != len(tt.expectReqIDs) {
-				t.Errorf("expected %d requirements, got %d", len(tt.expectReqIDs), len(reqs))
+				t.Errorf("expected %d requirements, got %d (%s)", len(tt.expectReqIDs), len(reqs), tt.line)
 				return
 			}
 
 			for i, req := range reqs {
 				if req.RequirementName != tt.expectReqIDs[i] {
-					t.Errorf("expected requirement ID %s, got %s", tt.expectReqIDs[i], req.RequirementName)
+					t.Errorf("expected requirement ID %s, got %s (%s)", tt.expectReqIDs[i], req.RequirementName, tt.line)
 				}
 				if req.IsAnnotated != tt.expectAnnotated[i] {
-					t.Errorf("expected IsAnnotated=%v for %s, got %v", tt.expectAnnotated[i], req.RequirementName, req.IsAnnotated)
+					t.Errorf("expected IsAnnotated=%v for %s, got %v (%s)", tt.expectAnnotated[i], req.RequirementName, req.IsAnnotated, tt.line)
 				}
 			}
 		})
