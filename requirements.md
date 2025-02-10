@@ -220,9 +220,10 @@ Concepts:
   - FilePath: path of the file where the action is performed
   - Line: line number where the action is performed
   - Data: New data
-- SyntaxError: currently syntax errors are not defined (empty list)
+- SyntaxError:
+  - RequirementName shall be an identifier
 - SemanticError:
-  - requirement id shall be unique within all MarkdownFiles
+  - RequirementID shall be unique within all MarkdownFiles
 - FileStructure:
   - Path
   - Merge of the MarkdownFile and InputFile properties
