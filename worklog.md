@@ -13,14 +13,14 @@ This file contains a brief log of the project design and construction.
   - Generate internal/interfaces.go
     - Fix package names
   - Note: FileStructure was not defined
-  - ChatGPT-4 o1:
+  - ChatGPT o1:
     - Prompt: Suggest the architecture of the solution using SOLID principles. Don't generate any code yet. Provide a list of files, key functions, structures, and their responsibilities.
     - Generate models.go and interfaces.go
   - GitHub Copilot: Suggest mdparser implementation ❌
   - GitHub Copilot: Claude: Implement mdparser.go ✅
   - GitHub Copilot: Claude: Generate tests and testdata for mdparser.go
-  - ChatGPT-3: Generate engaging README.md for this project ❌
-  - ChatGPT-4: Generate engaging README.md for this project ✅
+  - ChatGPT o1: Generate engaging README.md for this project ❌
+  - ChatGPT 4o: Generate engaging README.md for this project ✅
   - Manually: Improve mdparser_test.go
   - GitHub Copilot: Claude: Generate definition for requirementSiteRegex ❌
   - ChatGPT o3-mini-high: Generate definition (Go) for requirementSiteRegex, Generate test for this regexpt ✅ ([private chat](https://chatgpt.com/c/67aa31b3-85c8-800d-8237-686acd9ee06f))
