@@ -203,6 +203,6 @@ func TestRequirementSiteRegex(t *testing.T) {
 
 func TestMdParser_ParseCoverageFootnote(t *testing.T) {
 	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1), [folder2/filename2:line2:test](https://example.com/pkg2/filename2)"
-	notes := ParseCoverageFootnote("", line, 1, nil)
-	require.Len(t, notes, 1, "expected 1 coverage footnote, got %d", len(notes))
+	note := ParseCoverageFootnote("", line, 1, nil)
+	require.NotNil(t, note)
 }

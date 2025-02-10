@@ -70,7 +70,6 @@ type CoverageTag struct {
 type CoverageFootnote struct {
 	FilePath          string
 	Line              int
-	RequirementSiteID string
 	PackageID         string
 	RequirementID     string
 	Coverers          []Coverer
