@@ -91,3 +91,5 @@ func parseRequirements(filePath string, line string, lineNum int, errors *[]Synt
 
 	return requirements
 }
+
+func parseRequirements(filePath string, line string, lineNum int, errors *[]SyntaxError) []RequirementSite {
