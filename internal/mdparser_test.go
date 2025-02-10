@@ -213,3 +213,4 @@ func TestMdParser_ParseCoverageFootnote(t *testing.T) {
 	note := ParseCoverageFootnote("", line, 1, nil)
 	require.NotNil(t, note)
 }
+

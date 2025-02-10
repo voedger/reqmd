@@ -33,7 +33,12 @@ This file contains a brief log of the project design and construction.
   - regexps :( 1h
   - GitHub Copilot: Claude: Rewrite the test using testify/assert👍
     - Refactor TestMdParser_ParseMarkdownFile to use testify/assert for improved readability and consistency
-  - GitHub Copilot: Claude: Implement "Test coverage footnote" block, see below👍
+  - GitHub Copilot: o3-mini
+    - Implement "Test coverage footnote" block, see below👍
+    - Implement ParseSourceFile using same approach as for ParseMarkdownFile👍
+    - Generate TestMdParser_ParseSourceFile using same approach as for TestMdParser_ParseMarkdownFile: ✅ but no test data
+    - Generate testdata/srccoverparser-1.go: file created but...❌
+  Generate testdata/srccoverparser-1.go
 
 ### Prompt_CoverageFootnoteRegex
 
