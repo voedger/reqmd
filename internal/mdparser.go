@@ -10,12 +10,8 @@ import (
 
 // Regular expressions for parsing markdown elements
 var (
-	headerRegex           = regexp.MustCompile(`^reqmd\.package:\s*(.+)$`)
-	RequirementSiteRegex  = regexp.MustCompile("`~([^~]+)~`(?:cov\\[\\^~([^~]+)~\\])?")
-	CoverageFootnoteRegex = regexp.MustCompile(`^\s*\[\^~([^~]+)~\]:\s*` + //Footnote reference
-		"`\\[~([^~]+)~([^\\]]+)\\]`" + // Hint with package and coverage type
-		`(?:\s*(.+))?$`) // Optional coverer list
-	CovererRegex = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
+	headerRegex          = regexp.MustCompile(`^reqmd\.package:\s*(.+)$`)
+	RequirementSiteRegex = regexp.MustCompile("`~([^~]+)~`(?:cov\\[\\^~([^~]+)~\\])?")
 )
 
 func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
@@ -63,8 +59,10 @@ func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
 		structure.Requirements = append(structure.Requirements, requirements...)
 
 		// Parse coverage footnotes
-		footnotes := ParseCoverageFootnote(filePath, line, lineNum, &errors)
-		structure.CoverageFootnotes = append(structure.CoverageFootnotes, footnotes...)
+		footnote := ParseCoverageFootnote(filePath, line, lineNum, &errors)
+		if footnote != nil {
+			structure.CoverageFootnotes = append(structure.CoverageFootnotes, *footnote)
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -101,20 +99,27 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Synt
 	return requirements
 }
 
-func ParseCoverageFootnote(filePath string, line string, lineNum int, _ *[]SyntaxError) []CoverageFootnote {
-	var footnotes []CoverageFootnote
+var (
+	// "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1), [folder2/filename2:line2:test](https://example.com/pkg2/filename2)"
+	CoverageFootnoteRegex = regexp.MustCompile(`^\s*\[\^~([^~]+)~\]:\s*` + //Footnote reference
+		"`\\[~([^~/]+)/([^~]+)~([^\\]]+)\\]`" + // Hint with package and coverage type
+		`(?:\s*(.+))?$`) // Optional coverer list
+	CovererRegex = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
+)
+
+func ParseCoverageFootnote(filePath string, line string, lineNum int, _ *[]SyntaxError) (footnote *CoverageFootnote) {
 
 	matches := CoverageFootnoteRegex.FindStringSubmatch(line)
 	if len(matches) > 0 {
-		footnote := CoverageFootnote{
-			FilePath:          filePath,
-			RequirementSiteID: matches[1],
-			PackageID:         matches[2],
-			Line:              lineNum,
+		footnote = &CoverageFootnote{
+			FilePath:      filePath,
+			RequirementID: matches[1],
+			PackageID:     matches[2],
+			Line:          lineNum,
 		}
 
 		// Parse coverers if present
-		if len(matches) > 4 && matches[4] != "" {
+		if len(matches) > 5 && matches[5] != "" {
 			covererMatches := CovererRegex.FindAllStringSubmatch(matches[4], -1)
 			for _, covMatch := range covererMatches {
 				if len(covMatch) > 2 {
@@ -126,8 +131,6 @@ func ParseCoverageFootnote(filePath string, line string, lineNum int, _ *[]Synta
 				}
 			}
 		}
-
-		footnotes = append(footnotes, footnote)
 	}
-	return footnotes
+	return footnote
 }

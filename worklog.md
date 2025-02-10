@@ -44,7 +44,6 @@ does not match
 line := "[^~REQ002~]: [~com.example.basic~impl][folder1/filename1:line1:impl](https://example.com/pkg1/filename1), [folder2/filename2:line2:test](https://example.com/pkg2/filename2)..."
 ```
 
-
 ## Analysis
 
 - Presumably: ChatGPT-4 produces better quality text content
