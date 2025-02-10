@@ -4,7 +4,7 @@ This file contains a brief log of the project design and construction.
 
 ## LLMs
 
-- Attempt 1. ChatGPT o3-mini-high. https://chatgpt.com/c/67a7f223-fcc0-800d-a486-427a3f47c3ed (not public)
+- Attempt 1. ChatGPT o3-mini-high. [private chat](https://chatgpt.com/c/67a7f223-fcc0-800d-a486-427a3f47c3ed)
   - Prompt: Suggest architecture of the solution (Go). Do not generate all code yet. Provide list of files, key functions, structs and their resposibilities.
     - After the analysys of the output the Construction requirements section was added.
 - Attempt 2. ChatGPT o3-mini-high. https://chatgpt.com/c/67a90782-3644-800d-a619-956119cc2b0c (not public)
@@ -22,6 +22,8 @@ This file contains a brief log of the project design and construction.
   - ChatGPT-3: Generate engaging README.md for this project ❌
   - ChatGPT-4: Generate engaging README.md for this project ✅
   - Manually: Improve mdparser_test.go
+  - GitHub Copilot: Claude: Generate definition for requirementSiteRegex ❌
+  - ChatGPT o3-mini-high: Generate definition (Go) for requirementSiteRegex, Generate test for this regexpt ✅ ([private chat](https://chatgpt.com/c/67aa31b3-85c8-800d-8237-686acd9ee06f))
 
 Analysis
 

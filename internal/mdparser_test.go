@@ -140,3 +140,82 @@ func TestMdParser_parseRequirements(t *testing.T) {
 		})
 	}
 }
+
+// requirementSiteRegex matches:
+// - A backtick (`)
+// - A RequirementSiteID: a tilde (~), an Identifier, then a tilde (~)
+// - A backtick (`)
+// - Optionally, the literal "cov" followed by a CoverageFootnoteReference:
+//   - "[^"
+//   - the same RequirementSiteID pattern
+//   - "]"
+
+func TestRequirementSiteRegex(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		expectMatch bool
+		group1      string // The captured RequirementSiteID (e.g., "~Post.handler~")
+		group2      string // The optional captured CoverageFootnoteReference (if any)
+	}{
+		{
+			name:        "Bare requirement site",
+			input:       "`~Post.handler~`",
+			expectMatch: true,
+			group1:      "~Post.handler~",
+			group2:      "",
+		},
+		{
+			name:        "Annotated requirement site",
+			input:       "`~Post.handler~`cov[^~Post.handler~]",
+			expectMatch: true,
+			group1:      "~Post.handler~",
+			group2:      "~Post.handler~",
+		},
+		{
+			name:        "Annotated with different requirement id",
+			input:       "`~Post.handler~`cov[^~Other.handler~]",
+			expectMatch: true,
+			group1:      "~Post.handler~",
+			group2:      "~Other.handler~",
+		},
+		{
+			name:        "Missing closing backtick",
+			input:       "`~Post.handler~",
+			expectMatch: false,
+		},
+		{
+			name:        "Invalid identifier (starts with digit)",
+			input:       "`~123Invalid~`",
+			expectMatch: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			matches := RequirementSiteRegex.FindStringSubmatch(tc.input)
+			if tc.expectMatch {
+				if matches == nil {
+					t.Fatalf("Expected match for input %q but got none", tc.input)
+				}
+				// matches[0] is the entire match, matches[1] is the RequirementSiteID,
+				// and matches[2] is the optional coverage footnote requirementSiteID.
+				if matches[1] != tc.group1 {
+					t.Errorf("Expected group1 to be %q, got %q", tc.group1, matches[1])
+				}
+				// Check group2 only if it was expected.
+				if len(matches) > 2 {
+					if matches[2] != tc.group2 {
+						t.Errorf("Expected group2 to be %q, got %q", tc.group2, matches[2])
+					}
+				} else if tc.group2 != "" {
+					t.Errorf("Expected group2 to be %q but no group2 captured", tc.group2)
+				}
+			} else {
+				if matches != nil {
+					t.Errorf("Expected no match for input %q, but got %v", tc.input, matches)
+				}
+			}
+		})
+	}
+}

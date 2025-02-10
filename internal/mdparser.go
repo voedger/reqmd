@@ -16,6 +16,9 @@ var (
 	headerRegex        = regexp.MustCompile(`^reqmd\.package:\s*(.+)$`)
 	requirementRegex   = regexp.MustCompile("`~([^~]+)~`")
 	coverageAnnotRegex = regexp.MustCompile(`~([^~]+)~coverage\[\^~[^~]+~\]`)
+
+	// RequirementSite
+	RequirementSiteRegex = regexp.MustCompile("`(~[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)*~)`(?:cov\\[\\^(~[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)*~)\\])?")
 )
 
 func NewMarkdownParser() IScanner {
