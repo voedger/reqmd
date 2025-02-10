@@ -41,19 +41,21 @@ const (
 
 // FileStructure merges the parsed data from an input file (Markdown or source).
 type FileStructure struct {
-	Path         string
-	Type         FileType          // indicates if it's Markdown or source
-	PackageID    string            // parsed from Markdown header (if markdown)
-	Requirements []RequirementSite // for Markdown: discovered requirements (bare or annotated)
-	CoverageTags []CoverageTag     // for source: discovered coverage tags
+	Path              string
+	Type              FileType           // indicates if it's Markdown or source
+	PackageID         string             // parsed from Markdown header (if markdown)
+	Requirements      []RequirementSite  // for Markdown: discovered requirements (bare or annotated)
+	CoverageFootnotes []CoverageFootnote // for Markdown: discovered coverage footnotes
+	CoverageTags      []CoverageTag      // for source: discovered coverage tags
 	// ... Add more fields if needed for raw file content, line references, etc.
 }
 
 // RequirementSite represents a single requirement reference discovered in a Markdown file.
 type RequirementSite struct {
+	FilePath        string
+	Line            int    // line number where the requirement is defined/referenced
 	RequirementName string // e.g., "Post.handler"
 	ReferenceName   string // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
-	Line            int    // line number where the requirement is defined/referenced
 	IsAnnotated     bool   // true if it already has coverage annotation, false if it’s bare
 }
 
@@ -66,8 +68,12 @@ type CoverageTag struct {
 
 // CoverageFootnote represents the footnote in Markdown that references coverage tags.
 type CoverageFootnote struct {
-	RequirementID string // e.g., "server.api.v2/Post.handler"
-	Coverers      []Coverer
+	FilePath          string
+	Line              int
+	RequirementSiteID string
+	PackageID         string
+	RequirementID     string
+	Coverers          []Coverer
 }
 
 // Coverer represents one coverage reference within a footnote, e.g., [folder/file:line:impl](URL)
