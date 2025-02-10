@@ -76,9 +76,9 @@ CoverageFootnoteReference = "[^" RequirementSiteID "]" ;
   For example:  `~server.api.v2~impl`
 *)
 
-CoverageFootnote = "[^" RequirementSiteID "]:" "`[" CoverageFootnoteHint "]`" [ WS CovererList ] ;
+CoverageFootnote = "[^" RequirementSiteID "]:" "`[" CoverageFootnoteHint "]`" [ CovererList ] ;
 CoverageFootnoteHint = "~" PackageID "~" CoverageType ;
-CovererList    = Coverer { WS Coverer } ;
+CovererList    = Coverer { Coverer } ;
 Coverer        = "[" CoverageLabel "]" "(" CoverageURL ")" ;
 CoverageLabel  = { AnyCharacter - "]" } ;
 
