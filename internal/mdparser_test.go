@@ -30,41 +30,46 @@ func TestMdParser_Scan(t *testing.T) {
 	}
 
 	// Test requirements
-	if len(basicFile.Requirements) != 3 {
-		t.Errorf("expected 3 requirements, got %d", len(basicFile.Requirements))
+	if len(basicFile.Requirements) != 2 {
+		t.Errorf("expected 2 requirements, got %d", len(basicFile.Requirements))
 	}
 
 	// Verify REQ001
-	found := false
-	for _, req := range basicFile.Requirements {
-		if req.ID == "REQ001" {
-			found = true
-			if req.IsAnnotated {
-				t.Error("REQ001 should not be annotated")
-			}
-			if req.Line != 8 {
-				t.Errorf("REQ001 should be on line 8, got %d", req.Line)
+	{
+		found := false
+		for _, req := range basicFile.Requirements {
+			if req.ID == "REQ001" {
+				found = true
+				if req.IsAnnotated {
+					t.Error("REQ001 should not be annotated")
+				}
+				if req.Line != 7 {
+					t.Errorf("REQ001 should be on line 7, got %d", req.Line)
+				}
 			}
 		}
-	}
-	if !found {
-		t.Error("REQ001 not found")
+		if !found {
+			t.Error("REQ001 not found")
+		}
 	}
 
 	// Verify REQ002 (appears twice, one annotated)
-	annotatedFound := false
-	unannotatedFound := false
-	for _, req := range basicFile.Requirements {
-		if req.ID == "REQ002" {
-			if req.IsAnnotated {
-				annotatedFound = true
-			} else {
-				unannotatedFound = true
+	{
+		cnt := 0
+		for _, req := range basicFile.Requirements {
+			if req.ID == "REQ002" {
+				cnt++
+				if cnt > 1 {
+					t.Error("REQ002 should only appear once")
+				}
+				if !req.IsAnnotated {
+					t.Error("REQ002 should be annotated")
+				}
 			}
 		}
-	}
-	if !annotatedFound || !unannotatedFound {
-		t.Error("REQ002 should appear as both annotated and unannotated")
+		if cnt == 0 {
+			t.Error("REQ002 not found")
+		}
 	}
 
 	// Verify errors from invalid.md

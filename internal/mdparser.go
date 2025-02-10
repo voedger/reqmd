@@ -14,7 +14,7 @@ type mdParser struct{}
 // Regular expressions for parsing markdown elements
 var (
 	headerRegex        = regexp.MustCompile(`^reqmd\.package:\s*(.+)$`)
-	requirementRegex   = regexp.MustCompile(`~([^~]+)~`)
+	requirementRegex   = regexp.MustCompile("`~([^~]+)~`")
 	coverageAnnotRegex = regexp.MustCompile(`~([^~]+)~coverage\[\^~[^~]+~\]`)
 )
 

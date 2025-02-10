@@ -27,6 +27,7 @@ Input files consist of markdown files and source files.
 Name = Letter { Letter | Digit | "_" }
 
 Identifier = Name {"." Name}
+
 ```
 
 ## Markdown files
@@ -43,39 +44,64 @@ reqmd.package: server.api.v2
 
 Markdown body is a sequence of different text elements. The tool processes:
 
-- BareRequirementName
-- RequirementSite
+- RequirementSite, can be:
+  - BareRequirementSite
+  - AnnotatedRequirementSite
 - CoverageFootnote
 
-RequirementName is an Identifier and looks like: `~Post.handler~` (it can also be as simple as `~SomeName~`).
+```ebnf
+RequirementSite = RequirementSiteID ["cov" CoverageFootnoteReference]
 
-RequirementID is formed as PackageID "/" RequirementName.
+RequirementSiteLabel = "`" RequirementSiteID  "`"
+
+RequirementSiteID = "~" RequirementName "~"
+
+RequirementName = Identifier
+
+CoverageFootnoteReference = "[^" RequirementSiteID "]
+
+RequirementID = PackageID "/" RequirementName
+
+```
 
 RequirementID shall be unique within all MarkdownFiles.
 
-```markdown
-
-BareRequirementName is a RequirementName without CoverageAnnotation.
-
-RequirementSite is a RequirementName with CoverageAnnotation (CoverageAnnotation is added by the reqmd tool). An example:
+Example of a BareRequirementSite:
 
 ```markdown
-- APIv2 implementation shall provide a handler for POST requests. `~Post.handler~`coverage[^~Post.handler~].
+- APIv2 implementation shall provide a handler for POST requests. `~Post.handler~`.
+```
+
+Example of an AnnotatedRequirementSite:
+
+```markdown
+- APIv2 implementation shall provide a handler for POST requests. `~Post.handler~`cov[^~Post.handler~].
 ```
 
 CoverageFootnote contains a CoverageFootnoteHint and an optional list of Coverers. A Coverer contains "[" CoverageLabel "]" followed by "(" CoverageURL ")". An example:
 
+```ebnf
+CoverageFootnote = "[^" RequirementSiteID "]" ":" "`[" CoverageFootnoteHint "]`" [Coverer {"," Coverer}]
+
+Coverer = "[" CoverageLabel "]" "(" CoverageURL ")"
+
+```
+
+An example:
+
 ```markdown
 [^~Post.handler~]: `[~server.api.v2~impl]`[folder1/filename1:line1:impl](CoverageURL1), [folder2/filename2:line2:test](CoverageURL2)...
+```
 
 Where:
-- [~server.api.v2~impl] - CoverageFootnoteHint
+
+- `~server.api.v2~impl` - CoverageFootnoteHint
 - `[folder1/filename1:line1:impl](CoverageURL1)` - Coverer
-   - `folder1/filename1:line1:impl` - CoverageLabel
-   - `CoverageURL1` - CoverageURL
+  - `folder1/filename1:line1:impl` - CoverageLabel
+  - `CoverageURL1` - CoverageURL
 - `[folder2/filename2:line2:test](CoverageURL2)` - Coverer
-   - `folder2/filename2:line2:test` - CoverageLabel
-   - `CoverageURL2` - CoverageURL
+  - `folder2/filename2:line2:test` - CoverageLabel
+  - `CoverageURL2` - CoverageURL
 
 CoverageURL is defined as:
 
