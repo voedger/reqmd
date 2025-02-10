@@ -27,7 +27,24 @@ This file contains a brief log of the project design and construction.
   - GitHub Copilot: Claude: Generate syntax errors constructions. Texts should be similaer to requirements ("shall") ❌
   - ChatGPT o3-mini-high: Generate syntax errors constructors (e.g. NewErrPkgIdent). Error text should be similar to req text ("shall") ✅
   - NI: errors.go. 1h.
+  - GitHub Copilot: Claude: Generate ParseCoverageFootnote ✅ (but do not work)
+  - GitHub Copilot: Claude: Generate TestMdParser_ParseCoverageFootnote ❌
+  - ChatGPT o3-mini-high: see Prompt_CoverageFootnoteRegex ✅
+  - regexps :( 1h
 
-Analysis
+### Prompt_CoverageFootnoteRegex
+
+```text
+Why 
+
+CoverageFootnoteRegex = regexp.MustCompile(^\s*\[^~([^~]+)~\]:\s* + "")
+
+does not match
+
+line := "[^~REQ002~]: [~com.example.basic~impl][folder1/filename1:line1:impl](https://example.com/pkg1/filename1), [folder2/filename2:line2:test](https://example.com/pkg2/filename2)..."
+```
+
+
+## Analysis
 
 - Presumably: ChatGPT-4 produces better quality text content

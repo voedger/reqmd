@@ -12,7 +12,7 @@ import (
 var (
 	headerRegex           = regexp.MustCompile(`^reqmd\.package:\s*(.+)$`)
 	RequirementSiteRegex  = regexp.MustCompile("`~([^~]+)~`(?:cov\\[\\^~([^~]+)~\\])?")
-	CoverageFootnoteRegex = regexp.MustCompile(`^\[^~([^~]+)~\]:\s*` + // Footnote reference
+	CoverageFootnoteRegex = regexp.MustCompile(`^\s*\[\^~([^~]+)~\]:\s*` + //Footnote reference
 		"`\\[~([^~]+)~([^\\]]+)\\]`" + // Hint with package and coverage type
 		`(?:\s*(.+))?$`) // Optional coverer list
 	CovererRegex = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
@@ -59,11 +59,11 @@ func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
 		}
 
 		// Parse requirements
-		requirements := parseRequirements(filePath, line, lineNum, &errors)
+		requirements := ParseRequirements(filePath, line, lineNum, &errors)
 		structure.Requirements = append(structure.Requirements, requirements...)
 
 		// Parse coverage footnotes
-		footnotes := parseCoverageFootnotes(filePath, line, lineNum, &errors)
+		footnotes := ParseCoverageFootnote(filePath, line, lineNum, &errors)
 		structure.CoverageFootnotes = append(structure.CoverageFootnotes, footnotes...)
 	}
 
@@ -77,7 +77,7 @@ func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
 	return structure, errors, nil
 }
 
-func parseRequirements(filePath string, line string, lineNum int, errors *[]SyntaxError) []RequirementSite {
+func ParseRequirements(filePath string, line string, lineNum int, errors *[]SyntaxError) []RequirementSite {
 	var requirements []RequirementSite
 
 	// Find all requirement references
@@ -101,7 +101,7 @@ func parseRequirements(filePath string, line string, lineNum int, errors *[]Synt
 	return requirements
 }
 
-func parseCoverageFootnotes(filePath string, line string, lineNum int, _ *[]SyntaxError) []CoverageFootnote {
+func ParseCoverageFootnote(filePath string, line string, lineNum int, _ *[]SyntaxError) []CoverageFootnote {
 	var footnotes []CoverageFootnote
 
 	matches := CoverageFootnoteRegex.FindStringSubmatch(line)
@@ -129,6 +129,5 @@ func parseCoverageFootnotes(filePath string, line string, lineNum int, _ *[]Synt
 
 		footnotes = append(footnotes, footnote)
 	}
-
 	return footnotes
 }
