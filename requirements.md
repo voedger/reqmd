@@ -90,7 +90,7 @@ Coverer = "[" CoverageLabel "]" "(" CoverageURL ")"
 An example:
 
 ```markdown
-[^~Post.handler~]: `[~server.api.v2~impl]`[folder1/filename1:line1:impl](CoverageURL1), [folder2/filename2:line2:test](CoverageURL2)...
+[^~Post.handler~]: `[~server.api.v2/Post.handler~impl]`[folder1/filename1:line1:impl](CoverageURL1), [folder2/filename2:line2:test](CoverageURL2)...
 ```
 
 Where:

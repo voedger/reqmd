@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMdParser_Scan(t *testing.T) {
+func TestMdParser_ParseMarkdownFile(t *testing.T) {
 
 	testDataDir := filepath.Join("testdata", "mdparser-1.md")
 
@@ -102,7 +102,7 @@ func TestMdParser_parseRequirements(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			reqs := parseRequirements("", tt.line, 1, &errors)
+			reqs := ParseRequirements("", tt.line, 1, &errors)
 
 			if len(reqs) != len(tt.expectReqIDs) {
 				t.Errorf("expected %d requirements, got %d (%s)", len(tt.expectReqIDs), len(reqs), tt.line)
@@ -199,4 +199,10 @@ func TestRequirementSiteRegex(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMdParser_ParseCoverageFootnote(t *testing.T) {
+	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1), [folder2/filename2:line2:test](https://example.com/pkg2/filename2)"
+	notes := ParseCoverageFootnote("", line, 1, nil)
+	require.Len(t, notes, 1, "expected 1 coverage footnote, got %d", len(notes))
 }
