@@ -87,7 +87,7 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Synt
 				RequirementName: match[1],
 				ReferenceName:   match[2],
 				Line:            lineNum,
-				IsAnnotated:     match[1] == match[2],
+				IsAnnotated:     len(match[2]) > 0,
 			}
 			if req.IsAnnotated && (req.RequirementName != req.ReferenceName) {
 				*errors = append(*errors, NewErrRequirementSiteIDEqual(filePath, req.Line, req.RequirementName, req.ReferenceName))
