@@ -33,7 +33,7 @@ This file contains a brief log of the project design and construction.
   - regexps :( 1h
   - GitHub Copilot: Claude: Rewrite the test using testify/assert👍
     - Refactor TestMdParser_ParseMarkdownFile to use testify/assert for improved readability and consistency
-
+  - GitHub Copilot: Claude: Implement "Test coverage footnote" block, see below👍
 
 ### Prompt_CoverageFootnoteRegex
 
@@ -45,6 +45,28 @@ CoverageFootnoteRegex = regexp.MustCompile(^\s*\[^~([^~]+)~\]:\s* + "")
 does not match
 
 line := "[^~REQ002~]: [~com.example.basic~impl][folder1/filename1:line1:impl](https://example.com/pkg1/filename1), [folder2/filename2:line2:test](https://example.com/pkg2/filename2)..."
+```
+
+### Test coverage footnote
+
+```go
+  // Test coverage footnote
+  // [^~REQ002~]: `[~com.example.basic/REQ002~impl]` [folder1/filename1:line1:impl](https://example.com/pkg1/filename1), [folder2/filename2:line2:test](https://example.com/pkg2/filename2)
+	{
+		assert.Len(t, basicFile.CoverageFootnotes, 1, "should have 1 coverage footnote")
+		if len(basicFile.CoverageFootnotes) > 0 {
+			footnote := basicFile.CoverageFootnotes[0]
+			assert.Equal(t, "REQ002", footnote.RequirementID, "incorrect requirement ID in footnote")
+			assert.Equal(t, "com.example.basic", footnote.PackageID, "incorrect package ID in footnote")
+
+			require.Len(t, footnote.Coverers, 2, "should have 2 coverage references")
+			assert.Equal(t, "folder1/filename1:line1:impl", footnote.Coverers[0].CoverageLabel)
+			assert.Equal(t, "https://example.com/pkg1/filename1", footnote.Coverers[0].CoverageURL)
+			assert.Equal(t, "folder2/filename2:line2:test", footnote.Coverers[1].CoverageLabel)
+			assert.Equal(t, "https://example.com/pkg2/filename2", footnote.Coverers[1].CoverageURL)
+		}
+	}
+}
 ```
 
 ## Analysis
