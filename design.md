@@ -105,15 +105,11 @@ Explanation of each file:
 
 8. **mdparser.go** (optional name—could be integrated into `scanner.go` if you prefer fewer files)  
    - **Purpose**: Specialized logic for parsing Markdown files (headers, footnote references, requirement names, etc.).  
-   - **Key functions** (example):  
-     - `ParseMarkdown(path string) (MarkdownFileStructure, []SyntaxError)`: parse package headers, requirement names, footnotes.  
    - **Responsibilities**:  
      - Single responsibility: read a Markdown file, produce domain objects (`FileStructure` details) or syntax errors.  
 
 9. **srccoverparser.go** (optional name—could be integrated into `scanner.go` if you prefer fewer files)  
    - **Purpose**: Specialized logic for parsing coverage tags from source files.  
-   - **Key functions**:  
-     - `ParseSourceCoverage(path string) (SourceFileStructure, []SyntaxError)`: parse coverage tags like `[~server.api.v2/Post.handler~test]`.  
    - **Responsibilities**:  
      - Single responsibility: read a source file, find coverage tags, produce domain objects.  
 
