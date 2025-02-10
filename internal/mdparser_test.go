@@ -4,64 +4,44 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMdParser_ParseMarkdownFile(t *testing.T) {
-
 	testDataDir := filepath.Join("testdata", "mdparser-1.md")
 
 	basicFile, _, err := ParseMarkdownFile(testDataDir)
 	require.NoError(t, err)
 
-	// Test package ID
-	if basicFile.PackageID != "com.example.basic" {
-		t.Errorf("expected package ID 'com.example.basic', got '%s'", basicFile.PackageID)
+	// Test package ID and requirements count
+	assert.Equal(t, "com.example.basic", basicFile.PackageID, "incorrect package ID")
+	assert.Len(t, basicFile.Requirements, 2, "incorrect number of requirements")
+
+	// Find and verify REQ001
+	req001 := findRequirement(basicFile.Requirements, "REQ001")
+	assert.NotNil(t, req001, "REQ001 not found")
+	if req001 != nil {
+		assert.False(t, req001.IsAnnotated, "REQ001 should not be annotated")
+		assert.Equal(t, 7, req001.Line, "REQ001 is on wrong line")
 	}
 
-	// Test requirements
-	if len(basicFile.Requirements) != 2 {
-		t.Errorf("expected 2 requirements, got %d", len(basicFile.Requirements))
+	// Find and verify REQ002
+	req002 := findRequirement(basicFile.Requirements, "REQ002")
+	assert.NotNil(t, req002, "REQ002 not found")
+	if req002 != nil {
+		assert.True(t, req002.IsAnnotated, "REQ002 should be annotated")
 	}
+}
 
-	// Verify REQ001
-	{
-		found := false
-		for _, req := range basicFile.Requirements {
-			if req.RequirementName == "REQ001" {
-				found = true
-				if req.IsAnnotated {
-					t.Error("REQ001 should not be annotated")
-				}
-				if req.Line != 7 {
-					t.Errorf("REQ001 should be on line 7, got %d", req.Line)
-				}
-			}
-		}
-		if !found {
-			t.Error("REQ001 not found")
+// Helper function to find requirement by name
+func findRequirement(reqs []RequirementSite, name string) *RequirementSite {
+	for _, req := range reqs {
+		if req.RequirementName == name {
+			return &req
 		}
 	}
-
-	// Verify REQ002 (appears twice, one annotated)
-	{
-		cnt := 0
-		for _, req := range basicFile.Requirements {
-			if req.RequirementName == "REQ002" {
-				cnt++
-				if cnt > 1 {
-					t.Error("REQ002 should only appear once")
-				}
-				if !req.IsAnnotated {
-					t.Error("REQ002 should be annotated")
-				}
-			}
-		}
-		if cnt == 0 {
-			t.Error("REQ002 not found")
-		}
-	}
-
+	return nil
 }
 
 func TestMdParser_parseRequirements(t *testing.T) {
