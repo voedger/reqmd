@@ -21,11 +21,12 @@ This file contains a brief log of the project design and construction.
   - GitHub Copilot: Claude: Generate tests and testdata for mdparser.go
   - ChatGPT o1: Generate engaging README.md for this project ❌
   - ChatGPT 4o: Generate engaging README.md for this project ✅
-  - Manually: Improve mdparser_test.go
+  - NI: Improve mdparser_test.go
   - GitHub Copilot: Claude: Generate definition for requirementSiteRegex ❌
   - ChatGPT o3-mini-high: Generate definition (Go) for requirementSiteRegex, Generate test for this regexpt ✅ ([private chat](https://chatgpt.com/c/67aa31b3-85c8-800d-8237-686acd9ee06f))
   - GitHub Copilot: Claude: Generate syntax errors constructions. Texts should be similaer to requirements ("shall") ❌
   - ChatGPT o3-mini-high: Generate syntax errors constructors (e.g. NewErrPkgIdent). Error text should be similar to req text ("shall") ✅
+  - NI: errors.go. 1h.
 
 Analysis
 
