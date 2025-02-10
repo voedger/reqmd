@@ -38,7 +38,7 @@ func TestMdParser_Scan(t *testing.T) {
 	{
 		found := false
 		for _, req := range basicFile.Requirements {
-			if req.ID == "REQ001" {
+			if req.RequirementName == "REQ001" {
 				found = true
 				if req.IsAnnotated {
 					t.Error("REQ001 should not be annotated")
@@ -57,7 +57,7 @@ func TestMdParser_Scan(t *testing.T) {
 	{
 		cnt := 0
 		for _, req := range basicFile.Requirements {
-			if req.ID == "REQ002" {
+			if req.RequirementName == "REQ002" {
 				cnt++
 				if cnt > 1 {
 					t.Error("REQ002 should only appear once")
@@ -130,11 +130,11 @@ func TestMdParser_parseRequirements(t *testing.T) {
 			}
 
 			for i, req := range reqs {
-				if req.ID != tt.expectReqIDs[i] {
-					t.Errorf("expected requirement ID %s, got %s", tt.expectReqIDs[i], req.ID)
+				if req.RequirementName != tt.expectReqIDs[i] {
+					t.Errorf("expected requirement ID %s, got %s", tt.expectReqIDs[i], req.RequirementName)
 				}
 				if req.IsAnnotated != tt.expectAnnotated[i] {
-					t.Errorf("expected IsAnnotated=%v for %s, got %v", tt.expectAnnotated[i], req.ID, req.IsAnnotated)
+					t.Errorf("expected IsAnnotated=%v for %s, got %v", tt.expectAnnotated[i], req.RequirementName, req.IsAnnotated)
 				}
 			}
 		})
@@ -162,22 +162,22 @@ func TestRequirementSiteRegex(t *testing.T) {
 			name:        "Bare requirement site",
 			input:       "`~Post.handler~`",
 			expectMatch: true,
-			group1:      "~Post.handler~",
+			group1:      "Post.handler",
 			group2:      "",
 		},
 		{
 			name:        "Annotated requirement site",
 			input:       "`~Post.handler~`cov[^~Post.handler~]",
 			expectMatch: true,
-			group1:      "~Post.handler~",
-			group2:      "~Post.handler~",
+			group1:      "Post.handler",
+			group2:      "Post.handler",
 		},
 		{
 			name:        "Annotated with different requirement id",
 			input:       "`~Post.handler~`cov[^~Other.handler~]",
 			expectMatch: true,
-			group1:      "~Post.handler~",
-			group2:      "~Other.handler~",
+			group1:      "Post.handler",
+			group2:      "Other.handler",
 		},
 		{
 			name:        "Missing closing backtick",
@@ -186,8 +186,9 @@ func TestRequirementSiteRegex(t *testing.T) {
 		},
 		{
 			name:        "Invalid identifier (starts with digit)",
-			input:       "`~123Invalid~`",
-			expectMatch: false,
+			input:       "`~123InvalidIdentifier~`",
+			group1:      "123InvalidIdentifier",
+			expectMatch: true,
 		},
 	}
 

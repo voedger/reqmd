@@ -14,11 +14,11 @@ type mdParser struct{}
 // Regular expressions for parsing markdown elements
 var (
 	headerRegex        = regexp.MustCompile(`^reqmd\.package:\s*(.+)$`)
-	requirementRegex   = regexp.MustCompile("`~([^~]+)~`")
 	coverageAnnotRegex = regexp.MustCompile(`~([^~]+)~coverage\[\^~[^~]+~\]`)
 
 	// RequirementSite
-	RequirementSiteRegex = regexp.MustCompile("`(~[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)*~)`(?:cov\\[\\^(~[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)*~)\\])?")
+	//RequirementSiteRegex = regexp.MustCompile("`(~[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)*~)`(?:cov\\[\\^(~[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)*~)\\])?")
+	RequirementSiteRegex = regexp.MustCompile("`~([^~]+)~`(?:cov\\[\\^~([^~]+)~\\])?")
 )
 
 func NewMarkdownParser() IScanner {
@@ -116,17 +116,17 @@ func (m *mdParser) parseFile(filePath string) (*FileStructure, []SyntaxError) {
 	return structure, errors
 }
 
-func (m *mdParser) parseRequirements(line string, lineNum int) []Requirement {
-	var requirements []Requirement
+func (m *mdParser) parseRequirements(line string, lineNum int) []RequirementSite {
+	var requirements []RequirementSite
 
 	// Find all requirement references
-	matches := requirementRegex.FindAllStringSubmatch(line, -1)
+	matches := RequirementSiteRegex.FindAllStringSubmatch(line, -1)
 	for _, match := range matches {
 		if len(match) > 1 {
-			req := Requirement{
-				ID:          match[1], // Will be prefixed with PackageID later
-				Line:        lineNum,
-				IsAnnotated: coverageAnnotRegex.MatchString(line),
+			req := RequirementSite{
+				RequirementName: match[1], // Will be prefixed with PackageID later
+				Line:            lineNum,
+				IsAnnotated:     coverageAnnotRegex.MatchString(line),
 			}
 			requirements = append(requirements, req)
 		}

@@ -41,18 +41,18 @@ const (
 // FileStructure merges the parsed data from an input file (Markdown or source).
 type FileStructure struct {
 	Path         string
-	Type         FileType      // indicates if it's Markdown or source
-	PackageID    string        // parsed from Markdown header (if markdown)
-	Requirements []Requirement // for Markdown: discovered requirements (bare or annotated)
-	CoverageTags []CoverageTag // for source: discovered coverage tags
+	Type         FileType          // indicates if it's Markdown or source
+	PackageID    string            // parsed from Markdown header (if markdown)
+	Requirements []RequirementSite // for Markdown: discovered requirements (bare or annotated)
+	CoverageTags []CoverageTag     // for source: discovered coverage tags
 	// ... Add more fields if needed for raw file content, line references, etc.
 }
 
-// Requirement represents a single requirement reference discovered in a Markdown file.
-type Requirement struct {
-	ID          string // e.g., "server.api.v2/Post.handler"
-	Line        int    // line number where the requirement is defined/referenced
-	IsAnnotated bool   // true if it already has coverage annotation, false if it’s bare
+// RequirementSite represents a single requirement reference discovered in a Markdown file.
+type RequirementSite struct {
+	RequirementName string // e.g., "Post.handler"
+	Line            int    // line number where the requirement is defined/referenced
+	IsAnnotated     bool   // true if it already has coverage annotation, false if it’s bare
 }
 
 // CoverageTag represents a coverage marker found in source code.
