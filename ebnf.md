@@ -38,12 +38,12 @@ AnyCharacter   = ? any character ? ;
   A Markdown file consists of a header (with a package declaration) followed by a body.
 *)
 
-MarkdownFile   = Header , Body ;
+MarkdownFile   = Header Body ;
 
-Header         = "---" , NewLine ,
-                 PackageDeclaration , NewLine ,
-                 "---" , NewLine ;
-PackageDeclaration = "reqmd.package:" , WS , PackageID ;
+Header         = "---" NewLine
+                 PackageDeclaration NewLine
+                 "---" NewLine ;
+PackageDeclaration = "reqmd.package:" WS PackageID ;
 PackageID      = Identifier ;
 
 Body           = { MarkdownElement } ;
@@ -58,12 +58,12 @@ PlainText      = { AnyCharacter } ;
   Optionally, an annotated requirement site is immediately followed by the keyword "cov" and a footnote reference.
 *)
 
-RequirementSite = RequirementSiteLabel , [ WS , "cov" , WS , CoverageFootnoteReference ] ;
-RequirementSiteLabel = "`" , RequirementSiteID , "`" ;
-RequirementSiteID = "~" , RequirementName , "~" ;
+RequirementSite = RequirementSiteLabel [ "cov" CoverageFootnoteReference ] ;
+RequirementSiteLabel = "`" RequirementSiteID "`" ;
+RequirementSiteID = "~" RequirementName "~" ;
 RequirementName = Identifier ;
 
-CoverageFootnoteReference = "[^" , RequirementSiteID , "]" ;
+CoverageFootnoteReference = "[^" RequirementSiteID "]" ;
 
 (*
   Coverage Footnotes in Markdown
@@ -76,11 +76,11 @@ CoverageFootnoteReference = "[^" , RequirementSiteID , "]" ;
   For example:  `~server.api.v2~impl`
 *)
 
-CoverageFootnote = "[^" , RequirementSiteID , "]" , ":" , WS ,
-                   "`[" , CoverageFootnoteHint , "]`" , [ WS , CovererList ] ;
-CoverageFootnoteHint = "~" , PackageID , "~" , CoverageType ;
-CovererList    = Coverer , { "," , WS , Coverer } ;
-Coverer        = "[" , CoverageLabel , "]" , "(" , CoverageURL , ")" ;
+CoverageFootnote = "[^" RequirementSiteID "]:" WS
+                   "`[" CoverageFootnoteHint "]`" [ WS CovererList ] ;
+CoverageFootnoteHint = "~" PackageID "~" CoverageType ;
+CovererList    = Coverer { WS Coverer } ;
+Coverer        = "[" CoverageLabel "]" "(" CoverageURL ")" ;
 CoverageLabel  = { AnyCharacter - "]" } ;
 
 (*
@@ -90,15 +90,15 @@ CoverageLabel  = { AnyCharacter - "]" } ;
   and a coverage area indicated after a "#".
 *)
 
-CoverageURL    = FileURL , [ "?plain=1" ] , "#" , CoverageArea ;
+CoverageURL    = FileURL [ "?plain=1" ] "#" CoverageArea ;
 FileURL        = GitHubURL | GitLabURL ;
-GitHubURL      = "https://github.com/" , Owner , "/" , Repository ,
-                 "/blob/" , CommitHash , "/" , FilePath ;
-GitLabURL      = "https://gitlab.com/" , Owner , "/" , Repository ,
-                 "/-/blob/" , CommitHash , "/" , FilePath ;
+GitHubURL      = "https://github.com/" Owner "/" Repository
+                 "/blob/" CommitHash "/" FilePath ;
+GitLabURL      = "https://gitlab.com/" Owner "/" Repository
+                 "/-/blob/" CommitHash "/" FilePath ;
 Owner          = Identifier ;
 Repository     = Identifier ;
-CommitHash     = HexDigit , { HexDigit } ;
+CommitHash     = HexDigit { HexDigit } ;
 FilePath       = { AnyCharacter - ("?" | "#") } ;
 CoverageArea   = { AnyCharacter } ;
 
@@ -128,6 +128,6 @@ CoverageType   = Name ;
 
 SourceFile   = { SourceElement } ;
 SourceElement = CoverageTag | PlainText ;
-CoverageTag  = "[" , RequirementTag , "]" ;
-RequirementTag = "~" , PackageID , "/" , RequirementName , "~" , CoverageType ;
+CoverageTag  = "[" RequirementTag "]" ;
+RequirementTag = "~" PackageID "/" RequirementName "~" CoverageType ;
 ```
