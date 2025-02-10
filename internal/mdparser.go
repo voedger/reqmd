@@ -120,7 +120,7 @@ func ParseCoverageFootnote(filePath string, line string, lineNum int, _ *[]Synta
 
 		// Parse coverers if present
 		if len(matches) > 5 && matches[5] != "" {
-			covererMatches := CovererRegex.FindAllStringSubmatch(matches[4], -1)
+			covererMatches := CovererRegex.FindAllStringSubmatch(matches[5], -1)
 			for _, covMatch := range covererMatches {
 				if len(covMatch) > 2 {
 					coverer := Coverer{
