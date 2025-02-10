@@ -51,6 +51,16 @@ func TestMdParser_ParseMarkdownFile(t *testing.T) {
 	}
 }
 
+func TestMdParser_ParseMarkdownFileErr_reqsiteid(t *testing.T) {
+	testDataDir := filepath.Join("testdata", "mdparser-errs.md")
+
+	_, errors, err := ParseMarkdownFile(testDataDir)
+	require.NoError(t, err)
+	require.Len(t, errors, 1, "should have 1 error")
+	assert.Equal(t, "reqsiteid", errors[0].Code)
+	assert.Equal(t, 8, errors[0].Line)
+}
+
 // Helper function to find requirement by name
 func findRequirement(reqs []RequirementSite, name string) *RequirementSite {
 	for _, req := range reqs {
