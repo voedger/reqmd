@@ -137,9 +137,9 @@ Where:
 - `979d75b2c7da961f94396ce2b286e7389eb73d75` - CommitHash
 - `L4` - CoverageArea
 
-## Input Files
+## Source Files
 
-Each InputFile may contain multiple CoverageTags in its text.
+Each SourceFile may contain multiple CoverageTags in its text.
 
 CoverageTag is specified as explained in the following example:
 
@@ -223,6 +223,7 @@ Concepts:
 - SyntaxError:
   - PackageName shall be an identifier
   - RequirementName shall be an identifier
+  - RequirementSiteID shall be equals in the RequirementSite and CoverageFootnote
 - SemanticError:
   - RequirementID shall be unique within all MarkdownFiles
   - PackageID shall be defined if there are RequirementSites
