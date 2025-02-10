@@ -55,7 +55,7 @@ func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
 		}
 
 		// Parse requirements
-		requirements := parseRequirements(line, lineNum, &errors)
+		requirements := parseRequirements(filePath, line, lineNum, &errors)
 		structure.Requirements = append(structure.Requirements, requirements...)
 	}
 
@@ -69,7 +69,7 @@ func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
 	return structure, errors, nil
 }
 
-func parseRequirements(line string, lineNum int, errors *[]SyntaxError) []RequirementSite {
+func parseRequirements(filePath string, line string, lineNum int, errors *[]SyntaxError) []RequirementSite {
 	var requirements []RequirementSite
 
 	// Find all requirement references
@@ -81,6 +81,9 @@ func parseRequirements(line string, lineNum int, errors *[]SyntaxError) []Requir
 				ReferenceName:   match[2],
 				Line:            lineNum,
 				IsAnnotated:     match[1] == match[2],
+			}
+			if req.IsAnnotated && (req.RequirementName != req.ReferenceName) {
+				*errors = append(*errors, NewErrRequirementSiteIDEqual(filePath, req.Line, req.RequirementName, req.ReferenceName))
 			}
 			requirements = append(requirements, req)
 		}
