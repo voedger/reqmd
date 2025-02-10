@@ -1,7 +1,5 @@
 package internal
 
-// NewErrPkgIdent creates a SyntaxError indicating that a PackageName is not a valid identifier.
-// According to the specification, "PackageName shall be an identifier".
 func NewErrPkgIdent(filePath string, line int) SyntaxError {
 	return SyntaxError{
 		Code:     "pkgident",
@@ -11,8 +9,6 @@ func NewErrPkgIdent(filePath string, line int) SyntaxError {
 	}
 }
 
-// NewErrReqIdent creates a SyntaxError indicating that a RequirementName is not a valid identifier.
-// According to the specification, "RequirementName shall be an identifier".
 func NewErrReqIdent(filePath string, line int) SyntaxError {
 	return SyntaxError{
 		Code:     "reqident",
@@ -20,4 +16,14 @@ func NewErrReqIdent(filePath string, line int) SyntaxError {
 		Line:     line,
 		Message:  "RequirementName shall be an identifier",
 	}
+}
+
+func NewErrRequirementSiteIDEqual(filePath string, line int, RequirementSiteID1, RequirementSiteID2 string) SyntaxError {
+	return SyntaxError{
+		Code:     "reqsiteid",
+		FilePath: filePath,
+		Line:     line,
+		Message:  "RequirementSiteID from RequirementSiteLabel and CoverageFootnoteReference shall be equal: " + RequirementSiteID1 + " != " + RequirementSiteID2,
+	}
+
 }
