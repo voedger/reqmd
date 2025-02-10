@@ -24,6 +24,8 @@ This file contains a brief log of the project design and construction.
   - Manually: Improve mdparser_test.go
   - GitHub Copilot: Claude: Generate definition for requirementSiteRegex ❌
   - ChatGPT o3-mini-high: Generate definition (Go) for requirementSiteRegex, Generate test for this regexpt ✅ ([private chat](https://chatgpt.com/c/67aa31b3-85c8-800d-8237-686acd9ee06f))
+  - GitHub Copilot: Claude: Generate syntax errors constructions. Texts should be similaer to requirements ("shall") ❌
+  - ChatGPT o3-mini-high: Generate syntax errors constructors (e.g. NewErrPkgIdent). Error text should be similar to req text ("shall") ✅
 
 Analysis
 

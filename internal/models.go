@@ -19,6 +19,7 @@ type Action struct {
 
 // SyntaxError captures syntax-level errors found while parsing a file.
 type SyntaxError struct {
+	Code     string // error code (e.g., "pkgident")
 	FilePath string // file that has a syntax error
 	Line     int    // line number where the syntax error is detected
 	Message  string // human-readable description

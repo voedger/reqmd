@@ -1,105 +1,133 @@
 # ebnf
 
+## Lexical Elements
+
 ```ebnf
-MarkdownFile = MarkdownHeader MarkdownBody
+(*
+  Lexical Elements
+  ----------------
+  Note: The productions for Letter and Digit are given in an abbreviated form.
+*)
+
+Letter         = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" |
+                 "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" |
+                 "U" | "V" | "W" | "X" | "Y" | "Z" |
+                 "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" |
+                 "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" |
+                 "u" | "v" | "w" | "x" | "y" | "z" ;
+
+Digit          = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+HexDigit       = Digit | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F" ;
+
+Name           = Letter { Letter | Digit | "_" } ;
+Identifier     = Name { "." Name } ;
+
+WS             = { " " | "\t" } ;
+NewLine        = "\n" | "\r\n" ;
+
+AnyCharacter   = ? any character ? ;
 ```
 
+## Markdown Files
+
 ```ebnf
-(* Identifiers and their basic parts follow the provided definitions. *)
-Identifier        = Letter { Letter | Digit | "_" }
+(*
+  Markdown Files
+  --------------
+  A Markdown file consists of a header (with a package declaration) followed by a body.
+*)
 
-(* A package name is a sequence of one or more identifiers separated by dots. *)
-PackageName       = Identifier { "." Identifier }
+MarkdownFile   = Header , Body ;
 
-(* A Markdown file consists of a header and a body. *)
-MarkdownHeader  = HeaderDelimiter NewLine HeaderBody HeaderDelimiter NewLine
+Header         = "---" , NewLine ,
+                 PackageDeclaration , NewLine ,
+                 "---" , NewLine ;
+PackageDeclaration = "reqmd.package:" , WS , PackageID ;
+PackageID      = Identifier ;
 
-(* The header delimiter is three dashes. *)
-HeaderDelimiter = "---"
+Body           = { MarkdownElement } ;
+MarkdownElement = RequirementSite | CoverageFootnote | PlainText ;
 
-(* The body is zero or more header lines. *)
-HeaderBody      = { HeaderLine NewLine }
+PlainText      = { AnyCharacter } ;
 
-(* A header line is either a field line (such as the reqmd.package field)
-   or any other line of text. *)
-HeaderLine      = FieldLine | OtherLine
+(*
+  Requirement Sites in Markdown
+  ------------------------------
+  A requirement site is written in the text as a backtick‐quoted requirement ID.
+  Optionally, an annotated requirement site is immediately followed by the keyword "cov" and a footnote reference.
+*)
 
-(* A header line is either a field line (such as the reqmd.package field)
-   or any other line of text. *)
-HeaderLine      = FieldLine | OtherLine
+RequirementSite = RequirementSiteLabel , [ WS , "cov" , WS , CoverageFootnoteReference ] ;
+RequirementSiteLabel = "`" , RequirementSiteID , "`" ;
+RequirementSiteID = "~" , RequirementName , "~" ;
+RequirementName = Identifier ;
 
-(* The reqmd.package field line uses a fixed key, a colon, optional whitespace,
-   and a package field value (the package name enclosed in "<" and ">"). *)
-FieldLine       = "reqmd.package:" PackageName
+CoverageFootnoteReference = "[^" , RequirementSiteID , "]" ;
 
+(*
+  Coverage Footnotes in Markdown
+  ------------------------------
+  A coverage footnote links a requirement (via its requirement site ID) to a hint and
+  a (comma‐separated) list of coverers.
+  
+  The hint is rendered inside a backtick-quoted "[ ... ]" and in our example is of the form:
+      ~<PackageID>~<CoverageType>
+  For example:  `~server.api.v2~impl`
+*)
+
+CoverageFootnote = "[^" , RequirementSiteID , "]" , ":" , WS ,
+                   "`[" , CoverageFootnoteHint , "]`" , [ WS , CovererList ] ;
+CoverageFootnoteHint = "~" , PackageID , "~" , CoverageType ;
+CovererList    = Coverer , { "," , WS , Coverer } ;
+Coverer        = "[" , CoverageLabel , "]" , "(" , CoverageURL , ")" ;
+CoverageLabel  = { AnyCharacter - "]" } ;
+
+(*
+  Coverage URL
+  ------------
+  A coverage URL is composed of a FileURL (from GitHub or GitLab), an optional query part,
+  and a coverage area indicated after a "#".
+*)
+
+CoverageURL    = FileURL , [ "?plain=1" ] , "#" , CoverageArea ;
+FileURL        = GitHubURL | GitLabURL ;
+GitHubURL      = "https://github.com/" , Owner , "/" , Repository ,
+                 "/blob/" , CommitHash , "/" , FilePath ;
+GitLabURL      = "https://gitlab.com/" , Owner , "/" , Repository ,
+                 "/-/blob/" , CommitHash , "/" , FilePath ;
+Owner          = Identifier ;
+Repository     = Identifier ;
+CommitHash     = HexDigit , { HexDigit } ;
+FilePath       = { AnyCharacter - ("?" | "#") } ;
+CoverageArea   = { AnyCharacter } ;
+
+(*
+  CoverageType
+  ------------
+  In both footnote hints and source file tags the coverage type is specified as a Name.
+*)
+CoverageType   = Name ;
 ```
 
-```ebnf
-(* A MarkdownBody is a sequence of text elements. *)
-MarkdownBody      = { TextElement }
-
-(* A TextElement is either a RequirementID, a CoveringFootnote on its own, or any other text. *)
-TextElement       = RequirementID | CoveringFootnote | OtherText
-
-(* A RequirementID is an inline requirement element that may optionally be annotated
-   with coverage information. *)
-RequirementID      = InlineReqID [ CoverageAnnotation ]
-
-(* The inline part of a RequirementID is written as a code element that begins with 
-   a tilde, contains a requirement name, and ends with a tilde. *)
-InlineReqID        = "`" "~" Identifier "~" "`"
-
-(* A covered RequirementID is marked by the literal "coverers" immediately following the inline code, followed by a CoveringFootnote. *)
-CoverageAnnotation = "coverers" FootnoteReference
-
-FootnoteReference = FootnoteLabel
-
-FootnoteLabel = "[^" CoverersID "]"
-
-CoverersID = "coverers" NUMBER
-
-(* A CoveringFootnote is a footnote marker followed by a CoverageTag and a FileCoverageList. *)
-CoveringFootnote  = FootnoteMarker "`" CoverageTag "`" ":" FileCoverageList
-
-FootnoteMarker    = FootnoteLabel ":"
-OtherText          ::= { AnyChar } 
-```
+## Source Files
 
 ```ebnf
 
+(*
+  Source Files
+  ------------
+  A source file is a text file that may contain one or more CoverageTags.
+  A CoverageTag is written as a bracketed expression which links a requirement (by its package and name)
+  to a coverage type.
+  
+  For example:
+      [~server.api.v2/Post.handler~test]
+  Here, PackageID is "server.api.v2", RequirementName is "Post.handler", and CoverageType is "test".
+*)
 
-(* A requirement identifier is a package name, a literal slash, and a requirement name. *)
-RequirementIdentifier = PackageName "/" RequirementName
-
-RequirementName   = Identifier
-```
-
-Coverage
-
-```ebnf
-
-
-CoverageTag       = "[~" RequirementIdentifier "~" CoverageType "]"
-
-CoverageType      = Identifier
-
-(* A list of file coverage entries is one or more FileCoverage items separated by commas. *)
-FileCoverageList  = FileCoverage { "," FileCoverage }
-
-(* Each file coverage entry consists of a file reference immediately followed by a coverage URL. *)
-FileCoverage      = CoverageLabel CoverageURL
-
-(* The file reference is enclosed in square brackets and has the form: 
-   file path, colon, line specification, colon, a coverage type. *)
-CoverageLabel     = "[" FilePath ":" Line ":" CoverageType "]"
-
-(* A file path is given as one or more path components (identifiers) separated by a slash. *)
-FilePath          = Identifier { "/" Identifier }
-
-(* A line specification begins with the literal "line" followed by one or more digits. *)
-Line              = "line" Digit { Digit }
-
-(* The coverage URL is provided in parentheses. (This production may be adapted
-   to a fuller URL grammar as needed.) *)
-CoverageURL       = "(" URL ")"
+SourceFile   = { SourceElement } ;
+SourceElement = CoverageTag | PlainText ;
+CoverageTag  = "[" , RequirementTag , "]" ;
+RequirementTag = "~" , PackageID , "/" , RequirementName , "~" , CoverageType ;
 ```
