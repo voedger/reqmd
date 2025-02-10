@@ -55,7 +55,7 @@ func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
 		}
 
 		// Parse requirements
-		requirements := parseRequirements(line, lineNum)
+		requirements := parseRequirements(line, lineNum, &errors)
 		structure.Requirements = append(structure.Requirements, requirements...)
 	}
 
@@ -69,7 +69,7 @@ func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
 	return structure, errors, nil
 }
 
-func parseRequirements(line string, lineNum int) []RequirementSite {
+func parseRequirements(line string, lineNum int, errors *[]SyntaxError) []RequirementSite {
 	var requirements []RequirementSite
 
 	// Find all requirement references

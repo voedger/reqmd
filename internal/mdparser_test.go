@@ -98,9 +98,11 @@ func TestMdParser_parseRequirements(t *testing.T) {
 		},
 	}
 
+	errors := []SyntaxError{}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			reqs := parseRequirements(tt.line, 1)
+			reqs := parseRequirements(tt.line, 1, &errors)
 
 			if len(reqs) != len(tt.expectReqIDs) {
 				t.Errorf("expected %d requirements, got %d (%s)", len(tt.expectReqIDs), len(reqs), tt.line)
