@@ -44,9 +44,9 @@ func TestMdParser_ParseMarkdownFile(t *testing.T) {
 
 			require.Len(t, footnote.Coverers, 2, "should have 2 coverage references")
 			assert.Equal(t, "folder1/filename1:line1:impl", footnote.Coverers[0].CoverageLabel)
-			assert.Equal(t, "https://example.com/pkg1/filename1", footnote.Coverers[0].CoverageURL)
+			assert.Equal(t, "https://example.com/pkg1/filename1#L11", footnote.Coverers[0].CoverageURL)
 			assert.Equal(t, "folder2/filename2:line2:test", footnote.Coverers[1].CoverageLabel)
-			assert.Equal(t, "https://example.com/pkg2/filename2", footnote.Coverers[1].CoverageURL)
+			assert.Equal(t, "https://example.com/pkg2/filename2#L22", footnote.Coverers[1].CoverageURL)
 		}
 	}
 }
