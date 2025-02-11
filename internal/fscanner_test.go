@@ -2,6 +2,7 @@ package internal
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -148,7 +149,7 @@ func TestFoldersScanner(t *testing.T) {
 			}
 
 			// Run scanner
-			errs := FoldersScanner(tt.nroutines, root, fp)
+			errs := FoldersScanner(tt.nroutines, 100, root, fp)
 
 			// Verify results
 			if tt.expectErrors && len(errs) == 0 {
@@ -202,5 +203,83 @@ func TestFoldersScanner(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// TestFoldersScanner_ALotOfErrors tests the FoldersScanner function with a large number of errors that more than the error channel capacity
+func TestFoldersScanner_ALotOfErrors(t *testing.T) {
+	// Create temporary root directory
+	root, err := os.MkdirTemp("", "folders-scanner-errors-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(root)
+
+	// Create test structure with many files
+	structure := testStructure{
+		name:  "root",
+		isDir: true,
+		children: []testStructure{
+			{
+				name:     "dir1",
+				isDir:    true,
+				children: make([]testStructure, 50), // 50 files in dir1
+			},
+			{
+				name:     "dir2",
+				isDir:    true,
+				children: make([]testStructure, 50), // 50 files in dir2
+			},
+		},
+	}
+
+	// Initialize files in dir1 and dir2
+	for i := range structure.children[0].children {
+		structure.children[0].children[i] = testStructure{
+			name:    fmt.Sprintf("file%d.txt", i),
+			content: fmt.Sprintf("content%d", i),
+		}
+	}
+	for i := range structure.children[1].children {
+		structure.children[1].children[i] = testStructure{
+			name:    fmt.Sprintf("file%d.txt", i),
+			content: fmt.Sprintf("content%d", i),
+		}
+	}
+
+	// Create test structure
+	if err := createTestStructure(t, root, structure); err != nil {
+		t.Fatalf("Failed to create test structure: %v", err)
+	}
+
+	var processedCount int32
+	var mu sync.Mutex
+
+	// Create folder processor that generates an error for every file
+	fp := func(folder string) (FileProcessor, error) {
+		return func(filePath string) error {
+			mu.Lock()
+			processedCount++
+			mu.Unlock()
+			return fmt.Errorf("error processing file: %s", filePath)
+		}, nil
+	}
+
+	// Run scanner with small error channel capacity
+	errs := FoldersScanner(4, 10, root, fp)
+
+	// Verify that we processed all files despite error channel being full
+	mu.Lock()
+	if processedCount != 100 { // 50 files in each directory
+		t.Errorf("Expected 100 processed files, got %d", processedCount)
+	}
+	mu.Unlock()
+
+	// Verify that we got some errors but not necessarily all of them
+	if len(errs) == 0 {
+		t.Error("Expected some errors but got none")
+	}
+	if len(errs) > 10 {
+		t.Errorf("Expected at most 10 errors (channel capacity), got %d", len(errs))
 	}
 }

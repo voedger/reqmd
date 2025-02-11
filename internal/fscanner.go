@@ -36,7 +36,7 @@ type FileProcessor func(filePath string) error
 //   - Collects all errors from both folder and file processing
 //   - Stops folder processing on folder processor error but continues with other folders
 //   - Continues processing even if some files fail, collecting all errors
-func FoldersScanner(nroutines int, root string, fp FolderProcessor) []error {
+func FoldersScanner(nroutines int, nerrors int, root string, fp FolderProcessor) []error {
 	if nroutines < 1 {
 		return []error{fmt.Errorf("number of routines must be positive")}
 	}
@@ -48,7 +48,7 @@ func FoldersScanner(nroutines int, root string, fp FolderProcessor) []error {
 	})
 
 	// Channel for collecting errors
-	errorsChan := make(chan error, 100)
+	errorsChan := make(chan error, nerrors)
 	var errors []error
 
 	// Start worker pool
@@ -59,7 +59,11 @@ func FoldersScanner(nroutines int, root string, fp FolderProcessor) []error {
 			defer wg.Done()
 			for task := range fileProcessors {
 				if err := task.processor(task.path); err != nil {
-					errorsChan <- err
+					select {
+					case errorsChan <- err:
+					default:
+						// Channel is full, log or handle accordingly
+					}
 				}
 			}
 		}()
@@ -74,14 +78,22 @@ func FoldersScanner(nroutines int, root string, fp FolderProcessor) []error {
 		// Get file processor for current folder
 		fileProcessor, err := fp(currentFolder)
 		if err != nil {
-			errorsChan <- err
+			select {
+			case errorsChan <- err:
+			default:
+				// Channel is full, log or handle accordingly
+			}
 			continue
 		}
 
 		// Read directory entries
 		entries, err := os.ReadDir(currentFolder)
 		if err != nil {
-			errorsChan <- err
+			select {
+			case errorsChan <- err:
+			default:
+				// Channel is full, log or handle accordingly
+			}
 			continue
 		}
 
