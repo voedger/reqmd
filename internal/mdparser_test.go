@@ -63,7 +63,7 @@ func TestMdParser_ParseMarkdownFile_Errors(t *testing.T) {
 	// 1. Invalid package name (non-identifier)
 	// 2. Invalid requirement name (non-identifier)
 	// 3. Mismatched requirement site IDs
-	require.Len(t, errors, 3, "expected exactly 3 syntax errors")
+	require.Len(t, errors, 4, "expected exactly 3 syntax errors")
 
 	// Sort errors by line number for consistent testing
 	sort.Slice(errors, func(i, j int) bool {
@@ -76,21 +76,15 @@ func TestMdParser_ParseMarkdownFile_Errors(t *testing.T) {
 
 	// Check requirement name error
 	assert.Equal(t, "reqident", errors[1].Code)
-	assert.Equal(t, 6, errors[1].Line)
+	assert.Equal(t, 8, errors[1].Line)
 
 	// Check requirement site ID mismatch error
 	assert.Equal(t, "reqsiteid", errors[2].Code)
-	assert.Equal(t, 8, errors[2].Line)
-}
+	assert.Equal(t, 10, errors[2].Line)
 
-func TestMdParser_ParseMarkdownFile_Err(t *testing.T) {
-	testDataDir := filepath.Join("testdata", "mdparser-errs.md")
-
-	_, errors, err := ParseMarkdownFile(testDataDir)
-	require.NoError(t, err)
-	require.Len(t, errors, 1, "should have 1 error")
-	assert.Equal(t, "reqsiteid", errors[0].Code)
-	assert.Equal(t, 8, errors[0].Line)
+	// Check coverage status error
+	assert.Equal(t, "covstatus", errors[3].Code)
+	assert.Equal(t, 12, errors[3].Line)
 }
 
 // Helper function to find requirement by name
@@ -143,18 +137,6 @@ func TestParseRequirements_table(t *testing.T) {
 				RequirementName:     "Post.handler",
 				ReferenceName:       "Post.handler",
 				CoverageStatusWord:  "covered",
-				CoverageStatusEmoji: "",
-				Line:                1,
-				IsAnnotated:         true,
-			}},
-		},
-		{
-			name:  "Annotated requirement site with invalid coverage status",
-			input: "`~Post.handler~`covrd[^~Post.handler~]",
-			expected: []RequirementSite{{
-				RequirementName:     "Post.handler",
-				ReferenceName:       "Post.handler",
-				CoverageStatusWord:  "covrd",
 				CoverageStatusEmoji: "",
 				Line:                1,
 				IsAnnotated:         true,

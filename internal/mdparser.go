@@ -18,6 +18,7 @@ var (
 			"\\s*\\[\\^~([^~]+)~\\]" + // CoverageFootnoteReference
 			"\\s*(✅|❓)?" + // Optional CoverageStatusEmoji
 			")?")
+	identifierRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*(?:\.[a-zA-Z][a-zA-Z0-9_]*)*$`)
 )
 
 func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
@@ -55,7 +56,11 @@ func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
 
 		if inHeader {
 			if matches := headerRegex.FindStringSubmatch(line); len(matches) > 1 {
-				structure.PackageID = strings.TrimSpace(matches[1])
+				pkgID := strings.TrimSpace(matches[1])
+				if !identifierRegex.MatchString(pkgID) {
+					errors = append(errors, NewErrPkgIdent(filePath, lineNum))
+				}
+				structure.PackageID = pkgID
 			}
 			continue
 		}
@@ -86,10 +91,15 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Synt
 
 	matches := RequirementSiteRegex.FindAllStringSubmatch(line, -1)
 	for _, match := range matches {
-		// match[1] = RequirementName from RequirementSiteLabel
-		// match[2] = CoverageStatusWord (optional)
-		// match[3] = ReferenceName from CoverageFootnoteReference
-		// match[4] = CoverageStatusEmoji (optional)
+		reqName := match[1]
+		if !identifierRegex.MatchString(reqName) {
+			*errors = append(*errors, NewErrReqIdent(filePath, lineNum))
+		}
+
+		covStatus := match[2]
+		if covStatus != "" && covStatus != "covered" && covStatus != "uncvrd" {
+			*errors = append(*errors, NewErrCoverageStatusWord(filePath, lineNum, covStatus))
+		}
 
 		req := RequirementSite{
 			FilePath:            filePath,

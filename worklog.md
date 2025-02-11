@@ -50,6 +50,7 @@ This file contains a brief log of the project design and construction.
   - Align RequirementSiteRegex() and ParseRequirements() with ebnf notation. 👍 with minor flaws
   - Implement TestParseRequirements() using examples from TestRequirementSiteRegex().👍
   - Generate TestMdParser_ParseMarkdownFile_Errors() that parses #file:mdparser-errs.md and check all errors om this file.👍
+  - mdparser.go shall identify pkgident, reqident and covstatus errors.👍🏆
 
 ### Prompt_CoverageFootnoteRegex
 
