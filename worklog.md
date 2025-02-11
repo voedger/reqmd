@@ -51,6 +51,11 @@ This file contains a brief log of the project design and construction.
   - Implement TestParseRequirements() using examples from TestRequirementSiteRegex().👍
   - Generate TestMdParser_ParseMarkdownFile_Errors() that parses #file:mdparser-errs.md and check all errors om this file.👍
   - mdparser.go shall identify pkgident, reqident and covstatus errors.👍🏆
+- Implement FoldersScanner
+  - GitHub Copilot: Claude: ❌ Much better prompt needed
+  - ChatGPT o1: : ❌ Much better prompt needed
+  - ChatGPT o3-mini-high: : ❌ Much better prompt needed
+  - Claude 3.5: 👍🏆
 
 ### Prompt_CoverageFootnoteRegex
 

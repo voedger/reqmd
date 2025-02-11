@@ -120,7 +120,7 @@ Explanation of each file:
     - **Responsibilities**:  
       - Encapsulate how file hashing is performed so it’s easy to maintain or replace.  
 
-11. **utils.go**  
+11. **utils.go**
     - **Purpose**: Collect small helper functions that do not belong in the main business logic (string manipulations, logging helpers, sorting, etc.).  
     - **Responsibilities**:  
       - Common or cross-cutting concerns without creating cyclical dependencies.  
