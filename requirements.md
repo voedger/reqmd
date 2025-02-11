@@ -38,7 +38,7 @@ The header specifies a PackageID (which is an Identifier), for example:
 
 ```markdown
 ---
-reqmd.package: server.api.v2
+reqmd.package: system.reqs
 ---
 ```
 
@@ -47,10 +47,12 @@ Markdown body is a sequence of different text elements. The tool processes:
 - RequirementSite, can be:
   - BareRequirementSite
   - AnnotatedRequirementSite
+    - CoveredAnnotatedRequirementSite
+    - UncoveredAnnotatedRequirementSite
 - CoverageFootnote
 
 ```ebnf
-RequirementSite = RequirementSiteID ["cov" CoverageFootnoteReference]
+RequirementSite = RequirementSiteID [( "covered" | "uncvrd" ) CoverageFootnoteReference] ("✅" | "❓")
 
 RequirementSiteLabel = "`" RequirementSiteID  "`"
 
@@ -69,13 +71,19 @@ RequirementID shall be unique within all MarkdownFiles.
 Example of a BareRequirementSite:
 
 ```markdown
-- APIv2 implementation shall provide a handler for POST requests. `~Post.handler~`.
+- The system shall handle incoming POST requests and return an HTTP 200 response upon successful processing. `~Post.handler~`.
 ```
 
-Example of an AnnotatedRequirementSite:
+Example of an CoveredAnnotatedRequirementSite:
 
 ```markdown
-- APIv2 implementation shall provide a handler for POST requests. `~Post.handler~`cov[^~Post.handler~].
+- The system shall handle incoming POST requests and return an HTTP 200 response upon successful processing. `~Post.handler~`covered[^~Post.handler~]✅.
+```
+
+Example of an UncoveredAnnotatedRequirementSite:
+
+```markdown
+- The system shall handle incoming POST requests and return an HTTP 200 response upon successful processing. `~Post.handler~`uncvrd[^~Post.handler~]❓.
 ```
 
 CoverageFootnote contains a CoverageFootnoteHint and an optional list of Coverers. A Coverer contains "[" CoverageLabel "]" followed by "(" CoverageURL ")". An example:
@@ -260,6 +268,6 @@ Phases:
 ## Decisions
 
 - RequirementSiteStatus
-  - `covred` denotes the covered status.
+  - `covered` denotes the covered status.
   - `uncvrd` denotes the uncovered status.
-  - Motivation: use short words with a high level of uniqueness for non-covered status.
+  - Motivation: use short words with a high level of uniqueness for uncovered status.
