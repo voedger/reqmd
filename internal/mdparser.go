@@ -14,7 +14,7 @@ var (
 	RequirementSiteRegex = regexp.MustCompile(
 		"`~([^~]+)~`" + // RequirementSiteLabel = "`" "~" RequirementName "~" "`"
 			"(?:" + // Optional group for coverage status and footnote
-			"\\s*(covered|uncvrd)?" + // Optional CoverageStatusWord
+			"\\s*([a-zA-Z]+)" + // Optional CoverageStatusWord
 			"\\s*\\[\\^~([^~]+)~\\]" + // CoverageFootnoteReference
 			"\\s*(✅|❓)?" + // Optional CoverageStatusEmoji
 			")?")

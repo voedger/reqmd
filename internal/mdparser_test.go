@@ -72,7 +72,13 @@ func findRequirement(reqs []RequirementSite, name string) *RequirementSite {
 	return nil
 }
 
-func TestParseRequirements(t *testing.T) {
+func TestParseRequirements_invalid_coverage_status(t *testing.T) {
+	var errors []SyntaxError
+	res := ParseRequirements("test.md", "`~Post.handler~`covrd[^~Post.handler~]", 1, &errors)
+	require.Len(t, res, 1)
+}
+
+func TestParseRequirements_table(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
@@ -100,12 +106,24 @@ func TestParseRequirements(t *testing.T) {
 			}},
 		},
 		{
-			name:  "Annotated requirement site with coverage status not no emoji",
+			name:  "Annotated requirement site with coverage status, no emoji",
 			input: "`~Post.handler~`covered[^~Post.handler~]",
 			expected: []RequirementSite{{
 				RequirementName:     "Post.handler",
 				ReferenceName:       "Post.handler",
 				CoverageStatusWord:  "covered",
+				CoverageStatusEmoji: "",
+				Line:                1,
+				IsAnnotated:         true,
+			}},
+		},
+		{
+			name:  "Annotated requirement site with invalid coverage status",
+			input: "`~Post.handler~`covrd[^~Post.handler~]",
+			expected: []RequirementSite{{
+				RequirementName:     "Post.handler",
+				ReferenceName:       "Post.handler",
+				CoverageStatusWord:  "covrd",
 				CoverageStatusEmoji: "",
 				Line:                1,
 				IsAnnotated:         true,
