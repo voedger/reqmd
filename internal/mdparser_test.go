@@ -2,6 +2,7 @@ package internal
 
 import (
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -214,3 +215,17 @@ func TestMdParser_ParseCoverageFootnote(t *testing.T) {
 	require.NotNil(t, note)
 }
 
+// Test that golang can recognize patterns like "`~Post.handler~`covered[^~Post.handler~]✅"
+func TestRegexpEmojis(t *testing.T) {
+	text1 := "Some text1 `~Post.handler~`covered[^~Post.handler~]✅ Some text2"
+	text2 := "Some text1 `~Post.handler~`covered[^~Post.handler~] Some text2"
+
+	pattern := regexp.MustCompile("`.*✅")
+
+	if !pattern.MatchString(text1) {
+		t.Errorf("Pattern did not match, but was expected to match.\nText: %s", text1)
+	}
+	if pattern.MatchString(text2) {
+		t.Errorf("Pattern matches, but was not expected to match.\nText: %s", text2)
+	}
+}
