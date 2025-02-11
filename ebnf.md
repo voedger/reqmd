@@ -3,10 +3,10 @@
 ## Lexical Elements
 
 ```ebnf
-(*
-  Lexical Elements
-  ----------------
-  Note: The productions for Letter and Digit are given in an abbreviated form.
+(* 
+  Lexical Elements 
+  ---------------- 
+  Note: The productions for Letter and Digit are given in an abbreviated form. 
 *)
 
 Letter         = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" |
@@ -32,10 +32,10 @@ AnyCharacter   = ? any character ? ;
 ## Markdown Files
 
 ```ebnf
-(*
-  Markdown Files
-  --------------
-  A Markdown file consists of a header (with a package declaration) followed by a body.
+(* 
+  Markdown Files 
+  -------------- 
+  A Markdown file consists of a header (with a package declaration) followed by a body. 
 *)
 
 MarkdownFile   = Header Body ;
@@ -51,78 +51,69 @@ MarkdownElement = RequirementSite | CoverageFootnote | PlainText ;
 
 PlainText      = { AnyCharacter } ;
 
-(*
-  Requirement Sites in Markdown
-  ------------------------------
-  A requirement site is written in the text as a backtick‐quoted requirement ID.
-  Optionally, an annotated requirement site is immediately followed by the keyword "cov" and a footnote reference.
+(* 
+  Requirement Sites in Markdown 
+  ------------------------------ 
+  A requirement site is written in the text as a backtick‐quoted requirement ID. 
+  An annotated requirement site includes coverage status and a footnote reference. 
 *)
 
-RequirementSite = RequirementSiteLabel [ "cov" CoverageFootnoteReference ] ;
+RequirementSite = RequirementSiteLabel [ CoverageStatus CoverageFootnoteReference ] [ CoverageStatusEmoji ] ;
+CoverageStatusWord = "covered" | "uncvrd" ;
+CoverageStatusEmoji = "✅" | "❓" ;
 RequirementSiteLabel = "`" RequirementSiteID "`" ;
 RequirementSiteID = "~" RequirementName "~" ;
 RequirementName = Identifier ;
+RequirementID = PackageID "/" RequirementName ;
 
 CoverageFootnoteReference = "[^" RequirementSiteID "]" ;
 
-(*
-  Coverage Footnotes in Markdown
-  ------------------------------
-  A coverage footnote links a requirement (via its requirement site ID) to a hint and
-  a (comma‐separated) list of coverers.
-  
-  The hint is rendered inside a backtick-quoted "[ ... ]" and in our example is of the form:
-      ~<PackageID>~<CoverageType>
-  For example:  `~server.api.v2~impl`
+(* 
+  Coverage Footnotes in Markdown 
+  ------------------------------ 
+  A coverage footnote links a requirement (via its requirement site ID) to a hint and 
+  optional comma-separated coverers. 
 *)
 
-CoverageFootnote = "[^" RequirementSiteID "]:" "`[" CoverageFootnoteHint "]`" [ CovererList ] ;
-CoverageFootnoteHint = "~" PackageID "~" CoverageType ;
-CovererList    = Coverer { Coverer } ;
+CoverageFootnote = "[^" RequirementSiteID "]:" WS "`[" CoverageFootnoteHint "]`" [ CovererList ] ;
+CoverageFootnoteHint = RequirementTag ;
+CovererList    = WS Coverer { "," WS Coverer } ;
 Coverer        = "[" CoverageLabel "]" "(" CoverageURL ")" ;
-CoverageLabel  = { AnyCharacter - "]" } ;
+CoverageLabel  = FilePath ":" "line" Digit { Digit } ":" CoverageType ;
 
-(*
-  Coverage URL
-  ------------
-  A coverage URL is composed of a FileURL (from GitHub or GitLab), an optional query part,
-  and a coverage area indicated after a "#".
+(* 
+  Coverage URL 
+  ------------ 
+  A coverage URL points to a specific location in a source code repository. 
 *)
 
 CoverageURL    = FileURL [ "?plain=1" ] "#" CoverageArea ;
 FileURL        = GitHubURL | GitLabURL ;
-GitHubURL      = "https://github.com/" Owner "/" Repository
-                 "/blob/" CommitHash "/" FilePath ;
-GitLabURL      = "https://gitlab.com/" Owner "/" Repository
-                 "/-/blob/" CommitHash "/" FilePath ;
+GitHubURL      = GitHubBaseURL "/blob/" CommitHash "/" FilePath ;
+GitHubBaseURL  = "https://github.com/" Owner "/" Repository ;
+GitLabURL      = GitLabBaseURL "/-/blob/" CommitHash "/" FilePath ;
+GitLabBaseURL  = "https://gitlab.com/" Owner "/" Repository ;
 Owner          = Identifier ;
 Repository     = Identifier ;
 CommitHash     = HexDigit { HexDigit } ;
 FilePath       = { AnyCharacter - ("?" | "#") } ;
-CoverageArea   = { AnyCharacter } ;
-
-(*
-  CoverageType
-  ------------
-  In both footnote hints and source file tags the coverage type is specified as a Name.
-*)
-CoverageType   = Name ;
+CoverageArea   = "L" Digit { Digit } ;
 ```
 
 ## Source Files
 
 ```ebnf
 
-(*
-  Source Files
-  ------------
-  A source file is a text file that may contain one or more CoverageTags.
-  A CoverageTag is written as a bracketed expression which links a requirement (by its package and name)
-  to a coverage type.
+(* 
+  Source Files 
+  ------------ 
+  A source file is a text file that may contain one or more CoverageTags. 
+  A CoverageTag is written as a bracketed expression which links a requirement (by its package and name) 
+  to a coverage type. 
   
-  For example:
-      [~server.api.v2/Post.handler~test]
-  Here, PackageID is "server.api.v2", RequirementName is "Post.handler", and CoverageType is "test".
+  For example: 
+      [~server.api.v2/Post.handler~test] 
+  Here, PackageID is "server.api.v2", RequirementName is "Post.handler", and CoverageType is "test". 
 *)
 
 SourceFile   = { SourceElement } ;
