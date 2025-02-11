@@ -256,3 +256,10 @@ Phases:
   - Interface implementation names shall be deduced from the interface name by removing the I prefix
   - All interfaces shall be defined in a separate file interfaces.go
   - All data structures used across the application shall be defined in the models.go file.
+
+## Decisions
+
+- RequirementSiteStatus
+  - `covered` denotes the covered status.
+  - `noncvrd` denotes the non-covered status.
+  - Motivation: use short words with a high level of uniqueness for non-covered status.
