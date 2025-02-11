@@ -3,6 +3,7 @@ package internal
 import (
 	"path/filepath"
 	"regexp"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -52,7 +53,37 @@ func TestMdParser_ParseMarkdownFile(t *testing.T) {
 	}
 }
 
-func TestMdParser_ParseMarkdownFileErr_reqsiteid(t *testing.T) {
+func TestMdParser_ParseMarkdownFile_Errors(t *testing.T) {
+	testDataDir := filepath.Join("testdata", "mdparser-errs.md")
+
+	_, errors, err := ParseMarkdownFile(testDataDir)
+	require.NoError(t, err)
+
+	// We expect 3 errors in the test file:
+	// 1. Invalid package name (non-identifier)
+	// 2. Invalid requirement name (non-identifier)
+	// 3. Mismatched requirement site IDs
+	require.Len(t, errors, 3, "expected exactly 3 syntax errors")
+
+	// Sort errors by line number for consistent testing
+	sort.Slice(errors, func(i, j int) bool {
+		return errors[i].Line < errors[j].Line
+	})
+
+	// Check package ID error
+	assert.Equal(t, "pkgident", errors[0].Code)
+	assert.Equal(t, 2, errors[0].Line)
+
+	// Check requirement name error
+	assert.Equal(t, "reqident", errors[1].Code)
+	assert.Equal(t, 6, errors[1].Line)
+
+	// Check requirement site ID mismatch error
+	assert.Equal(t, "reqsiteid", errors[2].Code)
+	assert.Equal(t, 8, errors[2].Line)
+}
+
+func TestMdParser_ParseMarkdownFile_Err(t *testing.T) {
 	testDataDir := filepath.Join("testdata", "mdparser-errs.md")
 
 	_, errors, err := ParseMarkdownFile(testDataDir)

@@ -232,6 +232,7 @@ Concepts:
   - PackageName shall be an identifier
   - RequirementName shall be an identifier
   - RequirementSiteID shall be equals in the RequirementSite and CoverageFootnote
+  - CoverageStatusWord shall be "covered" or "uncvrd"
 - SemanticError:
   - RequirementID shall be unique within all MarkdownFiles
   - PackageID shall be defined if there are RequirementSites

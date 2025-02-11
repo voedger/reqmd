@@ -25,5 +25,14 @@ func NewErrRequirementSiteIDEqual(filePath string, line int, RequirementSiteID1,
 		Line:     line,
 		Message:  "RequirementSiteID from RequirementSiteLabel and CoverageFootnoteReference shall be equal: " + RequirementSiteID1 + " != " + RequirementSiteID2,
 	}
+}
 
+// CoverageStatusWord shall be "covered" or "uncvrd"
+func NewErrCoverageStatusWord(filePath string, line int, CoverageStatusWord string) SyntaxError {
+	return SyntaxError{
+		Code:     "covstatus",
+		FilePath: filePath,
+		Line:     line,
+		Message:  "CoverageStatusWord shall be 'covered' or 'uncvrd':" + CoverageStatusWord,
+	}
 }
