@@ -229,7 +229,7 @@ Concepts:
   - Line: line number where the action is performed
   - Data: New data
 - SyntaxError:
-  - PackageName shall be an identifier
+  - See [internal/errors.go](internal/errors.go)
   - RequirementName shall be an identifier
   - RequirementSiteID shall be equals in the RequirementSite and CoverageFootnote
   - CoverageStatusWord shall be "covered" or "uncvrd"

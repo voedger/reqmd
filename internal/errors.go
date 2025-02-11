@@ -1,5 +1,7 @@
 package internal
 
+// ********** Syntax errors
+
 func NewErrPkgIdent(filePath string, line int) SyntaxError {
 	return SyntaxError{
 		Code:     "pkgident",
@@ -36,3 +38,5 @@ func NewErrCoverageStatusWord(filePath string, line int, CoverageStatusWord stri
 		Message:  "CoverageStatusWord shall be 'covered' or 'uncvrd':" + CoverageStatusWord,
 	}
 }
+
+// ********** Semantic errors
