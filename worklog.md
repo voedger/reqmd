@@ -55,7 +55,7 @@ This file contains a brief log of the project design and construction.
   - GitHub Copilot: Claude: ❌ Much better prompt needed
   - ChatGPT o1: : ❌ Much better prompt needed
   - ChatGPT o3-mini-high: : ❌ Much better prompt needed
-  - Claude 3.5: + tests 👍🏆
+  - Claude 3.5: Process folders breadth-first, tests 👍🏆
 
 ### Prompt_CoverageFootnoteRegex
 
