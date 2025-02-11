@@ -260,6 +260,6 @@ Phases:
 ## Decisions
 
 - RequirementSiteStatus
-  - `covered` denotes the covered status.
-  - `noncvrd` denotes the non-covered status.
+  - `covred` denotes the covered status.
+  - `uncvrd` denotes the uncovered status.
   - Motivation: use short words with a high level of uniqueness for non-covered status.
