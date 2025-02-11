@@ -11,7 +11,13 @@ import (
 // Regular expressions for parsing markdown elements
 var (
 	headerRegex          = regexp.MustCompile(`^reqmd\.package:\s*(.+)$`)
-	RequirementSiteRegex = regexp.MustCompile("`~([^~]+)~`(?:cov\\[\\^~([^~]+)~\\])?")
+	RequirementSiteRegex = regexp.MustCompile(
+		"`~([^~]+)~`" + // RequirementSiteLabel = "`" "~" RequirementName "~" "`"
+			"(?:" + // Optional group for coverage status and footnote
+			"\\s*(covered|uncvrd)?" + // Optional CoverageStatusWord
+			"\\s*\\[\\^~([^~]+)~\\]" + // CoverageFootnoteReference
+			"\\s*(✅|❓)?" + // Optional CoverageStatusEmoji
+			")?")
 )
 
 func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
@@ -78,22 +84,27 @@ func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
 func ParseRequirements(filePath string, line string, lineNum int, errors *[]SyntaxError) []RequirementSite {
 	var requirements []RequirementSite
 
-	// Find all requirement references
 	matches := RequirementSiteRegex.FindAllStringSubmatch(line, -1)
 	for _, match := range matches {
-		if len(match) > 1 {
-			req := RequirementSite{
-				FilePath:        filePath,
-				RequirementName: match[1],
-				ReferenceName:   match[2],
-				Line:            lineNum,
-				IsAnnotated:     len(match[2]) > 0,
-			}
-			if req.IsAnnotated && (req.RequirementName != req.ReferenceName) {
-				*errors = append(*errors, NewErrRequirementSiteIDEqual(filePath, req.Line, req.RequirementName, req.ReferenceName))
-			}
-			requirements = append(requirements, req)
+		// match[1] = RequirementName from RequirementSiteLabel
+		// match[2] = CoverageStatusWord (optional)
+		// match[3] = ReferenceName from CoverageFootnoteReference
+		// match[4] = CoverageStatusEmoji (optional)
+
+		req := RequirementSite{
+			FilePath:            filePath,
+			RequirementName:     match[1],
+			CoverageStatusWord:  match[2],
+			ReferenceName:       match[3],
+			CoverageStatusEmoji: match[4],
+			Line:                lineNum,
+			IsAnnotated:         match[3] != "",
 		}
+
+		if req.IsAnnotated && (req.RequirementName != req.ReferenceName) {
+			*errors = append(*errors, NewErrRequirementSiteIDEqual(filePath, req.Line, req.RequirementName, req.ReferenceName))
+		}
+		requirements = append(requirements, req)
 	}
 
 	return requirements

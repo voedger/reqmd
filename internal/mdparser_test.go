@@ -72,71 +72,93 @@ func findRequirement(reqs []RequirementSite, name string) *RequirementSite {
 	return nil
 }
 
-func TestMdParser_parseRequirements(t *testing.T) {
-
+func TestParseRequirements(t *testing.T) {
 	tests := []struct {
-		name            string
-		line            string
-		expectReqIDs    []string
-		expectAnnotated []bool
+		name     string
+		input    string
+		expected []RequirementSite
 	}{
 		{
-			name:            "simple requirement",
-			line:            "This contains `~REQ001~`",
-			expectReqIDs:    []string{"REQ001"},
-			expectAnnotated: []bool{false},
+			name:  "Bare requirement site",
+			input: "`~Post.handler~`",
+			expected: []RequirementSite{{
+				RequirementName: "Post.handler",
+				Line:            1,
+				IsAnnotated:     false,
+			}},
 		},
 		{
-			name:            "multiple requirements",
-			line:            "Contains `~REQ001~` and `~REQ002~`",
-			expectReqIDs:    []string{"REQ001", "REQ002"},
-			expectAnnotated: []bool{false, false},
+			name:  "Annotated requirement site with coverage status",
+			input: "`~Post.handler~`covered[^~Post.handler~]✅",
+			expected: []RequirementSite{{
+				RequirementName:     "Post.handler",
+				ReferenceName:       "Post.handler",
+				CoverageStatusWord:  "covered",
+				CoverageStatusEmoji: "✅",
+				Line:                1,
+				IsAnnotated:         true,
+			}},
 		},
 		{
-			name:            "annotated requirement",
-			line:            "`~REQ001~`cov[^~REQ001~]",
-			expectReqIDs:    []string{"REQ001"},
-			expectAnnotated: []bool{true},
+			name:  "Annotated requirement site with coverage status not no emoji",
+			input: "`~Post.handler~`covered[^~Post.handler~]",
+			expected: []RequirementSite{{
+				RequirementName:     "Post.handler",
+				ReferenceName:       "Post.handler",
+				CoverageStatusWord:  "covered",
+				CoverageStatusEmoji: "",
+				Line:                1,
+				IsAnnotated:         true,
+			}},
 		},
 		{
-			name:            "mixed requirements",
-			line:            "`~REQ001~` normal and `~REQ002~`cov[^~REQ002~] annotated",
-			expectReqIDs:    []string{"REQ001", "REQ002"},
-			expectAnnotated: []bool{false, true},
+			name:  "Uncovered requirement site with status",
+			input: "`~Post.handler~`uncvrd[^~Post.handler~]❓",
+			expected: []RequirementSite{{
+				RequirementName:     "Post.handler",
+				ReferenceName:       "Post.handler",
+				CoverageStatusWord:  "uncvrd",
+				CoverageStatusEmoji: "❓",
+				Line:                1,
+				IsAnnotated:         true,
+			}},
+		},
+		{
+			name:  "Multiple requirements in one line",
+			input: "`~REQ001~` and `~REQ002~`covered[^~REQ002~]✅",
+			expected: []RequirementSite{
+				{
+					RequirementName: "REQ001",
+					Line:            1,
+					IsAnnotated:     false,
+				},
+				{
+					RequirementName:     "REQ002",
+					ReferenceName:       "REQ002",
+					CoverageStatusWord:  "covered",
+					CoverageStatusEmoji: "✅",
+					Line:                1,
+					IsAnnotated:         true,
+				},
+			},
 		},
 	}
-
-	errors := []SyntaxError{}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			reqs := ParseRequirements("", tt.line, 1, &errors)
+			var errors []SyntaxError
+			got := ParseRequirements("test.md", tt.input, 1, &errors)
 
-			if len(reqs) != len(tt.expectReqIDs) {
-				t.Errorf("expected %d requirements, got %d (%s)", len(tt.expectReqIDs), len(reqs), tt.line)
-				return
+			require.Equal(t, len(tt.expected), len(got), "number of requirements mismatch")
+			for i, exp := range tt.expected {
+				// Set common fields that we don't need to specify in every test case
+				exp.FilePath = "test.md"
+				assert.Equal(t, exp, got[i], "requirement %d mismatch", i)
 			}
-
-			for i, req := range reqs {
-				if req.RequirementName != tt.expectReqIDs[i] {
-					t.Errorf("expected requirement ID %s, got %s (%s)", tt.expectReqIDs[i], req.RequirementName, tt.line)
-				}
-				if req.IsAnnotated != tt.expectAnnotated[i] {
-					t.Errorf("expected IsAnnotated=%v for %s, got %v (%s)", tt.expectAnnotated[i], req.RequirementName, req.IsAnnotated, tt.line)
-				}
-			}
+			assert.Empty(t, errors, "unexpected errors")
 		})
 	}
 }
-
-// requirementSiteRegex matches:
-// - A backtick (`)
-// - A RequirementSiteID: a tilde (~), an Identifier, then a tilde (~)
-// - A backtick (`)
-// - Optionally, the literal "cov" followed by a CoverageFootnoteReference:
-//   - "[^"
-//   - the same RequirementSiteID pattern
-//   - "]"
 
 func TestRequirementSiteRegex(t *testing.T) {
 	tests := []struct {
@@ -155,14 +177,14 @@ func TestRequirementSiteRegex(t *testing.T) {
 		},
 		{
 			name:        "Annotated requirement site",
-			input:       "`~Post.handler~`cov[^~Post.handler~]",
+			input:       "`~Post.handler~`covered[^~Post.handler~]✅",
 			expectMatch: true,
 			group1:      "Post.handler",
 			group2:      "Post.handler",
 		},
 		{
 			name:        "Annotated with different requirement id",
-			input:       "`~Post.handler~`cov[^~Other.handler~]",
+			input:       "`~Post.handler~`uncvrd[^~Other.handler~]❓",
 			expectMatch: true,
 			group1:      "Post.handler",
 			group2:      "Other.handler",
@@ -182,7 +204,8 @@ func TestRequirementSiteRegex(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			matches := RequirementSiteRegex.FindStringSubmatch(tc.input)
+			s := tc.input
+			matches := RequirementSiteRegex.FindStringSubmatch(s)
 			if tc.expectMatch {
 				if matches == nil {
 					t.Fatalf("Expected match for input %q but got none", tc.input)

@@ -52,11 +52,13 @@ type FileStructure struct {
 
 // RequirementSite represents a single requirement reference discovered in a Markdown file.
 type RequirementSite struct {
-	FilePath        string
-	Line            int    // line number where the requirement is defined/referenced
-	RequirementName string // e.g., "Post.handler"
-	ReferenceName   string // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
-	IsAnnotated     bool   // true if it already has coverage annotation, false if it’s bare
+	FilePath            string
+	Line                int    // line number where the requirement is defined/referenced
+	RequirementName     string // e.g., "Post.handler"
+	ReferenceName       string // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
+	CoverageStatusWord  string // "covered", "uncvrd", or empty
+	CoverageStatusEmoji string // "✅", "❓", or empty
+	IsAnnotated         bool   // true if it already has coverage annotation, false if it’s bare
 }
 
 // CoverageTag represents a coverage marker found in source code.
@@ -68,11 +70,11 @@ type CoverageTag struct {
 
 // CoverageFootnote represents the footnote in Markdown that references coverage tags.
 type CoverageFootnote struct {
-	FilePath          string
-	Line              int
-	PackageID         string
-	RequirementID     string
-	Coverers          []Coverer
+	FilePath      string
+	Line          int
+	PackageID     string
+	RequirementID string
+	Coverers      []Coverer
 }
 
 // Coverer represents one coverage reference within a footnote, e.g., [folder/file:line:impl](URL)

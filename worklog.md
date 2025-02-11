@@ -46,6 +46,9 @@ This file contains a brief log of the project design and construction.
 **Next**. Some tests work, so continue
 
 - If regexpt can match emojis: yes, TestRegexpEmojis
+- GitHub Copilot: Claude
+  - Align RequirementSiteRegex() and ParseRequirements() with ebnf notation. 👍 with minor flaws
+  - Implement TestParseRequirements() using examples from TestRequirementSiteRegex().👍
 
 ### Prompt_CoverageFootnoteRegex
 
