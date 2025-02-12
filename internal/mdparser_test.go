@@ -218,6 +218,18 @@ func Test_ParseCoverageFootnote(t *testing.T) {
 	assert.Equal(t, "hash2", note.Coverers[1].FileHash)
 }
 
+func Test_ParseCoverageFootnote_errors(t *testing.T) {
+	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder2/filename2:line2:test](://example.com/path)"
+
+	var errors []SyntaxError
+	note := ParseCoverageFootnote(newMdCtx(), "", line, 1, &errors)
+	require.NotNil(t, note)
+
+	require.Len(t, errors, 1, "should have 1 error")
+	assert.Equal(t, "urlsyntax", errors[0].Code)
+	assert.Contains(t, errors[0].Message, "://example.com/path")
+}
+
 // Test that golang can recognize patterns like "`~Post.handler~`covered[^~Post.handler~]✅"
 func TestRegexpEmojis(t *testing.T) {
 	text1 := "Some text1 `~Post.handler~`covered[^~Post.handler~]✅ Some text2"
