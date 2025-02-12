@@ -81,6 +81,7 @@ type CoverageFootnote struct {
 type Coverer struct {
 	CoverageLabel string // e.g., "folder/file.go:42:impl"
 	CoverageURL   string // e.g., full URL including commit hash
+	FileHash      string // git hash of the file specified in CoverageURL
 }
 
 // ReqmdfilesMap corresponds to the structure in reqmdfiles.json, mapping file URLs to their current hash.

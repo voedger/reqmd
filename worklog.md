@@ -2,7 +2,7 @@
 
 This file contains a brief log of the project design and construction.
 
-## LLMs
+## First attempts
 
 **Attempt 1**. ChatGPT o3-mini-high. [private chat](https://chatgpt.com/c/67a7f223-fcc0-800d-a486-427a3f47c3ed)
 
@@ -57,7 +57,12 @@ This file contains a brief log of the project design and construction.
   - ChatGPT o3-mini-high: : ❌ Much better prompt needed
   - Claude 3.5: Process folders breadth-first, tests 👍🏆
     - Generate TestFoldersScanner_ALotOfErrors👍🏆
-- scanner
+
+## scanner.go
+
+- Context for ParseMarkdownFile to provide `ReqmdfilesMap`
+
+## Intermediate results
 
 ### Prompt_CoverageFootnoteRegex
 

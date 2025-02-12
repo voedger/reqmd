@@ -21,7 +21,11 @@ var (
 	identifierRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*(?:\.[a-zA-Z][a-zA-Z0-9_]*)*$`)
 )
 
-func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
+type MarkdownContext struct {
+	rfiles ReqmdfilesMap
+}
+
+func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, []SyntaxError, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("ParseMarkdownFile: failed to open file: %w", err)
@@ -70,7 +74,7 @@ func ParseMarkdownFile(filePath string) (*FileStructure, []SyntaxError, error) {
 		structure.Requirements = append(structure.Requirements, requirements...)
 
 		// Parse coverage footnotes
-		footnote := ParseCoverageFootnote(filePath, line, lineNum, &errors)
+		footnote := ParseCoverageFootnote(mctx, filePath, line, lineNum, &errors)
 		if footnote != nil {
 			structure.CoverageFootnotes = append(structure.CoverageFootnotes, *footnote)
 		}
@@ -128,7 +132,7 @@ var (
 	CovererRegex = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
 )
 
-func ParseCoverageFootnote(filePath string, line string, lineNum int, _ *[]SyntaxError) (footnote *CoverageFootnote) {
+func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, lineNum int, _ *[]SyntaxError) (footnote *CoverageFootnote) {
 
 	matches := CoverageFootnoteRegex.FindStringSubmatch(line)
 	if len(matches) > 0 {

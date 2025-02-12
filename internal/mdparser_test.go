@@ -13,7 +13,7 @@ import (
 func TestMdParser_ParseMarkdownFile(t *testing.T) {
 	testDataDir := filepath.Join("testdata", "mdparser-1.md")
 
-	basicFile, _, err := ParseMarkdownFile(testDataDir)
+	basicFile, _, err := ParseMarkdownFile(newMdCtx(), testDataDir)
 	require.NoError(t, err)
 
 	// Test package ID and requirements count
@@ -56,7 +56,7 @@ func TestMdParser_ParseMarkdownFile(t *testing.T) {
 func TestMdParser_ParseMarkdownFile_Errors(t *testing.T) {
 	testDataDir := filepath.Join("testdata", "mdparser-errs.md")
 
-	_, errors, err := ParseMarkdownFile(testDataDir)
+	_, errors, err := ParseMarkdownFile(newMdCtx(), testDataDir)
 	require.NoError(t, err)
 
 	// We expect 3 errors in the test file:
@@ -95,6 +95,10 @@ func findRequirement(reqs []RequirementSite, name string) *RequirementSite {
 		}
 	}
 	return nil
+}
+
+func newMdCtx() *MarkdownContext {
+	return &MarkdownContext{}
 }
 
 func TestParseRequirements_invalid_coverage_status(t *testing.T) {
@@ -193,7 +197,7 @@ func TestParseRequirements_table(t *testing.T) {
 
 func TestMdParser_ParseCoverageFootnote(t *testing.T) {
 	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1), [folder2/filename2:line2:test](https://example.com/pkg2/filename2)"
-	note := ParseCoverageFootnote("", line, 1, nil)
+	note := ParseCoverageFootnote(newMdCtx(), "", line, 1, nil)
 	require.NotNil(t, note)
 }
 
