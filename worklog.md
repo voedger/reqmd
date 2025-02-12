@@ -67,6 +67,7 @@ This file contains a brief log of the project design and construction.
   - GitHub Copilot: o1: ❌ (very bad)
   - GitHub Copilot: o3-mini: ❌
   - ChatGPT o3-minin-high: starting point
+  - Claude 3.5: 👍🏆
 
 ## Intermediate results
 
