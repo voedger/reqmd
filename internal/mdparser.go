@@ -3,6 +3,7 @@ package internal
 import (
 	"bufio"
 	"fmt"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -132,7 +133,7 @@ var (
 	CovererRegex = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
 )
 
-func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, lineNum int, _ *[]SyntaxError) (footnote *CoverageFootnote) {
+func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, lineNum int, errs *[]SyntaxError) (footnote *CoverageFootnote) {
 
 	matches := CoverageFootnoteRegex.FindStringSubmatch(line)
 	if len(matches) > 0 {
@@ -148,10 +149,20 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 			covererMatches := CovererRegex.FindAllStringSubmatch(matches[5], -1)
 			for _, covMatch := range covererMatches {
 				if len(covMatch) > 2 {
+					parsedURL, err := url.Parse(covMatch[2])
+
+					// Add NewErrURLSyntax to errs
+					if err != nil {
+						*errs = append(*errs, NewErrURLSyntax(filePath, lineNum, covMatch[2]))
+						continue
+					}
+
 					coverer := Coverer{
 						CoverageLabel: covMatch[1],
 						CoverageURL:   covMatch[2],
 					}
+					fileURL := parsedURL.Scheme + "://" + parsedURL.Host + parsedURL.Path
+					coverer.FileHash = mctx.rfiles[fileURL]
 					footnote.Coverers = append(footnote.Coverers, coverer)
 				}
 			}

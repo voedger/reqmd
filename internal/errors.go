@@ -39,4 +39,14 @@ func NewErrCoverageStatusWord(filePath string, line int, CoverageStatusWord stri
 	}
 }
 
+// URL shall adhere to a valid syntax
+func NewErrURLSyntax(filePath string, line int, URL string) SyntaxError {
+	return SyntaxError{
+		Code:     "urlsyntax",
+		FilePath: filePath,
+		Line:     line,
+		Message:  "URL shall adhere to a valid syntax: " + URL,
+	}
+}
+
 // ********** Semantic errors

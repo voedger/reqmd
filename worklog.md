@@ -61,6 +61,7 @@ This file contains a brief log of the project design and construction.
 ## scanner.go
 
 - Context for ParseMarkdownFile to provide `ReqmdfilesMap`
+- GitHub Copilot: 4o:Test_ParseCoverageFootnote: pass MarkdownContext with urls and check all results: works
 
 ## Intermediate results
 

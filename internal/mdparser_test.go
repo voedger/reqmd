@@ -195,10 +195,27 @@ func TestParseRequirements_table(t *testing.T) {
 	}
 }
 
-func TestMdParser_ParseCoverageFootnote(t *testing.T) {
-	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1), [folder2/filename2:line2:test](https://example.com/pkg2/filename2)"
-	note := ParseCoverageFootnote(newMdCtx(), "", line, 1, nil)
+func Test_ParseCoverageFootnote(t *testing.T) {
+	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L11), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#L22)"
+	ctx := &MarkdownContext{
+		rfiles: map[string]string{
+			"https://example.com/pkg1/filename1": "hash1",
+			"https://example.com/pkg2/filename2": "hash2",
+		},
+	}
+	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
+
+	assert.Equal(t, "REQ002", note.RequirementID, "incorrect requirement ID in footnote")
+	assert.Equal(t, "com.example.basic", note.PackageID, "incorrect package ID in footnote")
+
+	require.Len(t, note.Coverers, 2, "should have 2 coverage references")
+	assert.Equal(t, "folder1/filename1:line1:impl", note.Coverers[0].CoverageLabel)
+	assert.Equal(t, "https://example.com/pkg1/filename1#L11", note.Coverers[0].CoverageURL)
+	assert.Equal(t, "hash1", note.Coverers[0].FileHash)
+	assert.Equal(t, "folder2/filename2:line2:test", note.Coverers[1].CoverageLabel)
+	assert.Equal(t, "https://example.com/pkg2/filename2#L22", note.Coverers[1].CoverageURL)
+	assert.Equal(t, "hash2", note.Coverers[1].FileHash)
 }
 
 // Test that golang can recognize patterns like "`~Post.handler~`covered[^~Post.handler~]✅"
