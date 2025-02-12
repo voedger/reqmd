@@ -11,25 +11,90 @@
   - VS Code: yes
   - github: ???
 
-## Separate `<path-to-markdowns>` and `<path-to-cloned-repo>`
+## go-git hash performance
 
-By ChatGPT:
+```go
+// C:/workspaces/work/voedger/pkg/istructsmem
+// 37902	     30670 ns/op	       127.0 files	   24245 B/op	     642 allocs/op
+//
+// C:/workspaces/work/voedger
+// 3440	    	301540 ns/op	      3590 files	  227868 B/op	    6194 allocs/op
+func BenchmarkHash(b *testing.B) {
 
-The design choice to require separate paths for `<path-to-markdowns>` and `<path-to-cloned-repo>` is intentional and serves several practical purposes:
+	repoRoot := "C:/workspaces/work/voedger"
+	repo, err := git.PlainOpen("C:/workspaces/work/voedger")
+	require.NoError(b, err)
 
-1. **Separation of Concerns:**  
-   - **Markdown Files:** The `<path-to-markdowns>` argument points to the directory where all the requirement documentation in Markdown format resides. This is where the tool scans for requirement sites, updates footnotes, and creates/updates the `reqmdfiles.json` file. Keeping these files isolated ensures that the tool works only on files that are meant to be part of the requirements traceability process.
-   - **Source Files:** The `<path-to-cloned-repo>` argument (or arguments) is used exclusively for coverage analysis. It points to one or more local clones of the repository that contain the source code with CoverageTags. This separation allows the tool to validate and update coverage mappings without conflating documentation with source code.
+	ref, err := repo.Head()
+	require.NoError(b, err)
 
-2. **Efficiency and Accuracy:**  
-   - By processing only Markdown files from the designated `<path-to-markdowns>` directory, the tool avoids unnecessarily scanning non-Markdown files that could be present in a large repository.  
-   - When analyzing coverage, using a separately specified cloned repository means the tool can focus on the files that contain the actual implementations or tests (the source files) without interference from the documentation files. This targeted approach minimizes processing overhead and potential errors.
+	commit, err := repo.CommitObject(ref.Hash())
+	require.NoError(b, err)
 
-3. **Maintenance and Update Control:**  
-   - The `reqmdfiles.json` file is maintained within the Markdown directory structure. This clear demarcation prevents accidental modifications or merge conflicts that might occur if Markdown and source files were processed together in one directory.
-   - It also allows for independent updates—if the source repository is updated (for example, if file hashes change), only the coverage analysis part needs to re-scan the cloned repository, without impacting the Markdown documentation processing.
 
-4. **Clarity in Traceability:**  
-   - The requirements traceability process is inherently a mapping between two different kinds of artifacts: documented requirements (in Markdown) and code coverage (in source files). Keeping their file paths separate reinforces this conceptual boundary, making it easier for users and developers to understand and maintain the linkage.
+	files, err := getFiles("C:/workspaces/work/voedger/pkg/istructsmem")
+	require.NoError(b, err)
 
-In summary, while it might seem convenient to process all files from a single directory, separating the Markdown files from the source repository is a deliberate design decision to ensure that each type of file is handled appropriately. This separation improves performance, maintains clear boundaries between documentation and code, and reduces the risk of errors in the traceability process.
+	// paths relative to the repo root
+	for i, file := range files {
+		relPath, err := filepath.Rel(repoRoot, file)
+		relPath = strings.ReplaceAll(relPath, "\\", "/")
+		require.NoError(b, err)
+		files[i] = relPath
+	}
+
+	tree, err := commit.Tree()
+	_ = tree
+	require.NoError(b, err)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, file := range files {
+			if !strings.HasSuffix(file, ".go") {
+				continue
+			}
+			entry, err := tree.FindEntry(file)
+			if err != nil {
+				b.Fatal(err, file)
+			}
+			hash := entry.Hash.String()
+			if len(hash) == 0 {
+				panic("hash is empty")
+			}
+
+		}
+	}
+	b.ReportMetric(float64(len(files)), "files")
+}
+
+func getFiles(directory string) ([]string, error) {
+	var files []string
+
+	err := filepath.WalkDir(directory, func(path string, d os.DirEntry, err error) error {
+
+		if err != nil {
+
+			return err
+
+		}
+
+		// Normalize path to avoid mismatches
+		normalizedPath := strings.ReplaceAll(path, "\\", "/")
+
+		// Add only files (not directories)
+		if !d.IsDir() {
+			files = append(files, normalizedPath)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+
+		return nil, err
+
+	}
+
+	return files, nil
+}
+```
