@@ -29,10 +29,14 @@ type ScanResult struct {
 - Other paths are processed as path to source files using
 
 Requirement files
-- FoldersScanner and ParseMarkdownFile
+- Uses FoldersScanner and ParseMarkdownFile
+- FolderProcessor parses reqmdfiles.json (if exists) and passes to FileProcessor
 
 Source files
-- FoldersScanner and ParseSourceFile
+- git repository shall be found in Path or parent directories
+- IGit is instantiated using NewIGit and a folder that contains .git folder
+- IGit should be passed to FolderProcessor and all FileProcessors
+- Uses FoldersScanner and ParseSourceFile
 
 */
 
