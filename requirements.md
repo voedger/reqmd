@@ -200,15 +200,15 @@ Requirement: The tool shall support tracing of requirements and generation of co
 Command:
 
 ```bash
-reqmd trace <path-to-markdowns> [<path-to-cloned-repo>...]
+reqmd trace <path-to-markdowns> [<path-to-sources>...]
 ```
 
-Where `<path-to-markdowns>` and `<path-to-cloned-repo>` are the InputFiles.
+Where `<path-to-markdowns>` and `<path-to-sources>` are the InputFiles.
 
 Arguments:
 
 - `<path-to-markdowns>` (Required): Directory containing the markdown files to be processed.
-- `<path-to-cloned-repo>` (Optional): Path to a local clone of the repository for additional coverage analysis.
+- `<path-to-sources>` (Optional): Path to a local clone of the repository for coverage analysis.
 
 Upon execution, the tool shall:
 
@@ -272,3 +272,5 @@ Phases:
   - `covered` denotes the covered status.
   - `uncvrd` denotes the uncovered status.
   - Motivation: use short words with a high level of uniqueness for uncovered status.
+- Separation of the `<path-to-markdowns>` and `<path-to-sources>`
+  - Paths are separated to avoid modificationd of sources
