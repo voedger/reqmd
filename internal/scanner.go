@@ -8,6 +8,17 @@ import (
 	"strings"
 )
 
+const (
+	// File extensions and patterns
+	markdownExtension = ".md"
+	gitFolderName     = ".git"
+	reqmdConfigFile   = "reqmdfiles.json"
+
+	// Scanner configuration
+	defaultMaxWorkers      = 32
+	defaultMaxErrQueueSize = 1000
+)
+
 /*
 
 An exerpt from design.md
@@ -32,9 +43,9 @@ type ScanResult struct {
 
 /*
 
-- Paths are processes sequentially by FoldersScanner using 32 routines
 - First path is processed as path to requirement files
 - Other paths are processed as path to source files using
+- Paths are processes sequentially by FoldersScanner
 
 Requirement files
 - Uses FoldersScanner and ParseMarkdownFile
@@ -48,6 +59,34 @@ Source files
 
 */
 
+func Scan(paths []string) (*ScanResult, error) {
+	if len(paths) == 0 {
+		return nil, fmt.Errorf("at least one path must be provided")
+	}
+
+	result := &ScanResult{}
+
+	// Scan markdown files from the first path
+	files, errs, err := ScanMarkdowns(paths[0])
+	if err != nil {
+		return nil, err
+	}
+	result.Files = append(result.Files, files...)
+	result.SyntaxErrors = append(result.SyntaxErrors, errs...)
+
+	// Scan source files from remaining paths
+	if len(paths) > 1 {
+		files, errs, err := ScanSources(paths[1:])
+		if err != nil {
+			return nil, err
+		}
+		result.Files = append(result.Files, files...)
+		result.SyntaxErrors = append(result.SyntaxErrors, errs...)
+	}
+
+	return result, nil
+}
+
 func ScanMarkdowns(reqPath string) ([]FileStructure, []SyntaxError, error) {
 	var files []FileStructure
 	var syntaxErrors []SyntaxError
@@ -57,15 +96,15 @@ func ScanMarkdowns(reqPath string) ([]FileStructure, []SyntaxError, error) {
 			rfiles: make(ReqmdfilesMap),
 		}
 
-		reqmdPath := filepath.Join(folder, "reqmdfiles.json")
+		reqmdPath := filepath.Join(folder, reqmdConfigFile)
 		if content, err := os.ReadFile(reqmdPath); err == nil {
 			if err := json.Unmarshal(content, &mctx.rfiles); err != nil {
-				return nil, fmt.Errorf("failed to parse reqmdfiles.json: %w", err)
+				return nil, fmt.Errorf("failed to parse %s: %w", reqmdConfigFile, err)
 			}
 		}
 
 		return func(filePath string) error {
-			if !strings.HasSuffix(strings.ToLower(filePath), ".md") {
+			if !strings.HasSuffix(strings.ToLower(filePath), markdownExtension) {
 				return nil
 			}
 
@@ -84,7 +123,7 @@ func ScanMarkdowns(reqPath string) ([]FileStructure, []SyntaxError, error) {
 		}, nil
 	}
 
-	if errs := FoldersScanner(32, 1000, reqPath, reqmdProcessor); len(errs) > 0 {
+	if errs := FoldersScanner(defaultMaxWorkers, defaultMaxErrQueueSize, reqPath, reqmdProcessor); len(errs) > 0 {
 		return nil, nil, fmt.Errorf("error scanning markdown files: %v", errs[0])
 	}
 
@@ -101,7 +140,7 @@ func ScanSources(srcPaths []string) ([]FileStructure, []SyntaxError, error) {
 		var gitPath string
 		currentPath := srcPath
 		for {
-			if _, err := os.Stat(filepath.Join(currentPath, ".git")); err == nil {
+			if _, err := os.Stat(filepath.Join(currentPath, gitFolderName)); err == nil {
 				gitPath = currentPath
 				break
 			}
@@ -122,7 +161,7 @@ func ScanSources(srcPaths []string) ([]FileStructure, []SyntaxError, error) {
 	for srcPath, git := range gitRepos {
 		srcProcessor := func(folder string) (FileProcessor, error) {
 			return func(filePath string) error {
-				if strings.Contains(filePath, ".git") {
+				if strings.Contains(filePath, gitFolderName) {
 					return nil
 				}
 
@@ -154,38 +193,10 @@ func ScanSources(srcPaths []string) ([]FileStructure, []SyntaxError, error) {
 			}, nil
 		}
 
-		if errs := FoldersScanner(32, 1000, srcPath, srcProcessor); len(errs) > 0 {
+		if errs := FoldersScanner(defaultMaxWorkers, defaultMaxErrQueueSize, srcPath, srcProcessor); len(errs) > 0 {
 			return nil, nil, fmt.Errorf("error scanning source files in %s: %v", srcPath, errs[0])
 		}
 	}
 
 	return files, syntaxErrors, nil
-}
-
-func Scan(paths []string) (*ScanResult, error) {
-	if len(paths) == 0 {
-		return nil, fmt.Errorf("at least one path must be provided")
-	}
-
-	result := &ScanResult{}
-
-	// Scan markdown files from the first path
-	files, errs, err := ScanMarkdowns(paths[0])
-	if err != nil {
-		return nil, err
-	}
-	result.Files = append(result.Files, files...)
-	result.SyntaxErrors = append(result.SyntaxErrors, errs...)
-
-	// Scan source files from remaining paths
-	if len(paths) > 1 {
-		files, errs, err := ScanSources(paths[1:])
-		if err != nil {
-			return nil, err
-		}
-		result.Files = append(result.Files, files...)
-		result.SyntaxErrors = append(result.SyntaxErrors, errs...)
-	}
-
-	return result, nil
 }
