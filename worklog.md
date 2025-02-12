@@ -62,6 +62,11 @@ This file contains a brief log of the project design and construction.
 
 - Context for ParseMarkdownFile to provide `ReqmdfilesMap`
 - GitHub Copilot: 4o:Test_ParseCoverageFootnote: pass MarkdownContext with urls and check all results: works but had to be fixed
+- Implement Scan function
+  - GitHub Copilot: Claude:Server error: 500 Internal Server Error
+  - GitHub Copilot: o1: ❌ (very bad)
+  - GitHub Copilot: o3-mini: ❌
+  - ChatGPT o3-minin-high: starting point
 
 ## Intermediate results
 

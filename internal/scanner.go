@@ -40,6 +40,6 @@ Source files
 
 */
 
-func Scan(paths []string) (res *ScanResult, err error) {
+func Scan(paths []string) (*ScanResult, error) {
 	return nil, nil
 }
