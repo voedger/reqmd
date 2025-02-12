@@ -72,8 +72,8 @@ Explanation of each file:
 5. **scanner.go**  
    - **Purpose**: Implements `IScanner`.  
    - **Key functions**:  
-     - `Scan(paths []string) ([]FileStructure, []SyntaxError)`:  
-       - Recursively discover Markdown and source files.  
+     - `Scan`:  
+       - Recursively discover Markdown and source files.
        - Delegate parsing to specialized components (`mdparser.go`, `srccoverparser.go`).  
        - Build a unified list of `FileStructure` objects for each file.  
        - Collect any `SyntaxError`s.  

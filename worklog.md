@@ -57,6 +57,7 @@ This file contains a brief log of the project design and construction.
   - ChatGPT o3-mini-high: : ❌ Much better prompt needed
   - Claude 3.5: Process folders breadth-first, tests 👍🏆
     - Generate TestFoldersScanner_ALotOfErrors👍🏆
+- scanner
 
 ### Prompt_CoverageFootnoteRegex
 
