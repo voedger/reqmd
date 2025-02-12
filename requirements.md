@@ -265,6 +265,7 @@ Phases:
   - Interface implementation names shall be deduced from the interface name by removing the I prefix
   - All interfaces shall be defined in a separate file interfaces.go
   - All data structures used across the application shall be defined in the models.go file.
+- "github.com/go-git/go-git/v5" shall be used for git operations
 
 ## Decisions
 

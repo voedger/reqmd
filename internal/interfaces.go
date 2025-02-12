@@ -26,6 +26,12 @@ type IApplier interface {
 	Apply(actions []Action) error
 }
 
+type IGit interface {
+	PathToRoot() string
+	CommitHash() string
+	FileHash(filePath string) (string, error)
+}
+
 // Optional specialized parsers, if you want to keep them separate:
 // IMarkdownParser could parse only Markdown files.
 // ISourceCoverageParser could parse only source files.

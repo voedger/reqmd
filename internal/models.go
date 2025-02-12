@@ -47,7 +47,7 @@ type FileStructure struct {
 	Requirements      []RequirementSite  // for Markdown: discovered requirements (bare or annotated)
 	CoverageFootnotes []CoverageFootnote // for Markdown: discovered coverage footnotes
 	CoverageTags      []CoverageTag      // for source: discovered coverage tags
-	// ... Add more fields if needed for raw file content, line references, etc.
+	FileHash          string             // git hash of the file
 }
 
 // RequirementSite represents a single requirement reference discovered in a Markdown file.

@@ -11,6 +11,10 @@ import (
 // A CoverageTag is expected in the form: [~PackageID/RequirementName~CoverageType]
 var coverageTagRegex = regexp.MustCompile(`\[\~([^/]+)/([^~]+)\~([^\]]+)\]`)
 
+type SourceFileContext struct {
+	Git IGit
+}
+
 func ParseSourceFile(filePath string) (*FileStructure, []SyntaxError, error) {
 	file, err := os.Open(filePath)
 	if err != nil {

@@ -136,6 +136,10 @@ Explanation of each file:
 - **Responsibilities**:  
   - Common or cross-cutting concerns without creating cyclical dependencies.  
 
+### **gogit.go**
+
+- **Purpose**: Provide IGit interface using `go-git` library.
+
 ---
 
 ## How SOLID principles are applied

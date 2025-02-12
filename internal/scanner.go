@@ -17,14 +17,25 @@ An exerpt from design.md
 
 */
 
+type ScanResult struct {
+	Files        []FileStructure
+	SyntaxErrors []SyntaxError
+}
+
 /*
 
-- Each path is processed in a separate goroutine.
+- Paths are processes sequentially by FoldersScanner using 32 routines
 - First path is processed as path to requirement files
-- Other paths are processed as path to source files
+- Other paths are processed as path to source files using
+
+Requirement files
+- FoldersScanner and ParseMarkdownFile
+
+Source files
+- FoldersScanner and ParseSourceFile
 
 */
 
-func Scan(paths []string) ([]FileStructure, []SyntaxError, error) {
-	return nil, nil, nil
+func Scan(paths []string) (res *ScanResult, err error) {
+	return nil, nil
 }
