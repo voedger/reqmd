@@ -120,10 +120,16 @@ Implement IAnalyzer. Modify Action type if needed. For each resposibility of the
 - There should be a way to obtain FileURL for a given FileStructure
 - Ref. design.md, FileURL calculation
 
-- Copilot.Claude: Is it clear how to implement ## FileURL calculation from #file:design.md ? Ask questions if needed.👍🏆
+- Copilot.Claude: Is it clear how to implement ## FileURL calculation from #file:design.md ? Ask questions if needed.🏆
   - Answer: Remote URL: How do we determine the repository's remote URL (e.g., "https://github.com/voedger/voedger")? This seems necessary to construct the RepoRootFolderURL. Should this be obtained through the Git interface?
   - Branch Name: The examples show URLs with "/blob/main/". Should we: Hardcode "main" as the branch name? Get it from the current branch? Make it configurable?
   - Platform Detection: The examples show different URL formats: GitHub: ".../blob/..." GitLab: ".../-/blob/..." How should we detect which platform format to use?
+  - Branch Name in URLs The design has conflicting information:🏆
+    - Git provider-specific path elements:
+      - GitHub: `blob/main`
+      - GitLab: `-/blob/main`
+    - But also mentions: Actual current branch name
+
 - Me: Prepare design of the ## File URL construction
 - Claude: Rewrite this part professionally. Keep ALL names intact.👍
 
