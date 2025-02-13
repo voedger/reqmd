@@ -159,10 +159,10 @@ URL structure examples:
 
 ### (g *git).RepoRootFolderURL() string
 
-- git.RepoRootFolderURL() returns data from the field `repoRootFolderURL`.
-- The system obtains data for RepoRootFolderURL() once during `NewIGit()` initialization
-  - This is implemented as a separate git.constructRepoRootFolderURL() function.
-- git.constructRepoRootFolderURL() uses:
+- `git.RepoRootFolderURL()` returns data from the field `repoRootFolderURL`.
+- The system obtains data for `RepoRootFolderURL()` once during `NewIGit()` initialization
+  - This is implemented as a separate `git.constructRepoRootFolderURL()` function.
+- `git.constructRepoRootFolderURL()` uses:
   - RepositoryURL which  is obtained from git remote named "origin", result is like `https://github.com/voedger/voedger`
     - Command would be `git remote get-url origin` but go-git shall be used instead.
   - Actual current branch name
