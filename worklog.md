@@ -115,7 +115,7 @@ Implement IAnalyzer. Modify Action type if needed. For each resposibility of the
     - Construct the list of Action items describing needed transformations.
 ```
 
-## oops, URL calculation is missing
+## oops, URL calculation is missing (+2h)
 
 - There should be a way to obtain FileURL for a given FileStructure
 - Ref. design.md, FileURL calculation
@@ -133,6 +133,10 @@ Implement IAnalyzer. Modify Action type if needed. For each resposibility of the
 - Me: Prepare design of the ## File URL construction
 - Claude: Rewrite this part professionally. Keep ALL names intact.👍
 
+- loop
+  - Copilot.Claude: Is it clear how to implement ## FileURL construction from #file:design.md ? Ask quiestions if needed
+  - Me: Modify design
+- Copilot.Claude: Based on your answers, I'll propose the implementation. We need to modify several files🏆
 
 ## Intermediate results
 

@@ -172,8 +172,7 @@ URL structure examples:
 - Git provider is detected based on the remote URL
   - GitHub: `github.com`
   - GitLab: `gitlab.com`
-- If URL calculation fails, `NewIGit()` initialization fails
-- RepoRootFolderURL is returned by `IGit.RepoRootFolderURL()`
+- If `git.constructRepoRootFolderURL()` fails, `NewIGit()` initialization fails
 
 ### FileStructure.RelativePath construction
 

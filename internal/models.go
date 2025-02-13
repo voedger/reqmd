@@ -1,5 +1,7 @@
 package internal
 
+import "path/filepath"
+
 // ActionType represents the type of transformation needed.
 type ActionType string
 
@@ -48,6 +50,12 @@ type FileStructure struct {
 	CoverageFootnotes []CoverageFootnote // for Markdown: discovered coverage footnotes
 	CoverageTags      []CoverageTag      // for source: discovered coverage tags
 	FileHash          string             // git hash of the file
+	RepoRootFolderURL string
+	RelativePath      string
+}
+
+func (f *FileStructure) FileURL() string {
+	return f.RepoRootFolderURL + "/" + filepath.ToSlash(f.RelativePath)
 }
 
 // RequirementSite represents a single requirement reference discovered in a Markdown file.

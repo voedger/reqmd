@@ -25,6 +25,7 @@ type IGit interface {
 	PathToRoot() string
 	CommitHash() string
 	FileHash(filePath string) (string, error)
+	RepoRootFolderURL() string
 }
 
 // Optional specialized parsers, if you want to keep them separate:

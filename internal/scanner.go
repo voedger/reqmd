@@ -194,17 +194,23 @@ func processSourceFile(filePath string, git IGit, files *[]FileStructure, syntax
 	}
 
 	if structure != nil {
+		// Get relative path for the file
 		relPath, err := filepath.Rel(git.PathToRoot(), filePath)
 		if err != nil {
 			return fmt.Errorf("failed to get relative path: %w", err)
 		}
 
+		// Get file hash
 		hash, err := git.FileHash(relPath)
 		if err != nil {
 			return fmt.Errorf("failed to get file hash: %w", err)
 		}
 
+		// Set FileStructure fields for URL construction
 		structure.FileHash = hash
+		structure.RelativePath = filepath.ToSlash(relPath)    // Convert Windows paths to URL format
+		structure.RepoRootFolderURL = git.RepoRootFolderURL() // Get base URL from git
+
 		*files = append(*files, *structure)
 	}
 
