@@ -233,6 +233,7 @@ Concepts:
   - RequirementName shall be an identifier
   - RequirementSiteID shall be equals in the RequirementSite and CoverageFootnote
   - CoverageStatusWord shall be "covered" or "uncvrd"
+  - // TODO One RequirementSite per line
 - SemanticError:
   - RequirementID shall be unique within all MarkdownFiles
   - PackageID shall be defined if there are RequirementSites

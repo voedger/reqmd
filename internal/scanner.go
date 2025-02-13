@@ -36,6 +36,20 @@ An exerpt from design.md
 
 */
 
+func NewScanner() IScanner {
+	return &scanner{}
+}
+
+func (s *scanner) Scan(reqPath string, srcPaths []string) ([]FileStructure, []SyntaxError, error) {
+	result, err := Scan(reqPath, srcPaths)
+	if err != nil {
+		return nil, nil, err
+	}
+	return result.Files, result.SyntaxErrors, nil
+}
+
+type scanner struct{}
+
 type ScanResult struct {
 	Files        []FileStructure
 	SyntaxErrors []SyntaxError
@@ -59,24 +73,20 @@ Source files
 
 */
 
-func Scan(paths []string) (*ScanResult, error) {
-	if len(paths) == 0 {
-		return nil, fmt.Errorf("at least one path must be provided")
-	}
-
+func Scan(reqPath string, srcPaths []string) (*ScanResult, error) {
 	result := &ScanResult{}
 
-	// Scan markdown files from the first path
-	files, errs, err := ScanMarkdowns(paths[0])
+	// Scan markdown files
+	files, errs, err := ScanMarkdowns(reqPath)
 	if err != nil {
 		return nil, err
 	}
 	result.Files = append(result.Files, files...)
 	result.SyntaxErrors = append(result.SyntaxErrors, errs...)
 
-	// Scan source files from remaining paths
-	if len(paths) > 1 {
-		files, errs, err := ScanSources(paths[1:])
+	// Scan source files if any paths provided
+	if len(srcPaths) > 0 {
+		files, errs, err := ScanSources(srcPaths)
 		if err != nil {
 			return nil, err
 		}

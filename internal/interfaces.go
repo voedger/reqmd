@@ -13,7 +13,7 @@ type ITracer interface {
 
 // IScanner is responsible for scanning file paths and parsing them into FileStructures.
 type IScanner interface {
-	Scan(reqPath string, srcPaths []string) ([]FileStructure, []SyntaxError)
+	Scan(reqPath string, srcPaths []string) ([]FileStructure, []SyntaxError, error)
 }
 
 // IAnalyzer checks for semantic issues (e.g., unique RequirementIDs) and generates Actions.
