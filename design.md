@@ -185,7 +185,7 @@ URL structure examples:
 
 - `Scanner.Scan()` sets `FileStructure.RepoRootFolderURL` using `IGit.RepoRootFolderURL()`
 
-### FileURL assembly
+### FileURL assembly: FileStructure.FileURL()
 
 - Final `FileURL` is retured by FileStructure.FileURL() and constructed by combining:
   - `FileStructure.RepoRootFolderURL`
