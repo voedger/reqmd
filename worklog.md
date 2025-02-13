@@ -87,6 +87,40 @@ This file contains a brief log of the project design and construction.
   - To: Use injected interfaced (ref. interfaces.go) IScanner, IAnalyzer, IApplier to scan, analyze, and apply changes.
 - Copilot.Claude: #file:tracer.go : construct tracer struct that implements ITracer. ITracer shall be created by NewTracer(all necessary params) ITracer methods.👍
 
+### tracer.go design
+
+- ChatGPT [o3-mini-high](https://chatgpt.com/g/g-p-675ed7110c588191ae3694ae50086ad0-reqmd/c/67ae5cd3-ece4-800d-b811-bb40e0c32795): Prompt1.❌
+- ChatGPT [o1](https://chatgpt.com/c/67ae5d38-8a38-800d-94b7-4419f51c6d28): Prompt1.❌
+- Claude: [Prompt1](https://claude.ai/chat/0448fe13-c6ec-4271-860b-290e13ae7c36).👍 Way better, but prompt should be amended.
+
+#### Prompt1
+
+```text
+Suggest a design for the implementation of the IAnalyzer that meets the fillowing requirements. Modify Action type if needed. Follow SOLID principles.
+
+    - Determine which coverage footnotes need to be updated or created.  
+    - Identify which bare requirement names need coverage annotations appended.  
+    - Compare file hashes in reqmdfiles.json to actual git hash-object results to see if coverage references are stale.  
+    - Construct the list of Action items describing needed transformations.
+```
+
+#### Prompt2
+
+```text
+Implement IAnalyzer. Modify Action type if needed. For each resposibility of the Analyze() method create a separate function.
+
+    - Determine which coverage footnotes need to be updated or created.  
+    - Identify which bare requirement names need coverage annotations appended.  
+    - Compare file hashes in reqmdfiles.json to actual git hash-object results to see if coverage references are stale.  
+    - Construct the list of Action items describing needed transformations.
+```
+
+Context
+
+- design.md
+- 
+
+
 ## Intermediate results
 
 ### Prompt_CoverageFootnoteRegex

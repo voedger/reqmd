@@ -88,11 +88,11 @@ Explanation of each file:
 - **Purpose**: Implements `IAnalyzer`.  
 - **Key functions**:  
   - `Analyze(files []FileStructure) (actions []Action, errs []SemanticError)`:  
-    - Perform semantic checks (e.g., unique `RequirementID`s).  
+    - Perform semantic checks (e.g., unique `RequirementID`s).
     - Determine which coverage footnotes need to be updated or created.  
     - Identify which bare requirement names need coverage annotations appended.  
     - Compare file hashes in `reqmdfiles.json` to actual `git hash-object` results to see if coverage references are stale.  
-    - Construct the list of `Action` items describing needed transformations.  
+    - Construct the list of `Action` items describing needed transformations.
 - **Responsibilities**:  
   - Single responsibility: interpret the domain data, detect required changes, produce actionable tasks.  
 
