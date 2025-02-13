@@ -161,35 +161,7 @@ func ScanSources(srcPaths []string) ([]FileStructure, []SyntaxError, error) {
 	for srcPath, git := range gitRepos {
 		srcProcessor := func(folder string) (FileProcessor, error) {
 			return func(filePath string) error {
-				if strings.Contains(filePath, gitFolderName) {
-					return nil
-				}
-
-				structure, errs, err := ParseSourceFile(filePath)
-				if err != nil {
-					return err
-				}
-
-				if structure != nil {
-					relPath, err := filepath.Rel(git.PathToRoot(), filePath)
-					if err != nil {
-						return fmt.Errorf("failed to get relative path: %w", err)
-					}
-
-					hash, err := git.FileHash(relPath)
-					if err != nil {
-						return fmt.Errorf("failed to get file hash: %w", err)
-					}
-
-					structure.FileHash = hash
-					files = append(files, *structure)
-				}
-
-				if len(errs) > 0 {
-					syntaxErrors = append(syntaxErrors, errs...)
-				}
-
-				return nil
+				return processSourceFile(filePath, git, &files, &syntaxErrors)
 			}, nil
 		}
 
@@ -199,4 +171,36 @@ func ScanSources(srcPaths []string) ([]FileStructure, []SyntaxError, error) {
 	}
 
 	return files, syntaxErrors, nil
+}
+
+func processSourceFile(filePath string, git IGit, files *[]FileStructure, syntaxErrors *[]SyntaxError) error {
+	if strings.Contains(filePath, gitFolderName) {
+		return nil
+	}
+
+	structure, errs, err := ParseSourceFile(filePath)
+	if err != nil {
+		return err
+	}
+
+	if structure != nil {
+		relPath, err := filepath.Rel(git.PathToRoot(), filePath)
+		if err != nil {
+			return fmt.Errorf("failed to get relative path: %w", err)
+		}
+
+		hash, err := git.FileHash(relPath)
+		if err != nil {
+			return fmt.Errorf("failed to get file hash: %w", err)
+		}
+
+		structure.FileHash = hash
+		*files = append(*files, *structure)
+	}
+
+	if len(errs) > 0 {
+		*syntaxErrors = append(*syntaxErrors, errs...)
+	}
+
+	return nil
 }
