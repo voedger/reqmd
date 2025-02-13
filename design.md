@@ -150,37 +150,53 @@ The system needs to construct a `FileURL` for any given `FileStructure`. A `File
 
 URL structure examples:
 
-- GitHub: `https://github.com/voedger/voedger/blob/main/pkg/api/handler_test.go`
-  - `RepoRootFolderURL`: `https://github.com/voedger/voedger/blob/main`
+- GitHub: `https://github.com/voedger/voedger/blob/somebranch1/pkg/api/handler_test.go`
+  - `RepoRootFolderURL`: `https://github.com/voedger/voedger/blob/somebranch1`
   - `RelativePath`: `pkg/api/handler_test.go`
-- GitLab: `https://gitlab.com/myorg/project/-/blob/main/src/core/processor.ts`
-  - `RepoRootFolderURL`: `https://gitlab.com/myorg/project/-/blob/main`
+- GitLab: `https://gitlab.com/myorg/project/-/blob/somebranch2/src/core/processor.ts`
+  - `RepoRootFolderURL`: `https://gitlab.com/myorg/project/-/blob/somebranch2`
   - `RelativePath`: `src/core/processor.ts`
 
-RepoRootFolderURL construction
+### (g *git).RepoRootFolderURL() string
 
-- The system obtains data during `NewIGit()` initialization
+- git.RepoRootFolderURL() returns data from the field.
+- The system obtains data for RepoRootFolderURL() once during `NewIGit()` initialization
+- This is implemented as a separate git.repoRootFolderURL() function.
 - The URL construction uses:
-  - Remote repository named "origin"
-  - Current branch name
+  - RepositoryURL which  is obtained from git remote named "origin", result is like `https://github.com/voedger/voedger`
+    - Command would be `git remote get-url origin` but go-git shall be used instead.
+  - Actual current branch name
   - Git provider-specific path elements:
     - GitHub: `blob/main`
     - GitLab: `-/blob/main`
+- Git provider is detected based on the remote URL
+  - GitHub: `github.com`
+  - GitLab: `gitlab.com`
 - If URL calculation fails, `NewIGit()` initialization fails
+- RepoRootFolderURL is returned by `IGit.RepoRootFolderURL()`
 
-RelativePath construction
+### FileStructure.RelativePath construction
 
 - `Scanner.Scan()` calculates the path using:
-  - `IGit.GetRootFolder()`
+  - `IGit.PathToRoot()`
   - `filepath.Rel()`
 - The result is stored in `FileStructure.RelativePath`
 
-FileURL assembly
+### FileStructure.RepoRootFolderURL construction
 
-- `Scanner.Scan()` stores the `RepoRootFolderURL` in `FileStructure.RepoRootFolderURL`
-- Final `FileURL` is constructed by combining:
+- `Scanner.Scan()` sets `FileStructure.RepoRootFolderURL` using `IGit.RepoRootFolderURL()`
+
+### FileURL assembly
+
+- Final `FileURL` is retured by FileStructure.FileURL() and constructed by combining:
   - `FileStructure.RepoRootFolderURL`
   - `FileStructure.RelativePath`
+
+### Implementation details
+
+- SSH URLs (like git@github.com:org/repo.git) are not supported
+- It is not necessary to define specific error types for URL construction failures
+- Path are stored and processed using URL separation, on Windows initial conversion is needed.
 
 ## How SOLID principles are applied
 

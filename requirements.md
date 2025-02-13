@@ -276,3 +276,4 @@ Phases:
   - Motivation: use short words with a high level of uniqueness for uncovered status.
 - Separation of the `<path-to-markdowns>` and `<path-to-sources>`
   - Paths are separated to avoid modificationd of sources
+- SSH URLs (like git@github.com:org/repo.git) are not supported
