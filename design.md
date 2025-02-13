@@ -4,7 +4,51 @@ Design of the reqmd tool.
 
 ## Overview
 
-Below is the desgin that follows **SOLID** principles. The solution is split into a CLI entry point (`main.go`) and an internal package (`internal/`). Within `internal/`, each file, structure, and function has a focused responsibility. All data structures are centralized in `models.go`, and all interfaces in `interfaces.go`. Implementations are named by removing the `I` prefix.
+The solution is split into a CLI entry point (`main.go`) and an internal package (`internal/`). Within `internal/`, each file, structure, and function has a focused responsibility. All data structures are centralized in `models.go`, and all interfaces in `interfaces.go`. Implementations are named by removing the `I` prefix.
+
+The tool follows a three-stage pipeline architecture:
+
+1. **Scan** – Build the Domain Model
+   - Recursively discovers Markdown and source files
+   - Extracts requirement references from Markdown files
+   - Identifies coverage tags in source code
+   - Builds file structures with Git metadata
+   - Collects any syntax errors during parsing
+
+2. **Analyze** – Validate and Plan Changes
+   - Performs semantic validation checks
+   - Ensures requirement IDs are unique
+   - Determines which coverage footnotes need updates
+   - Identifies requirements needing coverage annotations
+   - Verifies file hashes against reqmdfiles.json
+   - Generates a list of required file modifications
+
+3. **Apply** – Update Files
+   - Updates or creates coverage footnotes
+   - Appends coverage annotations to requirements
+   - Maintains reqmdfiles.json for file tracking
+   - Ensures changes are made only when no errors exist
+
+The system is designed using SOLID principles:
+
+1. **Single Responsibility Principle**  
+   - Each component (scanner, analyzer, applier) is responsible for exactly one stage of the process.  
+   - `mdparser.go` deals **only** with parsing Markdown; `srccoverparser.go` deals **only** with source coverage tags.
+
+2. **Open/Closed Principle**  
+   - New features can be added by creating new parsers or new analysis rules without modifying existing, stable components.
+   - For example, if a new coverage system is added, you can create a new parser that returns coverage tags in the same data model.
+
+3. **Liskov Substitution Principle**
+   - Interfaces (`IScanner`, `IAnalyzer`, `IApplier`) can be replaced with new implementations as long as they respect the same contracts.
+
+4. **Interface Segregation Principle**
+   - Instead of having a single “monolithic” interface, smaller interfaces reflect the actual steps: scanning, analyzing, applying.
+   - The consumer (the `Tracer`) depends only on the interfaces it needs.
+
+5. **Dependency Inversion Principle**
+   - `Tracer` depends on the abstract interfaces (`IScanner`, `IAnalyzer`, `IApplier`), not on specific implementations.
+   - Concrete implementations (e.g., `Scanner`, `Analyzer`, `Applier`) are **injected** into `Tracer` via `NewTracer(...)`.
 
 ---
 
@@ -45,7 +89,6 @@ Explanation of each file:
   - `IScanner`: Scans input directories/files to build a high-level model (`FileStructure` objects, coverage tags, etc.).  
   - `IAnalyzer`: Performs semantic checks, identifies required transformations, and generates a list of `Actions`.  
   - `IApplier`: Applies transformations (e.g., updating coverage footnotes, generating `reqmdfiles.json`).  
-  - Any additional smaller interfaces if needed (e.g., `IMarkdownParser`, `ISourceCoverageParser`), or you can keep these as separate or internal to the scanner if you wish.  
 
 ### **models.go**  
 
@@ -57,14 +100,13 @@ Explanation of each file:
   - `SemanticError`: structure describing higher-level semantic issues (e.g., requirement ID collisions).  
   - `CoverageTag`: stores found coverage annotation details (e.g., requirement ID, coverage type).  
   - `CoverageFootnote`: stores the requirement footnote details including coverage references.  
-  - `ReqmdfilesMap`: representation of the `reqmdfiles.json` data (mapping from `FileURL` -> `FileHash`).  
-  - (Optional) Additional smaller structs like `RequirementID`, `PackageID`, `RequirementName`, etc., if you want to model them more explicitly.  
+  - `ReqmdfilesMap`: representation of the `reqmdfiles.json` data (mapping from `FileURL` -> `FileHash`).
 
 ### **tracer.go**  
 
 - **Purpose**: Implements `ITracer`. This is the **facade** that orchestrates the scanning, analyzing, and applying phases.  
 - **Key functions**:  
-  - `Trace()
+  - `Trace()`
 - **Responsibilities**:  
   - High-level workflow control.  
   - Enforce the steps: if syntax errors exist, abort; if semantic errors exist, abort; otherwise apply actions.  
@@ -196,27 +238,6 @@ URL structure examples:
 - SSH URLs (like git@github.com:org/repo.git) are not supported
 - It is not necessary to define specific error types for URL construction failures
 - Path are stored and processed using URL separation, on Windows initial conversion is needed.
-
-## How SOLID principles are applied
-
-1. **Single Responsibility Principle**  
-   - Each component (scanner, analyzer, applier) is responsible for exactly one stage of the process.  
-   - `mdparser.go` deals **only** with parsing Markdown; `srccoverparser.go` deals **only** with source coverage tags.  
-
-2. **Open/Closed Principle**  
-   - New features can be added by creating new parsers or new analysis rules without modifying existing, stable components.  
-   - For example, if a new coverage system is added, you can create a new parser that returns coverage tags in the same data model.  
-
-3. **Liskov Substitution Principle**  
-   - Interfaces (`IScanner`, `IAnalyzer`, `IApplier`) can be replaced with new implementations as long as they respect the same contracts.  
-
-4. **Interface Segregation Principle**  
-   - Instead of having a single “monolithic” interface, smaller interfaces reflect the actual steps: scanning, analyzing, applying.  
-   - The consumer (the `Tracer`) depends only on the interfaces it needs.  
-
-5. **Dependency Inversion Principle**  
-   - `Tracer` depends on the abstract interfaces (`IScanner`, `IAnalyzer`, `IApplier`), not on specific implementations.  
-   - Concrete implementations (e.g., `Scanner`, `Analyzer`, `Applier`) are **injected** into `Tracer` via `NewTracer(...)`.  
 
 ---
 
