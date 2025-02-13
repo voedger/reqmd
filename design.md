@@ -139,6 +139,35 @@ Explanation of each file:
 
 ---
 
+## FileURL calculation
+
+There should be a way to obtain a `FileURL` for a given `FileStructure`.
+
+Examples:
+
+- "https://github.com/voedger/voedger/blob/main/pkg/api/handler_test.go"
+- "https://gitlab.com/myorg/project/-/blob/main/src/core/processor.ts"
+
+There are two parts, RepoRootFolderURL and RelativePath:
+
+- "https://github.com/voedger/voedger/blob/main" - RepoRootFolderURL
+- "pkg/api/handler_test.go" - RelativePath
+
+Design overview:
+
+- RepoRootFolderURL is returned by IGit.RepoRootFolderURL() and stored in the FileStructure.RepoRootFolderURL by Scanner.Scan()
+- RelativePath is stored in FileStructure.RelativePath and calculated by Scanner.Scan() using IGit.GetRootFolder() and filepath.Rel()
+- FileURL for a given FileStructure is constructed by combining RepoRootFolderURL and RelativePath
+
+### RepoRootFolderURL
+
+- Data for IGit.RepoRootFolderURL() is obtained once during NewIGit()
+- RepoRootFolderURL is formed using the following parts:
+  - remote with name "origin" of the repository
+  - current branch name of the repository
+  - analyzing the provider (GitHub, GitLab) and adding "blob/main" or "-/blob/main", accordingly
+- If RepoRootFolderURL calculation fails NewIGit() fails
+
 ## How SOLID principles are applied
 
 1. **Single Responsibility Principle**  

@@ -80,7 +80,7 @@ type CoverageFootnote struct {
 // Coverer represents one coverage reference within a footnote, e.g., [folder/file:line:impl](URL)
 type Coverer struct {
 	CoverageLabel string // e.g., "folder/file.go:42:impl"
-	CoverageURL   string // e.g., full URL including commit hash
+	CoverageURL   string // full URL including commit hash
 	FileHash      string // git hash of the file specified in CoverageURL
 }
 
