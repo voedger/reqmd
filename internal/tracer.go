@@ -1,5 +1,7 @@
 package internal
 
+import "fmt"
+
 /*
 
 An exerpt from design.md
@@ -8,31 +10,52 @@ An exerpt from design.md
 
 - **Purpose**: Implements `ITracer`. This is the **facade** that orchestrates the scanning, analyzing, and applying phases.
 - **Key functions**:
-  - `NewTracer(scanner IScanner, analyzer IAnalyzer, applier IApplier) *Tracer`: constructor to inject dependencies.
-  - `Scan(paths []string) ([]FileStructure, []SyntaxError)`: orchestrates scanning by delegating to `IScanner`.
-  - `Analyze(files []FileStructure) ([]Action, []SemanticError)`: delegates to `IAnalyzer`.
-  - `Apply(actions []Action) error`: delegates to `IApplier`.
+  - `Trace()
 - **Responsibilities**:
   - High-level workflow control.
   - Enforce the steps: if syntax errors exist, abort; if semantic errors exist, abort; otherwise apply actions.
-  - Depend on **abstractions** (`IScanner`, `IAnalyzer`, `IApplier`), not on concrete implementations.
+  - Use injected interfaced (ref. interfaces.go) IScanner, IAnalyzer, IApplier to scan, analyze, and apply changes.
 
 */
 
-// func NewTracer(scanner IScanner, analyzer IAnalyzer, applier IApplier) ITracer {
-// 	return &tracer{
-// 		scanner:  scanner,
-// 		analyzer: analyzer,
-// 		applier:  applier,
-// 	}
-// }
+type tracer struct {
+	scanner  IScanner
+	analyzer IAnalyzer
+	applier  IApplier
+	reqPath  string
+	srcPaths []string
+}
 
-// type tracer struct {
-// 	scanner  IScanner
-// 	analyzer IAnalyzer
-// 	applier  IApplier
-// }
+func NewTracer(scanner IScanner, analyzer IAnalyzer, applier IApplier, reqPath string, srcPaths []string) ITracer {
+	return &tracer{
+		scanner:  scanner,
+		analyzer: analyzer,
+		applier:  applier,
+		reqPath:  reqPath,
+		srcPaths: srcPaths,
+	}
+}
 
-// func (t *tracer) Scan(paths []string) ([]FileStructure, []SyntaxError) {
+func (t *tracer) Trace() error {
+	// Scanning phase
+	files, syntaxErrs, err := t.scanner.Scan(t.reqPath, t.srcPaths)
+	if err != nil {
+		return err
+	}
+	if len(syntaxErrs) > 0 {
+		return fmt.Errorf("syntax errors detected: %v", syntaxErrs)
+	}
 
-// }
+	// Analyzing phase
+	actions, semanticErrs := t.analyzer.Analyze(files)
+	if len(semanticErrs) > 0 {
+		return fmt.Errorf("semantic errors detected: %v", semanticErrs)
+	}
+
+	// Applying phase
+	if err := t.applier.Apply(actions); err != nil {
+		return err
+	}
+
+	return nil
+}

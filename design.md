@@ -64,10 +64,7 @@ Explanation of each file:
 
 - **Purpose**: Implements `ITracer`. This is the **facade** that orchestrates the scanning, analyzing, and applying phases.  
 - **Key functions**:  
-  - `NewTracer(scanner IScanner, analyzer IAnalyzer, applier IApplier) *Tracer`: constructor to inject dependencies.  
-  - `Scan(paths []string) ([]FileStructure, []SyntaxError)`: orchestrates scanning by delegating to `IScanner`.  
-  - `Analyze(files []FileStructure) ([]Action, []SemanticError)`: delegates to `IAnalyzer`.  
-  - `Apply(actions []Action) error`: delegates to `IApplier`.  
+  - `Trace()
 - **Responsibilities**:  
   - High-level workflow control.  
   - Enforce the steps: if syntax errors exist, abort; if semantic errors exist, abort; otherwise apply actions.  

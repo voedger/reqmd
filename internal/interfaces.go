@@ -3,12 +3,7 @@ package internal
 // ITracer defines the high-level interface for tracing workflow.
 // It orchestrates scanning, analyzing, and applying changes.
 type ITracer interface {
-	// Scan: parse files under given paths to build a list of FileStructures and any syntax errors.
-	Scan(paths []string) ([]FileStructure, []SyntaxError)
-	// Analyze: perform semantic checks and prepare a set of Actions.
-	Analyze(files []FileStructure) ([]Action, []SemanticError)
-	// Apply: execute the prepared Actions (e.g., modify files, update footnotes).
-	Apply(actions []Action) error
+	Trace() error
 }
 
 // IScanner is responsible for scanning file paths and parsing them into FileStructures.
