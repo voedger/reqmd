@@ -40,20 +40,20 @@ Scan Markdown files and source repositories to generate coverage mapping:
 reqmd trace <path-to-markdowns> [<path-to-cloned-repo>...]
 ```
 
-#### Arguments:
+#### Arguments
 
 - `<path-to-markdowns>` (Required) – Directory containing Markdown files
 - `<path-to-cloned-repo>` (Optional) – Directory containing cloned source repositories
 
-### Example Workflow
+### Examples
 
-#### Markdown File (`requirements.md`)
+`requirements.md`
 
 ```markdown
 - APIv2 implementation shall provide a handler for POST requests. `~Post.handler~`coverage[^~Post.handler~].
 ```
 
-#### Source Code (`handler.go`)
+`handler.go`
 
 ```go
 // [~server.api.v2/Post.handler~impl]
@@ -62,42 +62,11 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-#### Generated Coverage Footnote
+Generated coverage footnote for `requirements.md`:
 
 ```markdown
-[^~Post.handler~]: `[~server.api.v2~impl]`[pkg/handler.go:42:impl](https://github.com/repo/pkg/handler.go#L42)
+[^~Post.handler~]: `[~server.api.v2~impl]`[pkg/http/handler.go:42:impl](https://github.com/repo/pkg/http/handler.go#L42)
 ```
-
-## How It Works
-
-The tool follows a three-stage pipeline architecture:
-
-1. **Scan** – Build the Domain Model
-   - Recursively discovers Markdown and source files
-   - Extracts requirement references from Markdown files
-   - Identifies coverage tags in source code
-   - Builds file structures with Git metadata
-   - Collects any syntax errors during parsing
-
-2. **Analyze** – Validate and Plan Changes
-   - Performs semantic validation checks
-   - Ensures requirement IDs are unique
-   - Determines which coverage footnotes need updates
-   - Identifies requirements needing coverage annotations
-   - Verifies file hashes against reqmdfiles.json
-   - Generates a list of required file modifications
-
-3. **Apply** – Update Files
-   - Updates or creates coverage footnotes
-   - Appends coverage annotations to requirements
-   - Maintains reqmdfiles.json for file tracking
-   - Ensures changes are made only when no errors exist
-
-The system is designed using SOLID principles:
-- Each component has a single, focused responsibility
-- New features can be added without modifying existing code
-- Components interact through well-defined interfaces
-- Dependencies are injected for flexible configuration
 
 ## Design
 
@@ -106,7 +75,6 @@ Refer to [design.md](design.md) for detailed design decisions and architecture.
 ## Requirements & Dependencies
 
 - Go 1.18+
-- Git (for hashing file contents using `git hash-object`)
 
 ## Contributing
 
