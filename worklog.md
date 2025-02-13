@@ -20,23 +20,23 @@ This file contains a brief log of the project design and construction.
   - Prompt: Suggest the architecture of the solution using SOLID principles. Don't generate any code yet. Provide a list of files, key functions, structures, and their responsibilities.
   - Generate models.go and interfaces.go
 - GitHub Copilot: Suggest mdparser implementation ❌
-- GitHub Copilot: Claude: Implement mdparser.go ✅
-- GitHub Copilot: Claude: Generate tests and testdata for mdparser.go
+- Copilot.Claude: Implement mdparser.go ✅
+- Copilot.Claude: Generate tests and testdata for mdparser.go
 - ChatGPT o1: Generate engaging README.md for this project ❌
 - ChatGPT 4o: Generate engaging README.md for this project ✅
 - NI: Improve mdparser_test.go
-- GitHub Copilot: Claude: Generate definition for requirementSiteRegex ❌
+- Copilot.Claude: Generate definition for requirementSiteRegex ❌
 - ChatGPT o3-mini-high: Generate definition (Go) for requirementSiteRegex, Generate test for this regexpt ✅ ([private chat](https://chatgpt.com/c/67aa31b3-85c8-800d-8237-686acd9ee06f))
-- GitHub Copilot: Claude: Generate syntax errors constructions. Texts should be similaer to requirements ("shall") ❌
+- Copilot.Claude: Generate syntax errors constructions. Texts should be similaer to requirements ("shall") ❌
 - ChatGPT o3-mini-high: Generate syntax errors constructors (e.g. NewErrPkgIdent). Error text should be similar to req text ("shall") ✅
 - NI: errors.go. 1h.
-- GitHub Copilot: Claude: Generate ParseCoverageFootnote ✅ (but do not work)
-- GitHub Copilot: Claude: Generate TestMdParser_ParseCoverageFootnote ❌
+- Copilot.Claude: Generate ParseCoverageFootnote ✅ (but do not work)
+- Copilot.Claude: Generate TestMdParser_ParseCoverageFootnote ❌
 - ChatGPT o3-mini-high: see Prompt_CoverageFootnoteRegex ✅
 - regexps :( 1h
-- GitHub Copilot: Claude: Rewrite the test using testify/assert👍
+- Copilot.Claude: Rewrite the test using testify/assert👍
   - Refactor TestMdParser_ParseMarkdownFile to use testify/assert for improved readability and consistency
-- GitHub Copilot: o3-mini
+- Copilot.o3-mini
   - Implement "Test coverage footnote" block, see below👍
   - Implement ParseSourceFile using same approach as for ParseMarkdownFile👍
   - Generate TestMdParser_ParseSourceFile using same approach as for TestMdParser_ParseMarkdownFile: ✅ but no test data
@@ -46,13 +46,13 @@ This file contains a brief log of the project design and construction.
 **Next**. Some tests work, so continue
 
 - If regexpt can match emojis: yes, TestRegexpEmojis
-- GitHub Copilot: Claude
+- Copilot.Claude
   - Align RequirementSiteRegex() and ParseRequirements() with ebnf notation. 👍 with minor flaws
   - Implement TestParseRequirements() using examples from TestRequirementSiteRegex().👍
   - Generate TestMdParser_ParseMarkdownFile_Errors() that parses #file:mdparser-errs.md and check all errors om this file.👍
   - mdparser.go shall identify pkgident, reqident and covstatus errors.👍🏆
 - Implement FoldersScanner
-  - GitHub Copilot: Claude: ❌ Much better prompt needed
+  - Copilot.Claude: ❌ Much better prompt needed
   - ChatGPT o1: : ❌ Much better prompt needed
   - ChatGPT o3-mini-high: : ❌ Much better prompt needed
   - Claude 3.5: Process folders breadth-first, tests 👍🏆
@@ -63,27 +63,29 @@ This file contains a brief log of the project design and construction.
 - Context for ParseMarkdownFile to provide `ReqmdfilesMap`
 - GitHub Copilot: 4o:Test_ParseCoverageFootnote: pass MarkdownContext with urls and check all results: works but had to be fixed
 - Implement Scan function
-  - GitHub Copilot: Claude:Server error: 500 Internal Server Error
-  - GitHub Copilot: o1: ❌ (very bad)
-  - GitHub Copilot: o3-mini: ❌
+  - Copilot.Claude:Server error: 500 Internal Server Error
+  - Copilot.o1: ❌ (very bad)
+  - Copilot.o3-mini: ❌
   - ChatGPT o3-minin-high: starting point
   - Claude 3.5: 👍🏆
-- GitHub Copilot: Claude
+- Copilot.Claude
   - Create a new function processSourceFile that takes all necessary parameters. Replace the anonymous function with a call to processSourceFile.👍
-  - Oops. Refactor func Scan(paths []string) => func Scan(reqPath string, srcPaths []string)👍
-    - Let me help you refactor the Scan function to accept separate requirement and source paths
-    - Change the signature of Scan function and simplify its implementation since paths are now properly separated.
+
+## tracer.go
+
+- Oops. Refactor func Scan(paths []string) => func Scan(reqPath string, srcPaths []string)👍
+  - Let me help you refactor the Scan function to accept separate requirement and source paths
+  - Change the signature of Scan function and simplify its implementation since paths are now properly separated.
+- Copilot.Claude  
   - Add parameters to NewTracer() to feed all interfaces and implement (t *tracer) Trace()❌
-  - Fix design
-  - Cleanup tracer.go
-  - #file:tracer.go : construct tracer struct that implements ITracer. ITracer shall be created by NewTracer(all necessary params) ITracer methods.❌
-- GitHub Copilot: o3-mini:: #file:tracer.go : construct tracer struct that implements ITracer. ITracer shall be created by NewTracer(all necessary params) ITracer methods.❌
+- Fix design
+- Cleanup tracer.go
+- Copilot.Claude: #file:tracer.go : construct tracer struct that implements ITracer. ITracer shall be created by NewTracer(all necessary params) ITracer methods.❌
+- Copilot.o3-mini:: #file:tracer.go : construct tracer struct that implements ITracer. ITracer shall be created by NewTracer(all necessary params) ITracer methods.❌
 - Change design
   - From: Depend on **abstractions** (`IScanner`, `IAnalyzer`, `IApplier`), not on concrete implementations.
   - To: Use injected interfaced (ref. interfaces.go) IScanner, IAnalyzer, IApplier to scan, analyze, and apply changes.
 - Copilot.Claude: #file:tracer.go : construct tracer struct that implements ITracer. ITracer shall be created by NewTracer(all necessary params) ITracer methods.👍
-
-## tracer.go
 
 ## Intermediate results
 
