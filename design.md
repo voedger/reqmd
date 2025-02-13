@@ -139,34 +139,48 @@ Explanation of each file:
 
 ---
 
-## FileURL calculation
+Let me help you rewrite this technical documentation with a more professional structure and better formatting.
 
-There should be a way to obtain a `FileURL` for a given `FileStructure`.
+## File URL construction
 
-Examples:
+The system needs to construct a `FileURL` for any given `FileStructure`. A `FileURL` consists of two main components:
 
-- "https://github.com/voedger/voedger/blob/main/pkg/api/handler_test.go"
-- "https://gitlab.com/myorg/project/-/blob/main/src/core/processor.ts"
+- Repository root folder URL (`RepoRootFolderURL`)
+- Relative path (`RelativePath`)
 
-There are two parts, RepoRootFolderURL and RelativePath:
+URL structure examples:
 
-- "https://github.com/voedger/voedger/blob/main" - RepoRootFolderURL
-- "pkg/api/handler_test.go" - RelativePath
+- GitHub: `https://github.com/voedger/voedger/blob/main/pkg/api/handler_test.go`
+  - `RepoRootFolderURL`: `https://github.com/voedger/voedger/blob/main`
+  - `RelativePath`: `pkg/api/handler_test.go`
+- GitLab: `https://gitlab.com/myorg/project/-/blob/main/src/core/processor.ts`
+  - `RepoRootFolderURL`: `https://gitlab.com/myorg/project/-/blob/main`
+  - `RelativePath`: `src/core/processor.ts`
 
-Design overview:
+RepoRootFolderURL construction
 
-- RepoRootFolderURL is returned by IGit.RepoRootFolderURL() and stored in the FileStructure.RepoRootFolderURL by Scanner.Scan()
-- RelativePath is stored in FileStructure.RelativePath and calculated by Scanner.Scan() using IGit.GetRootFolder() and filepath.Rel()
-- FileURL for a given FileStructure is constructed by combining RepoRootFolderURL and RelativePath
+- The system obtains data during `NewIGit()` initialization
+- The URL construction uses:
+  - Remote repository named "origin"
+  - Current branch name
+  - Git provider-specific path elements:
+    - GitHub: `blob/main`
+    - GitLab: `-/blob/main`
+- If URL calculation fails, `NewIGit()` initialization fails
 
-### RepoRootFolderURL
+RelativePath construction
 
-- Data for IGit.RepoRootFolderURL() is obtained once during NewIGit()
-- RepoRootFolderURL is formed using the following parts:
-  - remote with name "origin" of the repository
-  - current branch name of the repository
-  - analyzing the provider (GitHub, GitLab) and adding "blob/main" or "-/blob/main", accordingly
-- If RepoRootFolderURL calculation fails NewIGit() fails
+- `Scanner.Scan()` calculates the path using:
+  - `IGit.GetRootFolder()`
+  - `filepath.Rel()`
+- The result is stored in `FileStructure.RelativePath`
+
+FileURL assembly
+
+- `Scanner.Scan()` stores the `RepoRootFolderURL` in `FileStructure.RepoRootFolderURL`
+- Final `FileURL` is constructed by combining:
+  - `FileStructure.RepoRootFolderURL`
+  - `FileStructure.RelativePath`
 
 ## How SOLID principles are applied
 
