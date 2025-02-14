@@ -12,7 +12,10 @@ import (
 //go:embed version
 var version string
 
-var verbose bool
+var (
+	verbose    bool
+	extensions string
+)
 
 func main() {
 	if err := execRootCmd(os.Args, version); err != nil {
@@ -45,14 +48,14 @@ func prepareRootCmd(use, short string, args []string, ver string, cmds ...*cobra
 
 func newTraceCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "trace <path-to-markdowns> [source-paths...]",
+		Use:   "trace [-e extensions] <path-to-markdowns> [source-paths...]",
 		Short: "Trace requirements in markdown files",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			reqPath := args[0]
 			srcPaths := args[1:]
 
-			scanner := internal.NewScanner()
+			scanner := internal.NewScanner(extensions)
 			analyzer := internal.NewAnalyzer()
 			applier := internal.NewDummyApplier()
 
@@ -70,5 +73,6 @@ func newTraceCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output showing detailed processing information")
+	cmd.Flags().StringVarP(&extensions, "extensions", "e", "", "Comma-separated list of source file extensions to process (e.g., .go,.ts,.js)")
 	return cmd
 }

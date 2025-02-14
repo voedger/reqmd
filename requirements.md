@@ -217,7 +217,7 @@ The command operates in three phases:
 - `-v`:
   - Enable verbose output showing detailed processing information.
 - `-e`, `--extensions`:
-  - Optional. Comma-separated list of file extensions to process (e.g., ".go,.ts,.js").
+  - Optional. Comma-separated list of source file extensions to process (e.g., ".go,.ts,.js").
   - When omitted, defaults to:
     ```text
     .go,.js,.ts,.jsx,.tsx,.java,.cs,.cpp,.c,.h,.hpp,.py,.rb,.php,.rs,.kt,.scala,.m,.swift,.fs,.md,.sql,.vsql

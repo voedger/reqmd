@@ -17,21 +17,38 @@ const (
 	// Scanner configuration
 	defaultMaxWorkers      = 32
 	defaultMaxErrQueueSize = 1000
+
+	// Default source file extensions
+	defaultSourceExtensions = ".go,.js,.ts,.jsx,.tsx,.java,.cs,.cpp,.c,.h,.hpp,.py,.rb,.php,.rs,.kt,.scala,.m,.swift,.fs,.md,.sql,.vsql"
 )
 
-func NewScanner() IScanner {
-	return &scanner{}
+func NewScanner(extensions string) IScanner {
+	s := &scanner{
+		sourceExtensions: make(map[string]bool),
+	}
+	// Use provided extensions or fallback to defaults
+	exts := extensions
+	if exts == "" {
+		exts = defaultSourceExtensions
+	}
+	// Initialize extensions map
+	for _, ext := range strings.Split(exts, ",") {
+		s.sourceExtensions[strings.TrimSpace(ext)] = true
+	}
+	return s
 }
 
 func (s *scanner) Scan(reqPath string, srcPaths []string) ([]FileStructure, []SyntaxError, error) {
-	result, err := Scan(reqPath, srcPaths)
+	result, err := s.scan(reqPath, srcPaths)
 	if err != nil {
 		return nil, nil, err
 	}
 	return result.Files, result.SyntaxErrors, nil
 }
 
-type scanner struct{}
+type scanner struct {
+	sourceExtensions map[string]bool
+}
 
 type ScanResult struct {
 	Files        []FileStructure
@@ -45,11 +62,11 @@ type ScanResult struct {
 
 */
 
-func Scan(reqPath string, srcPaths []string) (*ScanResult, error) {
+func (s *scanner) scan(reqPath string, srcPaths []string) (*ScanResult, error) {
 	result := &ScanResult{}
 
 	// Scan markdown files
-	files, errs, err := ScanMarkdowns(reqPath)
+	files, errs, err := scanMarkdowns(reqPath)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +75,7 @@ func Scan(reqPath string, srcPaths []string) (*ScanResult, error) {
 
 	// Scan source files if any paths provided
 	if len(srcPaths) > 0 {
-		files, errs, err := ScanSources(srcPaths)
+		files, errs, err := s.scanSources(srcPaths)
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +86,7 @@ func Scan(reqPath string, srcPaths []string) (*ScanResult, error) {
 	return result, nil
 }
 
-func ScanMarkdowns(reqPath string) ([]FileStructure, []SyntaxError, error) {
+func scanMarkdowns(reqPath string) ([]FileStructure, []SyntaxError, error) {
 	var files []FileStructure
 	var syntaxErrors []SyntaxError
 
@@ -112,7 +129,7 @@ func ScanMarkdowns(reqPath string) ([]FileStructure, []SyntaxError, error) {
 	return files, syntaxErrors, nil
 }
 
-func ScanSources(srcPaths []string) ([]FileStructure, []SyntaxError, error) {
+func (s *scanner) scanSources(srcPaths []string) ([]FileStructure, []SyntaxError, error) {
 	var files []FileStructure
 	var syntaxErrors []SyntaxError
 
@@ -143,7 +160,7 @@ func ScanSources(srcPaths []string) ([]FileStructure, []SyntaxError, error) {
 	for srcPath, git := range gitRepos {
 		srcProcessor := func(folder string) (FileProcessor, error) {
 			return func(filePath string) error {
-				return processSourceFile(filePath, git, &files, &syntaxErrors)
+				return s.processSourceFile(filePath, git, &files, &syntaxErrors)
 			}, nil
 		}
 
@@ -155,8 +172,14 @@ func ScanSources(srcPaths []string) ([]FileStructure, []SyntaxError, error) {
 	return files, syntaxErrors, nil
 }
 
-func processSourceFile(filePath string, git IGit, files *[]FileStructure, syntaxErrors *[]SyntaxError) error {
+func (s *scanner) processSourceFile(filePath string, git IGit, files *[]FileStructure, syntaxErrors *[]SyntaxError) error {
 	if strings.Contains(filePath, gitFolderName) {
+		return nil
+	}
+
+	// Check if file extension is supported
+	ext := strings.ToLower(filepath.Ext(filePath))
+	if !s.sourceExtensions[ext] {
 		return nil
 	}
 

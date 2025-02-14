@@ -163,6 +163,9 @@ Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scann
 - Me: it is necessary to process only specified file extensions in sources
 - Copilot.Claude: I want to pass a list of source file extensions as argument s for reqmd trace, what you recommend?👍
 - Me: Update the requirements.md
+- Copilot.Claude: Fix design.md and scanner.go according to requirements.md (source file extensions)❌
+  - Cause: main.go is missed in context
+- Copilot.Claude: Fix design.md, main.go and scanner.go according to changes in requirements.md (source file extensions)👍
 
 ## Intermediate results
 
