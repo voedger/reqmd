@@ -135,8 +135,6 @@ Suggest a design for the implementation of the IAnalyzer that meets the fillowin
   - They are clearly meta-comments from an AI assistant and not part of the actual technical documentation. The content before and after these lines is legitimate design documentation and should remain in place.
 - Copilot.Claude: Review the design:👍
 
-----------------------------------------------------------
-
 ## Implement main(): instantiate all necessary components and run Tracer
 
 Yes, so far IApplier is not implemented, so we should prepare a dummy implementation, but the rest can be tested already.
@@ -157,6 +155,13 @@ Prompt
 ```text
 Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scanner.go #applier.go #tracer.go
 ```
+
+----------------------------------------------------------
+
+## Run tests and make sure that the scanner works properly
+
+- Me: it is necessary to process only specified file extensions in sources
+- Copilot.Claude: 
 
 ## Intermediate results
 
