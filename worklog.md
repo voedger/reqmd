@@ -143,7 +143,7 @@ Yes, so far IApplier is not implemented, so we should prepare a dummy implementa
 
 - Copilot.Claude: Prepare a dummy implementation of IApplier in applier.go.
   - Failed first, had to add more to context☝️
-- Copilot.Claude: Rewrite like git documentation, use unordered for identation, do not use spaces.🏆
+- Copilot.Claude: Rewrite like git documentation, use unordered lists for identation, do not use spaces.🏆
   - Context: requirements.md, `### Tracing` section
 - Me: Oops, analyzer is missed.
 - Copilot.Claude: Implement dummy analyzer in analyzer.go. Ref. #file:interfaces.go , #file:models.go #file:scanner.go #file:applier.go #file:tracer.go👍
