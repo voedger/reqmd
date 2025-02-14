@@ -135,7 +135,6 @@ Suggest a design for the implementation of the IAnalyzer that meets the fillowin
   - They are clearly meta-comments from an AI assistant and not part of the actual technical documentation. The content before and after these lines is legitimate design documentation and should remain in place.
 - Copilot.Claude: Review the design:👍
 
-
 ## Intermediate results
 
 ### Prompt_CoverageFootnoteRegex
