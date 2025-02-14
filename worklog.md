@@ -145,6 +145,16 @@ Yes, so far IApplier is not implemented, so we should prepare a dummy implementa
   - Failed first, had to add more to context☝️
 - Copilot.Claude: Rewrite like git documentation, use unordered for identation, do not use spaces.🏆
   - Context: requirements.md, `### Tracing` section
+- Me: Oops, analyzer is missed.
+- Copilot.Claude: Implement dummy analyzer in analyzer.go. Ref. #file:interfaces.go , #file:models.go #file:scanner.go #file:applier.go #file:tracer.go👍
+- Copilot.Claude
+- Copilot.Claude: Is it clear how to implement ### Tracing secction from the #file:requirements.md ? Ref. #interfaces.go  ,#models.go  #scanner.go  #applier.go  #tracer.go👍
+
+Prompt
+
+```text
+Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scanner.go #applier.go #tracer.go
+```
 
 ## Intermediate results
 
@@ -185,3 +195,8 @@ line := "[^~REQ002~]: [~com.example.basic~impl][folder1/filename1:line1:impl](ht
 ## Analysis
 
 - Presumably: ChatGPT-4 produces better quality text content
+
+### Cool prompts
+
+- Copilot.Claude: Is it clear how to implement ### Tracing secction from the #file:requirements.md ? Ref. #interfaces.go  ,#models.go  #scanner.go  #applier.go  #tracer.go
+- Copilot.Claude: Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scanner.go #applier.go #tracer.

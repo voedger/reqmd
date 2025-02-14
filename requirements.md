@@ -238,9 +238,7 @@ The command operates in three phases:
 #### EXIT STATUS
 
 - 0: Success
-- 1: Syntax errors found during scan phase
-- 2: Semantic errors found during analysis phase
-- >2: Other errors
+- 1: Syntax/Semantic errors found during scan phase or other errors have occurred
 
 #### EXAMPLES
 
