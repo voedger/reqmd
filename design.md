@@ -181,8 +181,6 @@ Explanation of each file:
 
 ---
 
-Let me help you rewrite this technical documentation with a more professional structure and better formatting.
-
 ## File URL construction
 
 The system needs to construct a `FileURL` for any given `FileStructure`. A `FileURL` consists of two main components:

@@ -138,6 +138,13 @@ Implement IAnalyzer. Modify Action type if needed. For each resposibility of the
   - Me: Modify design
 - Copilot.Claude: Based on your answers, I'll propose the implementation. We need to modify several files🏆
 
+## cleanup
+
+- Copilot.Claude: Identify LLMs notes that should be removed👍
+  - The following line appears twice in the document and should be removed: Let me help you rewrite this technical documentation with a more professional structure and better formatting.
+  - They are clearly meta-comments from an AI assistant and not part of the actual technical documentation. The content before and after these lines is legitimate design documentation and should remain in place.
+
+
 ## Intermediate results
 
 ### Prompt_CoverageFootnoteRegex
