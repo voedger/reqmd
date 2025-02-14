@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 	"os"
@@ -8,37 +9,44 @@ import (
 	"github.com/voedger/reqmd/internal"
 )
 
+//go:embed version
+var version string
+
 func main() {
-	// Set up the trace subcommand
-	traceCmd := flag.NewFlagSet("trace", flag.ExitOnError)
-	verbose := traceCmd.Bool("v", false, "Enable verbose output showing detailed processing information")
-
-	// Validate command
-	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "Expected 'trace' subcommand\n")
-		os.Exit(1)
-	}
-
-	switch os.Args[1] {
-	case "trace":
-		handleTrace(traceCmd, os.Args[2:], verbose)
-	default:
-		fmt.Fprintf(os.Stderr, "Unknown command %q\n", os.Args[1])
+	if err := execRootCmd(os.Args, version); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func handleTrace(traceCmd *flag.FlagSet, args []string, verbose *bool) {
+func execRootCmd(args []string, _ string) error {
+	// Set up the trace subcommand
+	traceCmd := flag.NewFlagSet("trace", flag.ExitOnError)
+	verbose := traceCmd.Bool("v", false, "Enable verbose output showing detailed processing information")
+
+
+	// Validate command
+	if len(args) < 2 {
+		return fmt.Errorf("Expected 'trace' subcommand")
+	}
+
+	switch args[1] {
+	case "trace":
+		return handleTrace(traceCmd, args[2:], verbose)
+	default:
+		return fmt.Errorf("Unknown command %q", args[1])
+	}
+}
+
+func handleTrace(traceCmd *flag.FlagSet, args []string, verbose *bool) error {
 	err := traceCmd.Parse(args)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error parsing trace command: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("error parsing trace command: %v", err)
 	}
 
 	// Validate required path argument
 	if traceCmd.NArg() < 1 {
-		fmt.Fprintf(os.Stderr, "Required <path-to-markdowns> argument missing\n")
-		os.Exit(1)
+		return fmt.Errorf("required <path-to-markdowns> argument missing")
 	}
 
 	// Get paths
@@ -53,14 +61,15 @@ func handleTrace(traceCmd *flag.FlagSet, args []string, verbose *bool) {
 	// Create and run tracer
 	tracer := internal.NewTracer(scanner, analyzer, applier, reqPath, srcPaths)
 
-	// Execute trace operation and handle exit codes per requirements
+	// Execute trace operation
 	if err := tracer.Trace(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1) // Syntax errors during scan
+		return fmt.Errorf("error: %v", err)
 	}
 
 	// Success
 	if *verbose {
 		fmt.Println("Processing completed successfully")
 	}
+
+	return nil
 }
