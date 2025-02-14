@@ -149,6 +149,8 @@ Yes, so far IApplier is not implemented, so we should prepare a dummy implementa
 - Copilot.Claude: Implement dummy analyzer in analyzer.go. Ref. #file:interfaces.go , #file:models.go #file:scanner.go #file:applier.go #file:tracer.go👍
 - Copilot.Claude
 - Copilot.Claude: Is it clear how to implement ### Tracing secction from the #file:requirements.md ? Ref. #interfaces.go  ,#models.go  #scanner.go  #applier.go  #tracer.go👍
+- Me: Apply changes to main.go
+- Copilot.Claude: rewrite main.go logic using cobra👍
 
 Prompt
 
