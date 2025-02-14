@@ -11,13 +11,13 @@ This file contains a brief log of the project design and construction.
 
 **Attempt 2**. ChatGPT o3-mini-high. [private chat](https://chatgpt.com/c/67a90782-3644-800d-a619-956119cc2b0c)
 
-- Suggest the architecture of the solution using SOLID principles. Don't generate all the code yet. Provide a list of files, key functions, structures, and their responsibilities.
+- Propose a solution architecture using SOLID principles.. Don't generate all the code yet. Provide a list of files, key functions, structures, and their responsibilities.
 - Generate internal/models.go
 - Generate internal/interfaces.go
   - Fix package names
 - Note: FileStructure was not defined
 - ChatGPT o1:
-  - Prompt: Suggest the architecture of the solution using SOLID principles. Don't generate any code yet. Provide a list of files, key functions, structures, and their responsibilities.
+  - Prompt: Propose a solution architecture using SOLID principles. Don't generate any code yet. Provide a list of files, key functions, structures, and their responsibilities.
   - Generate models.go and interfaces.go
 - GitHub Copilot: Suggest mdparser implementation ❌
 - Copilot.Claude: Implement mdparser.go ✅
@@ -93,7 +93,7 @@ This file contains a brief log of the project design and construction.
 - ChatGPT [o1](https://chatgpt.com/c/67ae5d38-8a38-800d-94b7-4419f51c6d28): Prompt1.❌
 - Claude: [Prompt1](https://claude.ai/chat/0448fe13-c6ec-4271-860b-290e13ae7c36).👍 Way better, but prompt should be amended.
 
-#### Prompt1
+Prompt1
 
 ```text
 Suggest a design for the implementation of the IAnalyzer that meets the fillowing requirements. Modify Action type if needed. Follow SOLID principles.
@@ -104,36 +104,26 @@ Suggest a design for the implementation of the IAnalyzer that meets the fillowin
     - Construct the list of Action items describing needed transformations.
 ```
 
-#### Prompt2
-
-```text
-Implement IAnalyzer. Modify Action type if needed. For each resposibility of the Analyze() method create a separate function.
-
-    - Determine which coverage footnotes need to be updated or created.  
-    - Identify which bare requirement names need coverage annotations appended.  
-    - Compare file hashes in reqmdfiles.json to actual git hash-object results to see if coverage references are stale.  
-    - Construct the list of Action items describing needed transformations.
-```
-
 ## oops, URL calculation is missing (+2h)
 
 - There should be a way to obtain FileURL for a given FileStructure
-- Ref. design.md, FileURL calculation
+- Me: Edit design.md, FileURL construction
 
-- Copilot.Claude: Is it clear how to implement ## FileURL calculation from #file:design.md ? Ask questions if needed.🏆
-  - Answer: Remote URL: How do we determine the repository's remote URL (e.g., "https://github.com/voedger/voedger")? This seems necessary to construct the RepoRootFolderURL. Should this be obtained through the Git interface?
-  - Branch Name: The examples show URLs with "/blob/main/". Should we: Hardcode "main" as the branch name? Get it from the current branch? Make it configurable?
-  - Platform Detection: The examples show different URL formats: GitHub: ".../blob/..." GitLab: ".../-/blob/..." How should we detect which platform format to use?
-  - Branch Name in URLs The design has conflicting information:🏆
-    - Git provider-specific path elements:
-      - GitHub: `blob/main`
-      - GitLab: `-/blob/main`
-    - But also mentions: Actual current branch name
+- Copilot.Claude: Is it clear how to implement ## FileURL construction from #file:design.md ? Ask questions if needed.🏆
+  - Answer:
+    - Remote URL: How do we determine the repository's remote URL (e.g., "https://github.com/voedger/voedger")? This seems necessary to construct the RepoRootFolderURL. Should this be obtained through the Git interface?
+    - Branch Name: The examples show URLs with "/blob/main/". Should we: Hardcode "main" as the branch name? Get it from the current branch? Make it configurable?
+    - Platform Detection: The examples show different URL formats: GitHub: ".../blob/..." GitLab: ".../-/blob/..." How should we detect which platform format to use?
+    - Branch Name in URLs The design has conflicting information:🏆
+      - Git provider-specific path elements:
+        - GitHub: `blob/main`
+        - GitLab: `-/blob/main`
+      - But also mentions: Actual current branch name
 
 - Me: Prepare design of the ## File URL construction
 - Claude: Rewrite this part professionally. Keep ALL names intact.👍
 
-- loop
+- loop ~10 times
   - Copilot.Claude: Is it clear how to implement ## FileURL construction from #file:design.md ? Ask quiestions if needed
   - Me: Modify design
 - Copilot.Claude: Based on your answers, I'll propose the implementation. We need to modify several files🏆
@@ -143,6 +133,7 @@ Implement IAnalyzer. Modify Action type if needed. For each resposibility of the
 - Copilot.Claude: Identify LLMs notes that should be removed👍
   - The following line appears twice in the document and should be removed: Let me help you rewrite this technical documentation with a more professional structure and better formatting.
   - They are clearly meta-comments from an AI assistant and not part of the actual technical documentation. The content before and after these lines is legitimate design documentation and should remain in place.
+- Copilot.Claude: Review the design:👍
 
 
 ## Intermediate results
