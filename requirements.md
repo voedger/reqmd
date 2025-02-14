@@ -228,9 +228,11 @@ The command operates in three phases:
 
 - `<path-to-markdowns>`:
   - Required. Directory containing markdown requirement files to process.
+  - Only files that are tracked by git shall be processed.
 
 - `<path-to-sources>`:
   - Optional. One or more paths to local git repository clones containing source code with coverage tags. When omitted, only markdown parsing is performed.
+  - Only files that are tracked by git shall be processed.
 
 #### OUTPUT FILES
 
@@ -301,10 +303,10 @@ Phases:
   - Parse all InputFiles and generate FileStructures and the list of SyntaxErrors.
   - InputFiles shall be processed per-subfolder by the goroutines pool.
 - Analyze
-  - If there are SyntaxErrors the processing is stopped
+  - Preconditions: there are no SyntaxErrors
   - Parse all FileStructures and generate list of SemanticErrors and list of Actions.
 - Apply
-  - If there are SemanticErrors the processing is stopped
+  - Preconditions: there are no SemanticErrors
   - Apply all Actions to the InputFiles.
 
 ## Construction requirements

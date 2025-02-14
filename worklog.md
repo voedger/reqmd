@@ -156,8 +156,6 @@ Prompt
 Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scanner.go #applier.go #tracer.go
 ```
 
-----------------------------------------------------------
-
 ## Run tests and make sure that the scanner works properly
 
 - Me: it is necessary to process only specified file extensions in sources
@@ -166,6 +164,10 @@ Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scann
 - Copilot.Claude: Fix design.md and scanner.go according to requirements.md (source file extensions)❌
   - Cause: main.go is missed in context
 - Copilot.Claude: Fix design.md, main.go and scanner.go according to changes in requirements.md (source file extensions)👍
+
+## Only files that are tracked by git shall be processed
+
+--------------------
 
 ## Intermediate results
 
