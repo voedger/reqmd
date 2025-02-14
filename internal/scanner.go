@@ -19,23 +19,6 @@ const (
 	defaultMaxErrQueueSize = 1000
 )
 
-/*
-
-An exerpt from design.md
-
-- **Purpose**: Implements `IScanner`.
-- **Key functions**:
-  - `Scan`:
-    - Recursively discover Markdown and source files.
-    - Delegate parsing to specialized components (`mdparser.go`, `srccoverparser.go`).
-    - Build a unified list of `FileStructure` objects for each file.
-    - Collect any `SyntaxError`s.
-- **Responsibilities**:
-  - Single responsibility: collecting raw data (files, coverage tags, requirement references) and building the domain model.
-  - Potential concurrency (goroutines) for scanning subfolders.
-
-*/
-
 func NewScanner() IScanner {
 	return &scanner{}
 }
@@ -57,19 +40,8 @@ type ScanResult struct {
 
 /*
 
-- First path is processed as path to requirement files
-- Other paths are processed as path to source files using
-- Paths are processes sequentially by FoldersScanner
-
-Requirement files
-- Uses FoldersScanner and ParseMarkdownFile
-- FolderProcessor parses reqmdfiles.json (if exists) and passes to FileProcessor
-
-Source files
-- git repository shall be found in Path or parent directories
-- IGit is instantiated using NewIGit and a folder that contains .git folder
-- IGit should be passed to FolderProcessor and all FileProcessors
-- Uses FoldersScanner and ParseSourceFile
+- Scan accepts list of source file extensions as a parameter (besides other parameters) to allow scanning only specific types of source files
+- If it is empty, default set of the source file extensions is used that covers all popular programming languages
 
 */
 

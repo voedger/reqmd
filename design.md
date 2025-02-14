@@ -121,7 +121,7 @@ Explanation of each file:
     - Delegate parsing to specialized components (`mdparser.go`, `srccoverparser.go`).
     - Build a unified list of `FileStructure` objects for each file.
       - Files without Requirements or CoverageTags are skipped.
-    - Collect any `SyntaxError`s.  
+    - Collect any `SyntaxError`s.
 - **Responsibilities**:  
   - Single responsibility: collecting raw data (files, coverage tags, requirement references) and building the domain model.  
   - Potential concurrency (goroutines) for scanning subfolders.  
