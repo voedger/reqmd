@@ -135,6 +135,15 @@ Suggest a design for the implementation of the IAnalyzer that meets the fillowin
   - They are clearly meta-comments from an AI assistant and not part of the actual technical documentation. The content before and after these lines is legitimate design documentation and should remain in place.
 - Copilot.Claude: Review the design:👍
 
+----------------------------------------------------------
+
+## Implement main(): instantiate all necessary components and run Tracer
+
+Yes, so far IApplier is not implemented, so we should prepare a dummy implementation, but the rest can be tested already.
+
+- Copilot.Claude: Prepare a dummy implementation of IApplier in applier.go.
+  - Failed first, had to add more to context☝️
+
 ## Intermediate results
 
 ### Prompt_CoverageFootnoteRegex
