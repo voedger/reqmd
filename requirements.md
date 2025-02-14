@@ -196,27 +196,72 @@ go install github.com/voedger/reqmd@latest
 
 ### Tracing
 
-Requirement: The tool shall support tracing of requirements and generation of coverage mapping.  
-Command:
+#### SYNOPSIS
 
 ```bash
-reqmd trace <path-to-markdowns> [<path-to-sources>...]
+reqmd trace [-v] <path-to-markdowns> [<path-to-sources>...]
 ```
 
-Where `<path-to-markdowns>` and `<path-to-sources>` are the InputFiles.
+#### DESCRIPTION
 
-Arguments:
+Analyzes markdown requirement files and their corresponding source code implementation to establish traceability links. The command processes requirement identifiers in markdown files and maps them to their implementation coverage tags in source code.
 
-- `<path-to-markdowns>` (Required): Directory containing the markdown files to be processed.
-- `<path-to-sources>` (Optional): Path to a local clone of the repository for coverage analysis.
+The command operates in three phases:
 
-Upon execution, the tool shall:
+1. Scans input files and builds file structures
+2. Analyzes requirements and determines needed changes
+3. Applies changes to update coverage information
 
-- Create or update `reqmdfiles.json` in the `<path-to-markdowns>` and its subdirectories
-  - `reqmdfiles.json` is created/updated only if markdown files are found in the directory and they contain FileURLs.
-- Convert all BareRequirementNames into corresponding RequirementSites by appending the appropriate CoverageAnnotation.
-- Generate/Update CoverageFootnotes for each RequirementSite that possesses matching CoverageTags.
-  - Coveres are updated only if the file addressed by the correspoding FileURL has hash different from the one in `reqmdfiles.json`.
+#### OPTIONS
+
+- `-v`:
+  - Enable verbose output showing detailed processing information.
+
+#### ARGUMENTS
+
+- `<path-to-markdowns>`:
+  - Required. Directory containing markdown requirement files to process.
+
+- `<path-to-sources>`:
+  - Optional. One or more paths to local git repository clones containing source code with coverage tags. When omitted, only markdown parsing is performed.
+
+#### OUTPUT FILES
+
+- `reqmdfiles.json`:
+  - Created or updated in `<path-to-markdowns>` directories when FileURLs are present. Maps FileURLs to their git hashes.
+
+- Markdown files:
+  - Updated with:
+  - Coverage annotations for requirement sites
+  - Coverage footnotes linking requirements to implementations
+
+#### EXIT STATUS
+
+- 0: Success
+- 1: Syntax errors found during scan phase
+- 2: Semantic errors found during analysis phase
+- >2: Other errors
+
+#### EXAMPLES
+
+Process markdown files only:
+
+```bash
+reqmd trace docs/requirements/
+
+```
+
+Process markdown with coverage from multiple source directories:
+
+```bash
+reqmd trace docs/requirements/ src/backend/ src/frontend/
+```
+
+Process with verbose output:
+
+```bash
+reqmd trace -v docs/requirements/ src/impl/
+```
 
 #### Processing requirements
 
