@@ -199,7 +199,7 @@ go install github.com/voedger/reqmd@latest
 #### SYNOPSIS
 
 ```bash
-reqmd trace [-v] <path-to-markdowns> [<path-to-sources>...]
+reqmd trace [-v] [-e <extensions>] <path-to-markdowns> [<path-to-sources>...]
 ```
 
 #### DESCRIPTION
@@ -216,6 +216,13 @@ The command operates in three phases:
 
 - `-v`:
   - Enable verbose output showing detailed processing information.
+- `-e`, `--extensions`:
+  - Optional. Comma-separated list of file extensions to process (e.g., ".go,.ts,.js").
+  - When omitted, defaults to:
+    ```text
+    .go,.js,.ts,.jsx,.tsx,.java,.cs,.cpp,.c,.h,.hpp,.py,.rb,.php,.rs,.kt,.scala,.m,.swift,.fs,.md,.sql,.vsql
+    ```
+  - Extensions must include the dot prefix.  
 
 #### ARGUMENTS
 
@@ -246,7 +253,11 @@ Process markdown files only:
 
 ```bash
 reqmd trace docs/requirements/
+```
 
+Process only Go and TypeScript files:
+```bash
+reqmd trace -e .go,.ts docs/requirements/ src/backend/
 ```
 
 Process markdown with coverage from multiple source directories:
