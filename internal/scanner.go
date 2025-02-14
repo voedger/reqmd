@@ -123,7 +123,7 @@ func ScanMarkdowns(reqPath string) ([]FileStructure, []SyntaxError, error) {
 				return err
 			}
 
-			if structure != nil {
+			if structure != nil && len(structure.Requirements) > 0 {
 				files = append(files, *structure)
 			}
 			if len(errs) > 0 {
@@ -193,7 +193,7 @@ func processSourceFile(filePath string, git IGit, files *[]FileStructure, syntax
 		return err
 	}
 
-	if structure != nil {
+	if structure != nil && len(structure.CoverageTags) > 0 {
 		// Get relative path for the file
 		relPath, err := filepath.Rel(git.PathToRoot(), filePath)
 		if err != nil {
