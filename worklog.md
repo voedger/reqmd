@@ -167,6 +167,7 @@ Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scann
 
 ## Format error output
 
+- Me: Similar to Go compiler output
 
 ## ??? Huge source files are avoided
 
