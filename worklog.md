@@ -71,7 +71,9 @@ This file contains a brief log of the project design and construction.
 - Copilot.Claude
   - Create a new function processSourceFile that takes all necessary parameters. Replace the anonymous function with a call to processSourceFile.👍
 
-## tracer.go
+## Tasks
+
+### tracer.go
 
 - Oops. Refactor func Scan(paths []string) => func Scan(reqPath string, srcPaths []string)👍
   - Let me help you refactor the Scan function to accept separate requirement and source paths
@@ -87,7 +89,7 @@ This file contains a brief log of the project design and construction.
   - To: Use injected interfaced (ref. interfaces.go) IScanner, IAnalyzer, IApplier to scan, analyze, and apply changes.
 - Copilot.Claude: #file:tracer.go : construct tracer struct that implements ITracer. ITracer shall be created by NewTracer(all necessary params) ITracer methods.👍
 
-### tracer.go design
+#### tracer.go design
 
 - ChatGPT [o3-mini-high](https://chatgpt.com/g/g-p-675ed7110c588191ae3694ae50086ad0-reqmd/c/67ae5cd3-ece4-800d-b811-bb40e0c32795): Prompt1.❌
 - ChatGPT [o1](https://chatgpt.com/c/67ae5d38-8a38-800d-94b7-4419f51c6d28): Prompt1.❌
@@ -104,7 +106,7 @@ Suggest a design for the implementation of the IAnalyzer that meets the fillowin
     - Construct the list of Action items describing needed transformations.
 ```
 
-## oops, URL calculation is missing (+2h)
+### oops, URL calculation is missing (+2h)
 
 - There should be a way to obtain FileURL for a given FileStructure
 - Me: Edit design.md, FileURL construction
@@ -128,14 +130,14 @@ Suggest a design for the implementation of the IAnalyzer that meets the fillowin
   - Me: Modify design
 - Copilot.Claude: Based on your answers, I'll propose the implementation. We need to modify several files🏆
 
-## cleanup
+### cleanup
 
 - Copilot.Claude: Identify LLMs notes that should be removed👍
   - The following line appears twice in the document and should be removed: Let me help you rewrite this technical documentation with a more professional structure and better formatting.
   - They are clearly meta-comments from an AI assistant and not part of the actual technical documentation. The content before and after these lines is legitimate design documentation and should remain in place.
 - Copilot.Claude: Review the design:👍
 
-## Implement main(): instantiate all necessary components and run Tracer
+### Implement main(): instantiate all necessary components and run Tracer
 
 Yes, so far IApplier is not implemented, so we should prepare a dummy implementation, but the rest can be tested already.
 
@@ -156,7 +158,7 @@ Prompt
 Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scanner.go #applier.go #tracer.go
 ```
 
-## Run tests and make sure that the scanner works properly
+### Run tests and make sure that the scanner works properly
 
 - Me: it is necessary to process only specified file extensions in sources
 - Copilot.Claude: I want to pass a list of source file extensions as argument s for reqmd trace, what you recommend?👍
@@ -165,11 +167,7 @@ Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scann
   - Cause: main.go is missed in context
 - Copilot.Claude: Fix design.md, main.go and scanner.go according to changes in requirements.md (source file extensions)👍
 
-## Format error output
-
-- Me: Similar to Go compiler output
-
-## Large source files are avoided
+### Large source files are avoided
 
 Input files that are larger than 128KB are not processed.
 
