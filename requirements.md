@@ -51,7 +51,11 @@ Markdown body is a sequence of different text elements. The tool processes:
     - UncoveredAnnotatedRequirementSite
 - CoverageFootnote
 
-Only one RequirementSite is allowed per line.
+Constraints:
+
+- Only one RequirementSite is allowed per line.
+- RequirementSite are not processed inside code blocks.
+- Node that code block can have identation specified by spaces or a tab.
 
 ```ebnf
 RequirementSite = RequirementSiteID [( "covered" | "uncvrd" ) CoverageFootnoteReference] ("✅" | "❓")
@@ -273,30 +277,23 @@ Process with verbose output:
 reqmd trace -v docs/requirements/ src/impl/
 ```
 
-#### Processing requirements
+## Processing requirements
 
-Concepts:
+### Syntax errors
 
-- Action:
-  - Type: Add, Update, Delete
-  - What: reqmdfiles.json, RequirementSite, CoverageFootnote
-  - FilePath: path of the file where the action is performed
-  - Line: line number where the action is performed
-  - Data: New data
-- SyntaxError:
-  - See [internal/errors.go](internal/errors.go)
-  - RequirementName shall be an identifier
-  - RequirementSiteID shall be equals in the RequirementSite and CoverageFootnote
-  - CoverageStatusWord shall be "covered" or "uncvrd"
-  - // TODO One RequirementSite per line
-- SemanticError:
-  - RequirementID shall be unique within all MarkdownFiles
-  - PackageID shall be defined if there are RequirementSites
-- FileStructure:
-  - Path
-  - Merge of the MarkdownFile and InputFile properties
+- See [internal/errors.go](internal/errors.go)
+- RequirementName shall be an identifier
+- Opening fence found without matching closing fence
+  - Message includes line information about the opening fence
 
-Phases:
+### Semantic error
+
+- Duplicate RequirementID detected
+  - Message should include information about the files where the duplicates are found.
+- Markdown file with RequirementSites shall define PackageID
+  - Message inclides line information about the first RequirementSite
+
+### Phases
 
 - Scan
   - Parse all InputFiles and generate FileStructures and the list of SyntaxErrors.

@@ -11,32 +11,45 @@ func (a *analyzer) Analyze(files []FileStructure) ([]Action, []ProcessingError) 
 	var errors []ProcessingError
 
 	// Track requirement IDs to check for duplicates
-	seenReqs := make(map[string]string) // reqID -> filePath
+	type reqLocation struct {
+		filePath string
+		line     int
+	}
+	seenReqs := make(map[string]reqLocation) // reqID -> location
 
 	for _, file := range files {
 		if file.Type != FileTypeMarkdown {
 			continue
 		}
 
+		// Check if file has requirements but no PackageID
+		if len(file.Requirements) > 0 && file.PackageID == "" {
+			errors = append(errors, NewErrMissingPackageIDWithReqs(file.Path, file.Requirements[0].Line))
+			continue
+		}
+
 		// Check for duplicate requirements
 		for _, req := range file.Requirements {
-			if existingFile, exists := seenReqs[req.RequirementName]; exists {
-				errors = append(errors, ProcessingError{
-					FilePath: file.Path,
-					Message:  "Duplicate requirement ID '" + req.RequirementName + "' also found in " + existingFile,
-				})
+			reqID := file.PackageID + "/" + req.RequirementName
+			if existing, exists := seenReqs[reqID]; exists {
+				errors = append(errors, NewErrDuplicateRequirementID(
+					existing.filePath, existing.line,
+					file.Path, req.Line,
+					reqID))
 				continue
 			}
-			seenReqs[req.RequirementName] = file.Path
+			seenReqs[reqID] = reqLocation{
+				filePath: file.Path,
+				line:     req.Line,
+			}
 
 			// For bare requirements without coverage annotation
 			if !req.IsAnnotated {
-				// Generate ActionAnnotate
 				action := Action{
 					Type:       ActionAnnotate,
 					FileStruct: &file,
 					Line:       req.Line,
-					Data:       req.RequirementName, // Add uncovered status
+					Data:       reqID,
 				}
 				actions = append(actions, action)
 				if IsVerbose {

@@ -184,6 +184,16 @@ Input files that are larger than 128KB are not processed.
   - See the response in the Intermediate results section
 - Copilot.Claude: Cover NewErrMultiSites by new TestParseRequirements_errors🏆
 
+### Error: Opening fence found without matching closing fence
+
+- Copilot.Claude: Implement "Opening fence found without matching closing fence"
+  - Message includes line information about the opening fence🏆
+  - See the response in the Intermediate results section
+
+### Test "unmatchedfence" in TestMdParser_ParseMarkdownFile_Errors
+
+- Copilot.Claude: Test "unmatchedfence" in TestMdParser_ParseMarkdownFile_Errors
+  
 ### ActionAnnotate
 
 - Copilot.Claude: Generate Action.String() method: OK
@@ -400,6 +410,85 @@ I have some questions about implementing ActionAnnotate in applier.go:
 
 Once these points are clarified, I can propose a specific implementation for the applier.go file.
 
+### Response: Implement  "Opening fence found without matching closing fence"
+
+I'll help you implement the unmatched code block fence error. Here's the solution:
+
+1. First, we'll add a new error type in errors.go
+2. Then modify mdparser.go to track code block fences and detect unmatched ones
+
+#### [errors.go](file:///c%3A/projects/main/reqmd/internal/errors.go)
+
+Add a new error function for unmatched code block fences.
+
+```go
+// ...existing code...
+
+// Unmatched code block fence detected
+func NewErrUnmatchedFence(filePath string, openFenceLine int) ProcessingError {
+	return ProcessingError{
+		Code:     "unmatchedfence",
+		FilePath: filePath,
+		Line:     openFenceLine,
+		Message:  fmt.Sprintf("Opening code block fence at line %d has no matching closing fence", openFenceLine),
+	}
+}
+```
+
+#### [mdparser.go](file:///c%3A/projects/main/reqmd/internal/mdparser.go)
+
+Modify ParseMarkdownFile to track code block fence positions and report unmatched fences.
+
+```go
+
+
+Made changes.
+
+// ...existing code...
+
+func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, []ProcessingError, error) {
+	// ...existing code until inCodeBlock definition...
+
+	var lastFenceLine int // Track the line number of the last opening fence
+
+	for scanner.Scan() {
+		lineNum++
+		line := scanner.Text()
+
+		// Check for code block markers, handling indentation
+		if isCodeBlockMarker(line) {
+			if !inCodeBlock {
+				lastFenceLine = lineNum
+				inCodeBlock = true
+			} else {
+				inCodeBlock = false
+			}
+			continue
+		}
+
+		// ...existing code...
+	}
+
+	// Check for unmatched fence at end of file
+	if inCodeBlock {
+		errors = append(errors, NewErrUnmatchedFence(filePath, lastFenceLine))
+	}
+
+	// ...rest of existing code...
+}
+```
+
+This implementation:
+
+1. Tracks the line number of opening code block fences
+2. Maintains the state of being inside/outside a code block
+3. If we reach the end of the file while still inside a code block (inCodeBlock is true), reports an error with the line number of the unmatched opening fence
+4. Uses a new error type that provides clear information about where the unmatched fence was found
+
+The error message will be helpful for users to locate and fix unmatched code block fences in their Markdown files.
+
+Made changes.
+
 ## Analysis
 
 - Presumably: ChatGPT-4 produces better quality text content
@@ -407,4 +496,4 @@ Once these points are clarified, I can propose a specific implementation for the
 ### Cool prompts
 
 - Copilot.Claude: Is it clear how to implement ### Tracing section from the #file:requirements.md ? Ref. #interfaces.go  ,#models.go  #scanner.go  #applier.go  #tracer.go. Ask questions, if needed.👍
-- Copilot.Claude: Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scanner.go #applier.go #tracer.
+- Copilot.Claude: Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scanner.go #applier.go #tracer

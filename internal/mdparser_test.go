@@ -11,9 +11,9 @@ import (
 )
 
 func TestMdParser_ParseMarkdownFile(t *testing.T) {
-	testDataDir := filepath.Join("testdata", "mdparser-1.md")
+	testDataFile := filepath.Join("testdata", "mdparser-1.md")
 
-	basicFile, _, err := ParseMarkdownFile(newMdCtx(), testDataDir)
+	basicFile, _, err := ParseMarkdownFile(newMdCtx(), testDataFile)
 	require.NoError(t, err)
 
 	// Test package ID and requirements count
@@ -59,11 +59,13 @@ func TestMdParser_ParseMarkdownFile_Errors(t *testing.T) {
 	_, errors, err := ParseMarkdownFile(newMdCtx(), testDataDir)
 	require.NoError(t, err)
 
-	// We expect 3 errors in the test file:
+	// We expect 4 errors in the test file:
 	// 1. Invalid package name (non-identifier)
 	// 2. Invalid requirement name (non-identifier)
 	// 3. Mismatched requirement site IDs
-	require.Len(t, errors, 4, "expected exactly 3 syntax errors")
+	// 4. Invalid coverage status
+	// 5. Unmatched fence
+	require.Len(t, errors, 5, "expected exactly 5 syntax errors")
 
 	// Sort errors by line number for consistent testing
 	sort.Slice(errors, func(i, j int) bool {
@@ -85,6 +87,10 @@ func TestMdParser_ParseMarkdownFile_Errors(t *testing.T) {
 	// Check coverage status error
 	assert.Equal(t, "covstatus", errors[3].Code)
 	assert.Equal(t, 12, errors[3].Line)
+
+	// Check unmatched fence error
+	assert.Equal(t, "unmatchedfence", errors[4].Code)
+	assert.Equal(t, 16, errors[4].Line)
 }
 
 // Helper function to find requirement by name
@@ -104,7 +110,7 @@ func newMdCtx() *MarkdownContext {
 func TestParseRequirements_invalid_coverage_status(t *testing.T) {
 	var errors []ProcessingError
 	res := ParseRequirements("test.md", "`~Post.handler~`covrd[^~Post.handler~]", 1, &errors)
-	require.Len(t, res, 1)
+	require.Len(t, res, 0)
 }
 
 func TestParseRequirements_table(t *testing.T) {
@@ -157,25 +163,6 @@ func TestParseRequirements_table(t *testing.T) {
 				Line:                1,
 				IsAnnotated:         true,
 			}},
-		},
-		{
-			name:  "Multiple requirements in one line",
-			input: "`~REQ001~` and `~REQ002~`covered[^~REQ002~]✅",
-			expected: []RequirementSite{
-				{
-					RequirementName: "REQ001",
-					Line:            1,
-					IsAnnotated:     false,
-				},
-				{
-					RequirementName:     "REQ002",
-					ReferenceName:       "REQ002",
-					CoverageStatusWord:  "covered",
-					CoverageStatusEmoji: "✅",
-					Line:                1,
-					IsAnnotated:         true,
-				},
-			},
 		},
 	}
 
@@ -261,15 +248,46 @@ func TestParseRequirements_errors(t *testing.T) {
 				Message:  "Only one RequirementSite is allowed per line: `~REQ001~`,  `~REQ002~`covered[^~REQ002~]✅",
 			},
 		},
+		{
+			name: "mismatched requirement site IDs",
+			line: "`~REQ001~`covered[^~REQ002~]✅",
+			wantErr: ProcessingError{
+				Code:     "reqsiteid",
+				FilePath: "test.md",
+				Line:     2,
+				Message:  "RequirementSiteID from RequirementSiteLabel and CoverageFootnoteReference shall be equal: REQ001 != REQ002",
+			},
+		},
+		{
+			name: "invalid coverage status",
+			line: "`~REQ001~`covrd[^~REQ001~]✅",
+			wantErr: ProcessingError{
+				Code:     "covstatus",
+				FilePath: "test.md",
+				Line:     3,
+				Message:  "CoverageStatusWord shall be 'covered' or 'uncvrd': covrd",
+			},
+		},
+		{
+			name: "empty coverage status",
+			line: "`~REQ001~`[^~REQ001~]✅",
+			wantErr: ProcessingError{
+				Code:     "covstatus",
+				FilePath: "test.md",
+				Line:     4,
+				Message:  "CoverageStatusWord shall be 'covered' or 'uncvrd': ",
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var errors []ProcessingError
-			requirements := ParseRequirements("test.md", tt.line, 1, &errors)
+			line := tt.line
+			requirements := ParseRequirements("test.md", line, tt.wantErr.Line, &errors)
 
 			// Check that no requirements were returned
-			assert.Nil(t, requirements, "should return nil requirements when multiple sites found")
+			assert.Nil(t, requirements, "should return nil requirements")
 
 			// Verify the error
 			if assert.Len(t, errors, 1, "should have exactly one error") {

@@ -15,15 +15,21 @@ var (
 	RequirementSiteRegex = regexp.MustCompile(
 		"`~([^~]+)~`" + // RequirementSiteLabel = "`" "~" RequirementName "~" "`"
 			"(?:" + // Optional group for coverage status and footnote
-			"\\s*([a-zA-Z]+)" + // Optional CoverageStatusWord
+			"\\s*([a-zA-Z]+)?" + // Optional CoverageStatusWord
 			"\\s*\\[\\^~([^~]+)~\\]" + // CoverageFootnoteReference
 			"\\s*(✅|❓)?" + // Optional CoverageStatusEmoji
 			")?")
-	identifierRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*(?:\.[a-zA-Z][a-zA-Z0-9_]*)*$`)
+	identifierRegex      = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*(?:\.[a-zA-Z][a-zA-Z0-9_]*)*$`)
+	codeBlockMarkerRegex = regexp.MustCompile(`^\s*` + "```")
 )
 
 type MarkdownContext struct {
 	rfiles ReqmdfilesMap
+}
+
+// isCodeBlockMarker checks if a line is a code block marker, handling indentation
+func isCodeBlockMarker(line string) bool {
+	return codeBlockMarkerRegex.MatchString(line)
 }
 
 func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, []ProcessingError, error) {
@@ -44,14 +50,27 @@ func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, 
 	scanner := bufio.NewScanner(file)
 	lineNum := 0
 	inHeader := false
+	inCodeBlock := false
+	var lastFenceLine int // Track the line number of the last opening fence
 
 	for scanner.Scan() {
 		lineNum++
 		line := scanner.Text()
 
+		// Check for code block markers, handling indentation
+		if isCodeBlockMarker(line) {
+			if !inCodeBlock {
+				lastFenceLine = lineNum
+				inCodeBlock = true
+			} else {
+				inCodeBlock = false
+			}
+			continue
+		}
+
 		// Handle header section
-		if line == "---" && lineNum == 1 {
-			if !inHeader {
+		if line == "---" {
+			if lineNum == 1 {
 				inHeader = true
 				continue
 			} else {
@@ -71,15 +90,23 @@ func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, 
 			continue
 		}
 
-		// Parse requirements
-		requirements := ParseRequirements(filePath, line, lineNum, &errors)
-		structure.Requirements = append(structure.Requirements, requirements...)
+		// Only parse requirements and footnotes when not in a code block
+		if !inCodeBlock {
+			// Parse requirements
+			requirements := ParseRequirements(filePath, line, lineNum, &errors)
+			structure.Requirements = append(structure.Requirements, requirements...)
 
-		// Parse coverage footnotes
-		footnote := ParseCoverageFootnote(mctx, filePath, line, lineNum, &errors)
-		if footnote != nil {
-			structure.CoverageFootnotes = append(structure.CoverageFootnotes, *footnote)
+			// Parse coverage footnotes
+			footnote := ParseCoverageFootnote(mctx, filePath, line, lineNum, &errors)
+			if footnote != nil {
+				structure.CoverageFootnotes = append(structure.CoverageFootnotes, *footnote)
+			}
 		}
+	}
+
+	// Check for unmatched fence at end of file
+	if inCodeBlock {
+		errors = append(errors, NewErrUnmatchedFence(filePath, lastFenceLine))
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -110,6 +137,7 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 		covStatus := match[2]
 		if covStatus != "" && covStatus != "covered" && covStatus != "uncvrd" {
 			*errors = append(*errors, NewErrCoverageStatusWord(filePath, lineNum, covStatus))
+			return requirements
 		}
 
 		req := RequirementSite{
@@ -122,8 +150,14 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 			IsAnnotated:         match[3] != "",
 		}
 
+		if req.IsAnnotated && covStatus == "" {
+			*errors = append(*errors, NewErrCoverageStatusWord(filePath, lineNum, covStatus))
+			return requirements
+		}
+
 		if req.IsAnnotated && (req.RequirementName != req.ReferenceName) {
 			*errors = append(*errors, NewErrRequirementSiteIDEqual(filePath, req.Line, req.RequirementName, req.ReferenceName))
+			return requirements
 		}
 		requirements = append(requirements, req)
 	}

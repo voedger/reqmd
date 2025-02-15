@@ -1,5 +1,7 @@
 package internal
 
+import "fmt"
+
 // ********** Syntax errors
 
 func NewErrPkgIdent(filePath string, line int, pkgID string) ProcessingError {
@@ -49,6 +51,7 @@ func NewErrURLSyntax(filePath string, line int, URL string) ProcessingError {
 	}
 }
 
+// Only one RequirementSite is allowed per line
 func NewErrMultiSites(filePath string, line int, site1, site2 string) ProcessingError {
 	return ProcessingError{
 		Code:     "multisites",
@@ -58,4 +61,33 @@ func NewErrMultiSites(filePath string, line int, site1, site2 string) Processing
 	}
 }
 
+// Unmatched code block fence detected
+func NewErrUnmatchedFence(filePath string, openFenceLine int) ProcessingError {
+	return ProcessingError{
+		Code:     "unmatchedfence",
+		FilePath: filePath,
+		Line:     openFenceLine,
+		Message:  fmt.Sprintf("Opening code block fence at line %d has no matching closing fence", openFenceLine),
+	}
+}
+
 // ********** Semantic errors
+
+func NewErrDuplicateRequirementID(filePath1 string, line1 int, filePath2 string, line2 int, reqID string) ProcessingError {
+	return ProcessingError{
+		Code:     "dupreqid",
+		FilePath: filePath1,
+		Line:     line1,
+		Message: fmt.Sprintf("Duplicate RequirementID detected: %s found in %s:%d and %s:%d",
+			reqID, filePath1, line1, filePath2, line2),
+	}
+}
+
+func NewErrMissingPackageIDWithReqs(filePath string, lineOfTheFirstReqSite int) ProcessingError {
+	return ProcessingError{
+		Code:     "nopkgidreqs",
+		FilePath: filePath,
+		Line:     lineOfTheFirstReqSite,
+		Message:  "Markdown file with RequirementSites shall define PackageID",
+	}
+}
