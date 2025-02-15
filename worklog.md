@@ -173,6 +173,10 @@ Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scann
 
 Input files that are larger than 128KB are not processed.
 
+- Copilot.Claude: Apply requirements to scanner:
+  - Files that are larger than 128K are skipped.
+  - Only source files that are tracked by git (hash can be obtained) are processed.
+
 --------------------
 
 ## Intermediate results

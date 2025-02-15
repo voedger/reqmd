@@ -209,7 +209,7 @@ Analyzes markdown requirement files and their corresponding source code implemen
 General processing rules:
 
 - Files that are larger than 128K are skipped.
-- Only files that are tracked by git are processed.
+- Only source files that are tracked by git (hash can be obtained) are processed.
 
 #### OPTIONS
 

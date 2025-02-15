@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 )
 
@@ -17,7 +16,6 @@ type SourceFileContext struct {
 }
 
 func ParseSourceFile(filePath string) (*FileStructure, []ProcessingError, error) {
-	filePath = filepath.ToSlash(filePath)
 
 	file, err := os.Open(filePath)
 	if err != nil {

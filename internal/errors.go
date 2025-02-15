@@ -2,12 +2,12 @@ package internal
 
 // ********** Syntax errors
 
-func NewErrPkgIdent(filePath string, line int) ProcessingError {
+func NewErrPkgIdent(filePath string, line int, pkgID string) ProcessingError {
 	return ProcessingError{
 		Code:     "pkgident",
 		FilePath: filePath,
 		Line:     line,
-		Message:  "PackageName shall be an identifier",
+		Message:  "PackageID shall be an identifier: " + pkgID,
 	}
 }
 

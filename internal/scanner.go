@@ -20,6 +20,9 @@ const (
 
 	// Default source file extensions
 	defaultSourceExtensions = ".go,.js,.ts,.jsx,.tsx,.java,.cs,.cpp,.c,.h,.hpp,.py,.rb,.php,.rs,.kt,.scala,.m,.swift,.fs,.md,.sql,.vsql"
+
+	// Maximum file size for processing
+	maxFileSize = 128 * 1024 // 128KB
 )
 
 func NewScanner(extensions string) IScanner {
@@ -51,7 +54,7 @@ type scanner struct {
 }
 
 type ScanResult struct {
-	Files        []FileStructure
+	Files            []FileStructure
 	ProcessingErrors []ProcessingError
 }
 
@@ -103,6 +106,8 @@ func scanMarkdowns(reqPath string) ([]FileStructure, []ProcessingError, error) {
 		}
 
 		return func(filePath string) error {
+			filePath = filepath.ToSlash(filePath)
+
 			if !strings.HasSuffix(strings.ToLower(filePath), markdownExtension) {
 				return nil
 			}
@@ -173,6 +178,9 @@ func (s *scanner) scanSources(srcPaths []string) ([]FileStructure, []ProcessingE
 }
 
 func (s *scanner) processSourceFile(filePath string, git IGit, files *[]FileStructure, syntaxErrors *[]ProcessingError) error {
+
+	filePath = filepath.ToSlash(filePath)
+
 	if strings.Contains(filePath, gitFolderName) {
 		return nil
 	}
@@ -183,28 +191,41 @@ func (s *scanner) processSourceFile(filePath string, git IGit, files *[]FileStru
 		return nil
 	}
 
+	// Get file info to check size
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to get file info: %w", err)
+	}
+
+	// Skip large files
+	if fileInfo.Size() > maxFileSize {
+		Verbose("Skipping large file", "path", filePath, "size", fileInfo.Size())
+		return nil
+	}
+
+	// Get relative path for the file
+	relPath, err := filepath.Rel(git.PathToRoot(), filePath)
+	if err != nil {
+		return fmt.Errorf("failed to get relative path: %w", err)
+	}
+
+	// Try to get file hash - this will fail for untracked files
+	hash, err := git.FileHash(relPath)
+	if err != nil {
+		// Skip untracked files
+		return nil
+	}
+
 	structure, errs, err := ParseSourceFile(filePath)
 	if err != nil {
 		return err
 	}
 
 	if structure != nil && len(structure.CoverageTags) > 0 {
-		// Get relative path for the file
-		relPath, err := filepath.Rel(git.PathToRoot(), filePath)
-		if err != nil {
-			return fmt.Errorf("failed to get relative path: %w", err)
-		}
-
-		// Get file hash
-		hash, err := git.FileHash(relPath)
-		if err != nil {
-			return fmt.Errorf("failed to get file hash: %w", err)
-		}
-
 		// Set FileStructure fields for URL construction
 		structure.FileHash = hash
-		structure.RelativePath = filepath.ToSlash(relPath)    // Convert Windows paths to URL format
-		structure.RepoRootFolderURL = git.RepoRootFolderURL() // Get base URL from git
+		structure.RelativePath = filepath.ToSlash(relPath)
+		structure.RepoRootFolderURL = git.RepoRootFolderURL()
 
 		*files = append(*files, *structure)
 	}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -28,7 +27,6 @@ type MarkdownContext struct {
 }
 
 func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, []ProcessingError, error) {
-	filePath = filepath.ToSlash(filePath)
 
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -52,7 +50,7 @@ func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, 
 		line := scanner.Text()
 
 		// Handle header section
-		if line == "---" {
+		if line == "---" && lineNum == 1 {
 			if !inHeader {
 				inHeader = true
 				continue
@@ -66,7 +64,7 @@ func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, 
 			if matches := headerRegex.FindStringSubmatch(line); len(matches) > 1 {
 				pkgID := strings.TrimSpace(matches[1])
 				if !identifierRegex.MatchString(pkgID) {
-					errors = append(errors, NewErrPkgIdent(filePath, lineNum))
+					errors = append(errors, NewErrPkgIdent(filePath, lineNum, pkgID))
 				}
 				structure.PackageID = pkgID
 			}
