@@ -88,6 +88,6 @@ func NewErrMissingPackageIDWithReqs(filePath string, lineOfTheFirstReqSite int) 
 		Code:     "nopkgidreqs",
 		FilePath: filePath,
 		Line:     lineOfTheFirstReqSite,
-		Message:  "Markdown file with RequirementSites shall define PackageID",
+		Message:  "Markdown file with RequirementSites shall define reqmd.package",
 	}
 }
