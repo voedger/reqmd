@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 )
 
 const (
@@ -51,6 +52,12 @@ func (s *scanner) Scan(reqPath string, srcPaths []string) ([]FileStructure, []Pr
 
 type scanner struct {
 	sourceExtensions map[string]bool
+	stats            struct {
+		processedFiles atomic.Int64
+		processedBytes atomic.Int64
+		skippedFiles   atomic.Int64
+		skippedBytes   atomic.Int64
+	}
 }
 
 type ScanResult struct {
@@ -66,6 +73,12 @@ type ScanResult struct {
 */
 
 func (s *scanner) scan(reqPath string, srcPaths []string) (*ScanResult, error) {
+	// Reset statistics
+	s.stats.processedFiles.Store(0)
+	s.stats.processedBytes.Store(0)
+	s.stats.skippedFiles.Store(0)
+	s.stats.skippedBytes.Store(0)
+
 	result := &ScanResult{}
 
 	// Scan markdown files
@@ -85,6 +98,14 @@ func (s *scanner) scan(reqPath string, srcPaths []string) (*ScanResult, error) {
 		result.Files = append(result.Files, files...)
 		result.ProcessingErrors = append(result.ProcessingErrors, errs...)
 	}
+
+	// Report statistics after scanning is complete
+	Verbose("Scan complete",
+		"processed_files", s.stats.processedFiles.Load(),
+		"processed_size", ByteCountSI(s.stats.processedBytes.Load()),
+		"skipped_files", s.stats.skippedFiles.Load(),
+		"skipped_size", ByteCountSI(s.stats.skippedBytes.Load()),
+	)
 
 	return result, nil
 }
@@ -199,9 +220,15 @@ func (s *scanner) processSourceFile(filePath string, git IGit, files *[]FileStru
 
 	// Skip large files
 	if fileInfo.Size() > maxFileSize {
-		Verbose("Skipping large file", "path", filePath, "size", fileInfo.Size())
+		s.stats.skippedFiles.Add(1)
+		s.stats.skippedBytes.Add(fileInfo.Size())
+		Verbose("Skipping large file", "path", filePath, "size", ByteCountSI(fileInfo.Size()))
 		return nil
 	}
+
+	// Track processed file
+	s.stats.processedFiles.Add(1)
+	s.stats.processedBytes.Add(fileInfo.Size())
 
 	// Get relative path for the file
 	relPath, err := filepath.Rel(git.PathToRoot(), filePath)
@@ -235,4 +262,18 @@ func (s *scanner) processSourceFile(filePath string, git IGit, files *[]FileStru
 	}
 
 	return nil
+}
+
+// ByteCountSI converts bytes to human readable string using SI (decimal) units
+func ByteCountSI(b int64) string {
+	const unit = 1000
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "kMGTPE"[exp])
 }

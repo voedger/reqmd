@@ -177,6 +177,8 @@ Input files that are larger than 128KB are not processed.
   - Files that are larger than 128K are skipped.
   - Only source files that are tracked by git (hash can be obtained) are processed.
 
+- Copilot.Claude: scanner should Verbose number of encountered files and their total size, and number of skipped files and theit total size.👍
+
 --------------------
 
 ## Intermediate results
