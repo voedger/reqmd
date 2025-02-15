@@ -13,7 +13,6 @@ import (
 var version string
 
 var (
-	verbose    bool
 	extensions string
 )
 
@@ -41,6 +40,7 @@ func prepareRootCmd(use, short string, args []string, ver string, cmds ...*cobra
 		Version: ver,
 		Short:   short,
 	}
+	rootCmd.PersistentFlags().BoolVarP(&internal.IsVerbose, "verbose", "v", false, "Enable verbose output showing detailed processing information")
 	rootCmd.SetArgs(args[1:])
 	rootCmd.AddCommand(cmds...)
 	return rootCmd
@@ -48,9 +48,11 @@ func prepareRootCmd(use, short string, args []string, ver string, cmds ...*cobra
 
 func newTraceCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "trace [-e extensions] <path-to-markdowns> [source-paths...]",
-		Short: "Trace requirements in markdown files",
-		Args:  cobra.MinimumNArgs(1),
+		Use:          "trace [-e extensions] <path-to-markdowns> [source-paths...]",
+		Short:        "Trace requirements in markdown files",
+		Args:         cobra.MinimumNArgs(1),
+		SilenceUsage: true,
+
 		RunE: func(cmd *cobra.Command, args []string) error {
 			reqPath := args[0]
 			srcPaths := args[1:]
@@ -59,20 +61,18 @@ func newTraceCmd() *cobra.Command {
 			analyzer := internal.NewAnalyzer()
 			applier := internal.NewDummyApplier()
 
+			internal.Verbose("Starting processing", "reqPath", reqPath, "srcPaths", fmt.Sprintf("%v", srcPaths))
+
 			tracer := internal.NewTracer(scanner, analyzer, applier, reqPath, srcPaths)
 
 			if err := tracer.Trace(); err != nil {
 				return fmt.Errorf("error: %v", err)
 			}
 
-			if verbose {
-				fmt.Println("Processing completed successfully")
-			}
 			return nil
 		},
 	}
 
-	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output showing detailed processing information")
 	cmd.Flags().StringVarP(&extensions, "extensions", "e", "", "Comma-separated list of source file extensions to process (e.g., .go,.ts,.js)")
 	return cmd
 }
