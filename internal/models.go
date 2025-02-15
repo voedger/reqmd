@@ -15,19 +15,19 @@ const (
 
 // Action describes a single transformation (add/update/delete) to be applied in a file.
 type Action struct {
-	Type     ActionType // e.g., Add, Update, Delete
-	FilePath string     // which file is changed
-	Line     int        // the line number where the change is applied
-	Data     string     // new data (if any)
+	Type       ActionType     // e.g., Add, Update, Delete
+	FileStruct *FileStructure // which file is changed
+	Line       int            // the line number where the change is applied
+	Data       string         // new data (if any)
 }
 
 // String returns a human-readable representation of the Action
 func (a *Action) String() string {
 	switch a.Type {
 	case ActionAnnotate:
-		return fmt.Sprintf("%s at %s:%d: %s", a.Type, a.FilePath, a.Line, a.Data)
+		return fmt.Sprintf("%s at %s:%d: %s", a.Type, a.FileStruct.Path, a.Line, a.Data)
 	default:
-		return fmt.Sprintf("Unknown action at %s:%d", a.FilePath, a.Line)
+		return fmt.Sprintf("Unknown action at %s:%d", a.FileStruct.Path, a.Line)
 	}
 }
 

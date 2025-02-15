@@ -33,10 +33,10 @@ func (a *analyzer) Analyze(files []FileStructure) ([]Action, []ProcessingError) 
 			if !req.IsAnnotated {
 				// Generate ActionAnnotate
 				action := Action{
-					Type:     ActionAnnotate,
-					FilePath: file.Path,
-					Line:     req.Line,
-					Data:     req.RequirementName, // Add uncovered status
+					Type:       ActionAnnotate,
+					FileStruct: &file,
+					Line:       req.Line,
+					Data:       req.RequirementName, // Add uncovered status
 				}
 				actions = append(actions, action)
 				if IsVerbose {
