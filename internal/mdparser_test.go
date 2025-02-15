@@ -102,7 +102,7 @@ func newMdCtx() *MarkdownContext {
 }
 
 func TestParseRequirements_invalid_coverage_status(t *testing.T) {
-	var errors []SyntaxError
+	var errors []ProcessingError
 	res := ParseRequirements("test.md", "`~Post.handler~`covrd[^~Post.handler~]", 1, &errors)
 	require.Len(t, res, 1)
 }
@@ -181,7 +181,7 @@ func TestParseRequirements_table(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var errors []SyntaxError
+			var errors []ProcessingError
 			got := ParseRequirements("test.md", tt.input, 1, &errors)
 
 			require.Equal(t, len(tt.expected), len(got), "number of requirements mismatch")
@@ -221,7 +221,7 @@ func Test_ParseCoverageFootnote(t *testing.T) {
 func Test_ParseCoverageFootnote_errors(t *testing.T) {
 	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder2/filename2:line2:test](://example.com/path)"
 
-	var errors []SyntaxError
+	var errors []ProcessingError
 	note := ParseCoverageFootnote(newMdCtx(), "", line, 1, &errors)
 	require.NotNil(t, note)
 

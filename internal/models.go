@@ -1,6 +1,10 @@
 package internal
 
-import "path/filepath"
+import (
+	"fmt"
+	"path/filepath"
+	"strings"
+)
 
 // ActionType represents the type of transformation needed.
 type ActionType string
@@ -19,18 +23,30 @@ type Action struct {
 	Data     string     // new data (if any)
 }
 
-// SyntaxError captures syntax-level errors found while parsing a file.
-type SyntaxError struct {
+// SyntaxError captures syntax and semantic errors.
+type ProcessingError struct {
 	Code     string // error code (e.g., "pkgident")
 	FilePath string // file that has a syntax error
 	Line     int    // line number where the syntax error is detected
 	Message  string // human-readable description
 }
 
-// SemanticError captures higher-level domain errors (e.g., duplicate RequirementIDs).
-type SemanticError struct {
-	FilePath string // file that triggered the semantic error (optional if more general)
-	Message  string // human-readable description
+// Collection of ProcessingErrors
+// Implements Error interface
+type ProcessingErrors struct {
+	Errors []ProcessingError
+}
+
+func (e *ProcessingErrors) Error() string {
+	if len(e.Errors) == 0 {
+		return ""
+	}
+
+	var msgs []string
+	for _, err := range e.Errors {
+		msgs = append(msgs, fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message))
+	}
+	return strings.Join(msgs, "\n")
 }
 
 // FileType distinguishes between different file categories (Markdown vs source, etc.).

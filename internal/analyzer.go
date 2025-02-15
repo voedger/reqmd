@@ -6,9 +6,9 @@ func NewAnalyzer() IAnalyzer {
 	return &analyzer{}
 }
 
-func (a *analyzer) Analyze(files []FileStructure) ([]Action, []SemanticError) {
+func (a *analyzer) Analyze(files []FileStructure) ([]Action, []ProcessingError) {
 	var actions []Action
-	var errors []SemanticError
+	var errors []ProcessingError
 
 	// Track requirement IDs to check for duplicates
 	seenReqs := make(map[string]string) // reqID -> filePath
@@ -21,7 +21,7 @@ func (a *analyzer) Analyze(files []FileStructure) ([]Action, []SemanticError) {
 		// Check for duplicate requirements
 		for _, req := range file.Requirements {
 			if existingFile, exists := seenReqs[req.RequirementName]; exists {
-				errors = append(errors, SemanticError{
+				errors = append(errors, ProcessingError{
 					FilePath: file.Path,
 					Message:  "Duplicate requirement ID '" + req.RequirementName + "' also found in " + existingFile,
 				})

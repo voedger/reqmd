@@ -31,7 +31,11 @@ func execRootCmd(args []string, ver string) error {
 		newTraceCmd(),
 	)
 
-	return rootCmd.Execute()
+	err := rootCmd.Execute()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	return err
 }
 
 func prepareRootCmd(use, short string, args []string, ver string, cmds ...*cobra.Command) *cobra.Command {
@@ -48,10 +52,11 @@ func prepareRootCmd(use, short string, args []string, ver string, cmds ...*cobra
 
 func newTraceCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "trace [-e extensions] <path-to-markdowns> [source-paths...]",
-		Short:        "Trace requirements in markdown files",
-		Args:         cobra.MinimumNArgs(1),
-		SilenceUsage: true,
+		Use:           "trace [-e extensions] <path-to-markdowns> [source-paths...]",
+		Short:         "Trace requirements in markdown files",
+		Args:          cobra.MinimumNArgs(1),
+		SilenceUsage:  true,
+		SilenceErrors: true,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			reqPath := args[0]
@@ -65,11 +70,7 @@ func newTraceCmd() *cobra.Command {
 
 			tracer := internal.NewTracer(scanner, analyzer, applier, reqPath, srcPaths)
 
-			if err := tracer.Trace(); err != nil {
-				return fmt.Errorf("error: %v", err)
-			}
-
-			return nil
+			return tracer.Trace()
 		},
 	}
 

@@ -1,7 +1,5 @@
 package internal
 
-import "fmt"
-
 /*
 
 An exerpt from design.md
@@ -43,13 +41,13 @@ func (t *tracer) Trace() error {
 		return err
 	}
 	if len(syntaxErrs) > 0 {
-		return fmt.Errorf("syntax errors detected: %v", syntaxErrs)
+		return &ProcessingErrors{Errors: syntaxErrs}
 	}
 
 	// Analyzing phase
 	actions, semanticErrs := t.analyzer.Analyze(files)
 	if len(semanticErrs) > 0 {
-		return fmt.Errorf("semantic errors detected: %v", semanticErrs)
+		return &ProcessingErrors{Errors: syntaxErrs}
 	}
 
 	// Applying phase

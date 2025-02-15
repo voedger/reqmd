@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 )
 
@@ -15,14 +16,16 @@ type SourceFileContext struct {
 	Git IGit
 }
 
-func ParseSourceFile(filePath string) (*FileStructure, []SyntaxError, error) {
+func ParseSourceFile(filePath string) (*FileStructure, []ProcessingError, error) {
+	filePath = filepath.ToSlash(filePath)
+
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("ParseSourceFile: failed to open file: %w", err)
 	}
 	defer file.Close()
 
-	var errors []SyntaxError
+	var errors []ProcessingError
 	structure := &FileStructure{
 		Path: filePath,
 		Type: FileTypeSource,
@@ -40,7 +43,7 @@ func ParseSourceFile(filePath string) (*FileStructure, []SyntaxError, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		errors = append(errors, SyntaxError{
+		errors = append(errors, ProcessingError{
 			FilePath: filePath,
 			Message:  "Error reading file: " + err.Error(),
 		})

@@ -165,7 +165,10 @@ Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scann
   - Cause: main.go is missed in context
 - Copilot.Claude: Fix design.md, main.go and scanner.go according to changes in requirements.md (source file extensions)👍
 
-## Only files that are tracked by git shall be processed
+## Format error output
+
+
+## ??? Huge source files are avoided
 
 --------------------
 

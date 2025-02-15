@@ -2,8 +2,8 @@ package internal
 
 // ********** Syntax errors
 
-func NewErrPkgIdent(filePath string, line int) SyntaxError {
-	return SyntaxError{
+func NewErrPkgIdent(filePath string, line int) ProcessingError {
+	return ProcessingError{
 		Code:     "pkgident",
 		FilePath: filePath,
 		Line:     line,
@@ -11,8 +11,8 @@ func NewErrPkgIdent(filePath string, line int) SyntaxError {
 	}
 }
 
-func NewErrReqIdent(filePath string, line int) SyntaxError {
-	return SyntaxError{
+func NewErrReqIdent(filePath string, line int) ProcessingError {
+	return ProcessingError{
 		Code:     "reqident",
 		FilePath: filePath,
 		Line:     line,
@@ -20,8 +20,8 @@ func NewErrReqIdent(filePath string, line int) SyntaxError {
 	}
 }
 
-func NewErrRequirementSiteIDEqual(filePath string, line int, RequirementSiteID1, RequirementSiteID2 string) SyntaxError {
-	return SyntaxError{
+func NewErrRequirementSiteIDEqual(filePath string, line int, RequirementSiteID1, RequirementSiteID2 string) ProcessingError {
+	return ProcessingError{
 		Code:     "reqsiteid",
 		FilePath: filePath,
 		Line:     line,
@@ -30,18 +30,18 @@ func NewErrRequirementSiteIDEqual(filePath string, line int, RequirementSiteID1,
 }
 
 // CoverageStatusWord shall be "covered" or "uncvrd"
-func NewErrCoverageStatusWord(filePath string, line int, CoverageStatusWord string) SyntaxError {
-	return SyntaxError{
+func NewErrCoverageStatusWord(filePath string, line int, CoverageStatusWord string) ProcessingError {
+	return ProcessingError{
 		Code:     "covstatus",
 		FilePath: filePath,
 		Line:     line,
-		Message:  "CoverageStatusWord shall be 'covered' or 'uncvrd':" + CoverageStatusWord,
+		Message:  "CoverageStatusWord shall be 'covered' or 'uncvrd': " + CoverageStatusWord,
 	}
 }
 
 // URL shall adhere to a valid syntax
-func NewErrURLSyntax(filePath string, line int, URL string) SyntaxError {
-	return SyntaxError{
+func NewErrURLSyntax(filePath string, line int, URL string) ProcessingError {
+	return ProcessingError{
 		Code:     "urlsyntax",
 		FilePath: filePath,
 		Line:     line,

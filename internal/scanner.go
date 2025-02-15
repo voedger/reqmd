@@ -38,12 +38,12 @@ func NewScanner(extensions string) IScanner {
 	return s
 }
 
-func (s *scanner) Scan(reqPath string, srcPaths []string) ([]FileStructure, []SyntaxError, error) {
+func (s *scanner) Scan(reqPath string, srcPaths []string) ([]FileStructure, []ProcessingError, error) {
 	result, err := s.scan(reqPath, srcPaths)
 	if err != nil {
 		return nil, nil, err
 	}
-	return result.Files, result.SyntaxErrors, nil
+	return result.Files, result.ProcessingErrors, nil
 }
 
 type scanner struct {
@@ -52,7 +52,7 @@ type scanner struct {
 
 type ScanResult struct {
 	Files        []FileStructure
-	SyntaxErrors []SyntaxError
+	ProcessingErrors []ProcessingError
 }
 
 /*
@@ -71,7 +71,7 @@ func (s *scanner) scan(reqPath string, srcPaths []string) (*ScanResult, error) {
 		return nil, err
 	}
 	result.Files = append(result.Files, files...)
-	result.SyntaxErrors = append(result.SyntaxErrors, errs...)
+	result.ProcessingErrors = append(result.ProcessingErrors, errs...)
 
 	// Scan source files if any paths provided
 	if len(srcPaths) > 0 {
@@ -80,15 +80,15 @@ func (s *scanner) scan(reqPath string, srcPaths []string) (*ScanResult, error) {
 			return nil, err
 		}
 		result.Files = append(result.Files, files...)
-		result.SyntaxErrors = append(result.SyntaxErrors, errs...)
+		result.ProcessingErrors = append(result.ProcessingErrors, errs...)
 	}
 
 	return result, nil
 }
 
-func scanMarkdowns(reqPath string) ([]FileStructure, []SyntaxError, error) {
+func scanMarkdowns(reqPath string) ([]FileStructure, []ProcessingError, error) {
 	var files []FileStructure
-	var syntaxErrors []SyntaxError
+	var syntaxErrors []ProcessingError
 
 	reqmdProcessor := func(folder string) (FileProcessor, error) {
 		mctx := &MarkdownContext{
@@ -129,9 +129,9 @@ func scanMarkdowns(reqPath string) ([]FileStructure, []SyntaxError, error) {
 	return files, syntaxErrors, nil
 }
 
-func (s *scanner) scanSources(srcPaths []string) ([]FileStructure, []SyntaxError, error) {
+func (s *scanner) scanSources(srcPaths []string) ([]FileStructure, []ProcessingError, error) {
 	var files []FileStructure
-	var syntaxErrors []SyntaxError
+	var syntaxErrors []ProcessingError
 
 	// Initialize git repositories for all source paths
 	gitRepos := make(map[string]IGit)
@@ -172,7 +172,7 @@ func (s *scanner) scanSources(srcPaths []string) ([]FileStructure, []SyntaxError
 	return files, syntaxErrors, nil
 }
 
-func (s *scanner) processSourceFile(filePath string, git IGit, files *[]FileStructure, syntaxErrors *[]SyntaxError) error {
+func (s *scanner) processSourceFile(filePath string, git IGit, files *[]FileStructure, syntaxErrors *[]ProcessingError) error {
 	if strings.Contains(filePath, gitFolderName) {
 		return nil
 	}

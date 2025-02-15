@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -26,14 +27,16 @@ type MarkdownContext struct {
 	rfiles ReqmdfilesMap
 }
 
-func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, []SyntaxError, error) {
+func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, []ProcessingError, error) {
+	filePath = filepath.ToSlash(filePath)
+
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("ParseMarkdownFile: failed to open file: %w", err)
 	}
 	defer file.Close()
 
-	var errors []SyntaxError
+	var errors []ProcessingError
 	structure := &FileStructure{
 		Path: filePath,
 		Type: FileTypeMarkdown,
@@ -82,7 +85,7 @@ func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, 
 	}
 
 	if err := scanner.Err(); err != nil {
-		errors = append(errors, SyntaxError{
+		errors = append(errors, ProcessingError{
 			FilePath: filePath,
 			Message:  "Error reading file: " + err.Error(),
 		})
@@ -91,7 +94,7 @@ func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, 
 	return structure, errors, nil
 }
 
-func ParseRequirements(filePath string, line string, lineNum int, errors *[]SyntaxError) []RequirementSite {
+func ParseRequirements(filePath string, line string, lineNum int, errors *[]ProcessingError) []RequirementSite {
 	var requirements []RequirementSite
 
 	matches := RequirementSiteRegex.FindAllStringSubmatch(line, -1)
@@ -133,7 +136,7 @@ var (
 	CovererRegex = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
 )
 
-func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, lineNum int, errs *[]SyntaxError) (footnote *CoverageFootnote) {
+func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, lineNum int, errs *[]ProcessingError) (footnote *CoverageFootnote) {
 
 	matches := CoverageFootnoteRegex.FindStringSubmatch(line)
 	if len(matches) > 0 {
