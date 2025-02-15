@@ -169,7 +169,9 @@ Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scann
 
 - Me: Similar to Go compiler output
 
-## ??? Huge source files are avoided
+## Large source files are avoided
+
+Input files that are larger than 128KB are not processed.
 
 --------------------
 

@@ -206,11 +206,10 @@ reqmd trace [-v] [-e <extensions>] <path-to-markdowns> [<path-to-sources>...]
 
 Analyzes markdown requirement files and their corresponding source code implementation to establish traceability links. The command processes requirement identifiers in markdown files and maps them to their implementation coverage tags in source code.
 
-The command operates in three phases:
+General processing rules:
 
-1. Scans input files and builds file structures
-2. Analyzes requirements and determines needed changes
-3. Applies changes to update coverage information
+- Files that are larger than 128K are skipped.
+- Only files that are tracked by git are processed.
 
 #### OPTIONS
 
@@ -228,11 +227,9 @@ The command operates in three phases:
 
 - `<path-to-markdowns>`:
   - Required. Directory containing markdown requirement files to process.
-  - Only files that are tracked by git shall be processed.
 
 - `<path-to-sources>`:
   - Optional. One or more paths to local git repository clones containing source code with coverage tags. When omitted, only markdown parsing is performed.
-  - Only files that are tracked by git shall be processed.
 
 #### OUTPUT FILES
 
