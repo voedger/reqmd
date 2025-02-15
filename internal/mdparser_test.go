@@ -244,3 +244,40 @@ func TestRegexpEmojis(t *testing.T) {
 		t.Errorf("Pattern matches, but was not expected to match.\nText: %s", text2)
 	}
 }
+
+func TestParseRequirements_errors(t *testing.T) {
+	tests := []struct {
+		name    string
+		line    string
+		wantErr ProcessingError
+	}{
+		{
+			name: "multiple requirements on single line",
+			line: "`~REQ001~` `~REQ002~`covered[^~REQ002~]✅",
+			wantErr: ProcessingError{
+				Code:     "multisites",
+				FilePath: "test.md",
+				Line:     1,
+				Message:  "Only one RequirementSite is allowed per line: `~REQ001~`,  `~REQ002~`covered[^~REQ002~]✅",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var errors []ProcessingError
+			requirements := ParseRequirements("test.md", tt.line, 1, &errors)
+
+			// Check that no requirements were returned
+			assert.Nil(t, requirements, "should return nil requirements when multiple sites found")
+
+			// Verify the error
+			if assert.Len(t, errors, 1, "should have exactly one error") {
+				assert.Equal(t, tt.wantErr.Code, errors[0].Code)
+				assert.Equal(t, tt.wantErr.Message, errors[0].Message)
+				assert.Equal(t, tt.wantErr.FilePath, errors[0].FilePath)
+				assert.Equal(t, tt.wantErr.Line, errors[0].Line)
+			}
+		})
+	}
+}

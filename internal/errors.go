@@ -49,4 +49,13 @@ func NewErrURLSyntax(filePath string, line int, URL string) ProcessingError {
 	}
 }
 
+func NewErrMultiSites(filePath string, line int, site1, site2 string) ProcessingError {
+	return ProcessingError{
+		Code:     "multisites",
+		FilePath: filePath,
+		Line:     line,
+		Message:  "Only one RequirementSite is allowed per line: " + site1 + ",  " + site2,
+	}
+}
+
 // ********** Semantic errors

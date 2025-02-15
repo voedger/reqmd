@@ -51,6 +51,8 @@ Markdown body is a sequence of different text elements. The tool processes:
     - UncoveredAnnotatedRequirementSite
 - CoverageFootnote
 
+Only one RequirementSite is allowed per line.
+
 ```ebnf
 RequirementSite = RequirementSiteID [( "covered" | "uncvrd" ) CoverageFootnoteReference] ("✅" | "❓")
 

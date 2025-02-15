@@ -96,6 +96,11 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 	var requirements []RequirementSite
 
 	matches := RequirementSiteRegex.FindAllStringSubmatch(line, -1)
+	if len(matches) > 1 {
+		*errors = append(*errors, NewErrMultiSites(filePath, lineNum, matches[0][0], matches[1][0]))
+		return nil
+	}
+
 	for _, match := range matches {
 		reqName := match[1]
 		if !identifierRegex.MatchString(reqName) {

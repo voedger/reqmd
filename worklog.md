@@ -177,6 +177,13 @@ Input files that are larger than 128KB are not processed.
 
 - Copilot.Claude: scanner should Verbose number of encountered files and their total size, and number of skipped files and theit total size.👍
 
+### Only one RequirementSite is allowed per line
+
+- Copilot.Claude: Only one RequirementSite is allowed per line.🏆
+  - Context: requirements.md, errors.go, mdparser.go
+  - See the response in the Intermediate results section
+- Copilot.Claude: Cover NewErrMultiSites by new TestParseRequirements_errors🏆
+
 --------------------
 
 ## Intermediate results
@@ -214,6 +221,139 @@ line := "[^~REQ002~]: [~com.example.basic~impl][folder1/filename1:line1:impl](ht
 	}
 }
 ```
+
+### Response: Only one RequirementSite is allowed per line
+
+I'll help implement the "one RequirementSite per line" requirement. Here's the step-by-step solution:
+
+1. Add a new error type for multiple requirements per line
+2. Modify the ParseRequirements function to check for multiple matches
+3. Add the corresponding error constructor in errors.go
+
+#### [mdparser.go](file:///c%3A/workspaces/work/reqmd/internal/mdparser.go)
+
+Modify ParseRequirements to check for multiple matches per line.
+
+```go
+// ...existing code...
+
+func ParseRequirements(filePath string, line string, lineNum int, errors *[]ProcessingError) []RequirementSite {
+	var requirements []RequirementSite
+
+	matches := RequirementSiteRegex.FindAllStringSubmatch(line, -1)
+	if len(matches) > 1 {
+		*errors = append(*errors, NewErrMultipleRequirements(filePath, lineNum))
+		return nil
+	}
+	
+	for _, match := range matches {
+		reqName := match[1]
+		if !identifierRegex.MatchString(reqName) {
+			*errors = append(*errors, NewErrReqIdent(filePath, lineNum))
+		}
+		// ...existing code...
+	}
+
+	return requirements
+}
+
+// ...existing code...
+```
+
+#### [errors.go](file:///c%3A/workspaces/work/reqmd/internal/errors.go)
+
+Add the new error constructor for multiple requirements per line.
+
+```go
+
+
+Made changes.
+
+// ...existing code...
+
+func NewErrMultipleRequirements(filePath string, line int) ProcessingError {
+	return ProcessingError{
+		Code:     "multireq",
+		FilePath: filePath,
+		Line:     line,
+		Message:  "Only one RequirementSite is allowed per line",
+	}
+}
+
+// ...existing code...
+```
+
+The changes ensure that:
+
+1. If multiple requirements are found on a single line, an error is reported
+2. No requirements from that line are processed (returning nil)
+3. The error message clearly indicates the violation of the one-requirement-per-line rule
+
+Made changes.
+
+### Response: Cover NewErrMultiSites by new TestParseRequirements_errors
+
+I'll help add a test function to cover the NewErrMultiSites error case. Here's the step-by-step solution:
+
+1. Create a new test function TestParseRequirements_errors
+2. Include test cases for multiple requirement sites on a single line
+
+```go
+package internal
+
+import (
+	"testing"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestParseRequirements_errors(t *testing.T) {
+	tests := []struct {
+		name     string
+		line     string
+		wantErr  ProcessingError
+	}{
+		{
+			name: "multiple requirements on single line",
+			line: "`~REQ001~` `~REQ002~`",
+			wantErr: ProcessingError{
+				Code:     "multisites",
+				FilePath: "test.md",
+				Line:     1,
+				Message:  "Only one RequirementSite is allowed per line: `~REQ001~`,  `~REQ002~`",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var errors []ProcessingError
+			requirements := ParseRequirements("test.md", tt.line, 1, &errors)
+
+			// Check that no requirements were returned
+			assert.Nil(t, requirements, "should return nil requirements when multiple sites found")
+
+			// Verify the error
+			if assert.Len(t, errors, 1, "should have exactly one error") {
+				assert.Equal(t, tt.wantErr.Code, errors[0].Code)
+				assert.Equal(t, tt.wantErr.Message, errors[0].Message)
+				assert.Equal(t, tt.wantErr.FilePath, errors[0].FilePath)
+				assert.Equal(t, tt.wantErr.Line, errors[0].Line)
+			}
+		})
+	}
+}
+```
+
+The test:
+
+1. Defines a test case with multiple requirement sites on a single line
+2. Verifies that ParseRequirements returns nil for requirements
+3. Checks that the correct error is generated with the expected properties
+4. Uses the testify/assert package for cleaner assertions
+
+You can add this test function to your existing mdparser_test.go file.
+
+Made changes.
 
 ## Analysis
 
