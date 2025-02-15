@@ -105,7 +105,7 @@ An example:
 
 Where:
 
-- `~server.api.v2~impl` - CoverageFootnoteHint
+- "`[~server.api.v2/Post.handler~impl]`" - CoverageFootnoteHint
 - `[folder1/filename1:line1:impl](CoverageURL1)` - Coverer
   - `folder1/filename1:line1:impl` - CoverageLabel
   - `CoverageURL1` - CoverageURL

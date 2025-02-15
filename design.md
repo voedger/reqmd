@@ -134,6 +134,28 @@ URL structure examples:
   - `FileStructure.RepoRootFolderURL`
   - `FileStructure.RelativePath`
 
+## ActionAnnotate processing
+
+Processing overview
+
+- First all ActionAnnotate actions are processed for all files, then other actions shall be processed
+- ActionAnnotate shall be grouped by file and applied to the file in order of appearance
+- During ActionAnnotate processing it is necessary to annotate RequirementSite and add a coverage footnote.
+- File is loaded as whole into the memory
+- Original lineendings shall be preserved (adding new lines use the first lineending found in the file)
+- Backup is not necessary
+
+RequirementSite processing
+
+- Replace the bare requirement (e.g., "~REQ001~") with the annotated version (e.g., "~REQ001~uncvrd[^REQ001]✅")-
+- Bare requirement shall be exactly on the line that is specified in the Action.Line
+- If the RequirementSite is not found, error is returned, the entire Apply operation fails
+
+Footnotes processing
+
+- If the last line of the file starts with "[^" then and empty line is added before the footnotes
+- Coverage footnotes are just appended at the very end of the file
+
 ## Implementation details
 
 - SSH URLs (like git@github.com:org/repo.git) are not supported

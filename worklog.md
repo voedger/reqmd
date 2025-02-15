@@ -184,6 +184,19 @@ Input files that are larger than 128KB are not processed.
   - See the response in the Intermediate results section
 - Copilot.Claude: Cover NewErrMultiSites by new TestParseRequirements_errors🏆
 
+### ActionAnnotate
+
+- Copilot.Claude: Generate Action.String() method: OK
+- Copilot.Claude: Is it clear how to process ActionAnnotate in applier.go. It is necessary to annotate RequirementSite and add a coverage footnote. Use RequirementSiteRegex to identify RequirementSite. Ask questions, if needed.🏆
+  - Context: #file:applier.go #file:requirements.md #file:ebnf.md #file:mdparser.go
+- Copilot.Claude: Is it clear how to implement `## ActionAnnotate processing` section  from the design.md? Ask questions, if needed.
+  - Context: #file:applier.go #file:requirements.md #file:ebnf.md #file:mdparser.go
+- Me: repeat the question multiple times. Response is incredibly cool🏆. An example:
+  - When Action.Type is ActionAdd for footnotes:
+    - Does Action.Data contain the complete footnote text?
+    - Or do we need to construct it from some components?
+    - Should we maintain any specific order of footnotes?
+
 --------------------
 
 ## Intermediate results
@@ -354,6 +367,38 @@ The test:
 You can add this test function to your existing mdparser_test.go file.
 
 Made changes.
+
+### Response: Is it clear how to process ActionAnnotate in applier.go
+
+I have some questions about implementing ActionAnnotate in applier.go:
+
+1. For line modification:
+   - When we find a RequirementSite using RequirementSiteRegex, should we:
+     - Replace just the bare requirement (e.g., "`~REQ001~`") with the annotated version (e.g., "`~REQ001~`covered[^~REQ001~]✅"), or
+     - Preserve any existing coverage status and just update it?
+
+2. For coverage footnotes:
+   - Where exactly should new coverage footnotes be added in the file:
+     - At the very end of the file?
+     - After the last existing footnote?
+     - After the section containing the requirement?
+
+3. File handling:
+   - Should we read the entire file into memory and modify it, or
+   - Process it line by line with a scanner/writer?
+   - Do we need to preserve original line endings (CRLF vs LF)?
+
+4. Error handling:
+   - What should happen if:
+     - The file is read-only?
+     - Multiple RequirementSites are found in a line (though this should be caught earlier)?
+     - The line number in the action doesn't match where we find the requirement?
+
+5. Backup:
+   - Should we create a backup of the original file before modifying it?
+   - Or should this be handled at a higher level?
+
+Once these points are clarified, I can propose a specific implementation for the applier.go file.
 
 ## Analysis
 

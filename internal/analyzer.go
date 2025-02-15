@@ -31,14 +31,17 @@ func (a *analyzer) Analyze(files []FileStructure) ([]Action, []ProcessingError) 
 
 			// For bare requirements without coverage annotation
 			if !req.IsAnnotated {
-				// Generate dummy coverage action
+				// Generate ActionAnnotate
 				action := Action{
-					Type:     ActionUpdate,
+					Type:     ActionAnnotate,
 					FilePath: file.Path,
 					Line:     req.Line,
-					Data:     req.RequirementName + " ❓", // Add uncovered status
+					Data:     req.RequirementName, // Add uncovered status
 				}
 				actions = append(actions, action)
+				if IsVerbose {
+					Verbose("ActionAnnotate: " + action.String())
+				}
 			}
 		}
 	}

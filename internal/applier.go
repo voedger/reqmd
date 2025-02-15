@@ -11,15 +11,9 @@ func NewDummyApplier() IApplier {
 func (a *dummyApplier) Apply(actions []Action) error {
 	for _, action := range actions {
 		switch action.Type {
-		case ActionAdd:
-			log.Printf("[DUMMY] Would add new content at %s:%d: %s\n",
-				action.FilePath, action.Line, action.Data)
-		case ActionUpdate:
+		case ActionAnnotate:
 			log.Printf("[DUMMY] Would update content at %s:%d: %s\n",
 				action.FilePath, action.Line, action.Data)
-		case ActionDelete:
-			log.Printf("[DUMMY] Would delete content at %s:%d\n",
-				action.FilePath, action.Line)
 		default:
 			log.Printf("[DUMMY] Unknown action type: %v\n", action.Type)
 		}

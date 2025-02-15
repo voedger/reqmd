@@ -75,9 +75,9 @@ CoverageFootnoteReference = "[^" RequirementSiteID "]" ;
   optional comma-separated coverers. 
 *)
 
-CoverageFootnote = "[^" RequirementSiteID "]:" WS "`[" CoverageFootnoteHint "]`" [ CovererList ] ;
-CoverageFootnoteHint = RequirementTag ;
-CovererList    = WS Coverer { "," WS Coverer } ;
+CoverageFootnote = "[^" RequirementSiteID "]:" CoverageFootnoteHint [ CovererList ] ;
+CoverageFootnoteHint = "`[" "~" PackageID "/" RequirementName "~impl]`" ;
+CovererList    = Coverer { "," WS Coverer } ;
 Coverer        = "[" CoverageLabel "]" "(" CoverageURL ")" ;
 CoverageLabel  = FilePath ":" "line" Digit { Digit } ":" CoverageType ;
 
@@ -118,6 +118,5 @@ CoverageArea   = "L" Digit { Digit } ;
 
 SourceFile   = { SourceElement } ;
 SourceElement = CoverageTag | PlainText ;
-CoverageTag  = "[" RequirementTag "]" ;
-RequirementTag = "~" PackageID "/" RequirementName "~" CoverageType ;
+CoverageTag  = "[" "~" PackageID "/" RequirementName "~" CoverageType "]";
 ```

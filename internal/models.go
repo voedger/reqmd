@@ -10,9 +10,7 @@ import (
 type ActionType string
 
 const (
-	ActionAdd    ActionType = "Add"
-	ActionUpdate ActionType = "Update"
-	ActionDelete ActionType = "Delete"
+	ActionAnnotate ActionType = "Annotate"
 )
 
 // Action describes a single transformation (add/update/delete) to be applied in a file.
@@ -21,6 +19,16 @@ type Action struct {
 	FilePath string     // which file is changed
 	Line     int        // the line number where the change is applied
 	Data     string     // new data (if any)
+}
+
+// String returns a human-readable representation of the Action
+func (a *Action) String() string {
+	switch a.Type {
+	case ActionAnnotate:
+		return fmt.Sprintf("%s at %s:%d: %s", a.Type, a.FilePath, a.Line, a.Data)
+	default:
+		return fmt.Sprintf("Unknown action at %s:%d", a.FilePath, a.Line)
+	}
 }
 
 // SyntaxError captures syntax and semantic errors.
