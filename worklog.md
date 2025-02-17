@@ -256,6 +256,8 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
 - Copilot.Claude: If possible get rid of seenReqs in analyzer, use analyzer.coverages instead👍
 - CopilotAgent.Claude: Generate tests to cover semantic errors in analyzer_test.go. Do not use table tests, use separate Run for each error.🏆
   - Context: analyzer.go
+- Copilot.Claude: analyzer_test.go: use helper to create FileStructure with one requriement👍
+- CopilotAgent.Claude: analyzer_test.go: Construct tests to cover action analysys.  Do not use table tests, use separate Runs. Construct new helper functions to create FileStructures, if needed.👍
 
 --------------------
 
