@@ -219,16 +219,12 @@ Input files that are larger than 128KB are not processed.
 
 ### Design: Changes processing
 
+- Me: design.md/Changes processing
+
 ```text
 ## Changes processing
 
-### Problem statement
 
-The following files may have to be changed
-
-- reqmd.json
-- Markdown files
-```
 
 --------------------
 

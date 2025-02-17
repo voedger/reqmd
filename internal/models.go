@@ -118,9 +118,6 @@ type Coverer struct {
 	FileHash      string // git hash of the file specified in CoverageURL
 }
 
-// ReqmdfilesMap corresponds to the structure in reqmdfiles.json, mapping file URLs to their current hash.
-type ReqmdfilesMap map[string]string
-
 // Reqmdjson models the structure of the reqmd.json file.
 type Reqmdjson struct {
 	FileHashes map[string]string //
