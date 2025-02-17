@@ -173,7 +173,11 @@ RequirementCoverage
 
 ### Analysis
 
-Analysis is conducted in two separate passes: footnotes first, then annotations.
+Analysis is conducted in few separate passes:
+
+- ActionFootnote, ActionUpdateStatus
+- ActionAnnotate
+- ActionAddFileURL, ActionUpdateHash
 
 Construction of ActionFootnote and ActionUpdateStatus
 
@@ -196,6 +200,19 @@ Construction of ActionAnnotate
 - foreach coverage in `coverages`
   - if coverage.ActionFootnote is nil and !coverage.Site.IsAnnotated  then
     - New ActionAnnotate is created using RequirementSite as Data
+
+Construction of ActionAddFileURL and ActionUpdateHash
+
+- foreach coverage in `coverages`
+  - foreach coverer in NewCoverers
+    - if CoverageURL does not exist NewCoverers
+      - New ActionAddFileURL is created
+        - FileStruct is set to coverage.FileStructure
+        - Data is set to coverer.FileHash
+    - else if coverer.FileHash != coverage.FileStructure.FileHash then
+      - New ActionUpdateHash is created
+        - FileStruct is set to coverage.FileStructure
+        - Data is set to coverer.FileHash
 
 ### Applying
 
@@ -227,7 +244,7 @@ Construction of ActionAnnotate
 - OS-specific line endings are preserved and used for writing
 - No backup files are created
 
-**Line Validation**:
+**Line Validation for markdown files**:
 
 - Each Action contains Line and RequirementID
 - It is expected that the line with the number exists and contains the RequirementSite or CoverageFootnote with the given RequirementID

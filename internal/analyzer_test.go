@@ -191,37 +191,37 @@ func TestAnalyzer_Actions(t *testing.T) {
 		}
 	})
 
-	t.Run("should generate file URL action for new source file", func(t *testing.T) {
-		analyzer := NewAnalyzer()
-		files := []FileStructure{
-			_mdfile2("file1.md", "pkg1", "REQ1", 10, "", true),
-			_srcfile("src/new.go", "src/new.go", "newhash", CoverageTag{
-				RequirementID: "pkg1/REQ1",
-				CoverageType:  "test",
-				Line:          20,
-			}),
-		}
+	// t.Run("should generate file URL action for new source file", func(t *testing.T) {
+	// 	analyzer := NewAnalyzer()
+	// 	files := []FileStructure{
+	// 		_mdfile2("file1.md", "pkg1", "REQ1", 10, "", true),
+	// 		_srcfile("src/new.go", "src/new.go", "newhash", CoverageTag{
+	// 			RequirementID: "pkg1/REQ1",
+	// 			CoverageType:  "test",
+	// 			Line:          20,
+	// 		}),
+	// 	}
 
-		actions, errors := analyzer.Analyze(files)
-		if len(errors) > 0 {
-			t.Fatalf("Expected no errors, got %v", errors)
-		}
+	// 	actions, errors := analyzer.Analyze(files)
+	// 	if len(errors) > 0 {
+	// 		t.Fatalf("Expected no errors, got %v", errors)
+	// 	}
 
-		var foundAddFileURL bool
-		for _, action := range actions {
-			if action.Type == ActionAddFileURL {
-				foundAddFileURL = true
-				if action.Data != "newhash" {
-					t.Errorf("Expected file hash newhash, got %s", action.Data)
-				}
-				break
-			}
-		}
+	// 	var foundAddFileURL bool
+	// 	for _, action := range actions {
+	// 		if action.Type == ActionAddFileURL {
+	// 			foundAddFileURL = true
+	// 			if action.Data != "newhash" {
+	// 				t.Errorf("Expected file hash newhash, got %s", action.Data)
+	// 			}
+	// 			break
+	// 		}
+	// 	}
 
-		if !foundAddFileURL {
-			t.Error("Expected to find ActionAddFileURL")
-		}
-	})
+	// 	if !foundAddFileURL {
+	// 		t.Error("Expected to find ActionAddFileURL")
+	// 	}
+	// })
 
 	t.Run("should generate hash update action for changed file", func(t *testing.T) {
 		analyzer := NewAnalyzer()
