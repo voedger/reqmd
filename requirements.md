@@ -184,7 +184,7 @@ Breakdown of the `[~server.api.v2/Post.handler~test]`:
 
 Structure
 
-- FileHashes
+- FileURL2FileHash
   - Maps FileURL to FileHash
   - FileURLs shall be ordered lexically to avoid unnecessary changes and merge conflicts
 

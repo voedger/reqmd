@@ -221,11 +221,6 @@ Input files that are larger than 128KB are not processed.
 
 - Me: design.md/Changes processing
 
-```text
-## Changes processing
-
-
-
 --------------------
 
 ## Intermediate results

@@ -140,9 +140,7 @@ The following files may have to be changed
 
 - reqmd.json
   - New URL is added
-  - 
 - Markdown files
-
 
 ## ActionAnnotate processing
 

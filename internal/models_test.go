@@ -20,13 +20,13 @@ func TestReqmdjson_UnmarshalJSON(t *testing.T) {
 		{
 			name: "valid json with multiple file hashes",
 			json: `{
-				"FileHashes": {
+				"FileURL2FileHash": {
 					"https://github.com/voedger/voedger/blob/main/pkg/api/handler.go": "979d75b2c7da961f94396ce2b286e7389eb73d75",
 					"https://github.com/voedger/voedger/blob/main/pkg/api/handler_test.go": "845a23c8f9d6a8b7e9c2d4f5a6b7c8d9e0f1a2b3"
 				}
 			}`,
 			want: Reqmdjson{
-				FileHashes: map[string]string{
+				FileURL2FileHash: map[string]string{
 					"https://github.com/voedger/voedger/blob/main/pkg/api/handler.go":      "979d75b2c7da961f94396ce2b286e7389eb73d75",
 					"https://github.com/voedger/voedger/blob/main/pkg/api/handler_test.go": "845a23c8f9d6a8b7e9c2d4f5a6b7c8d9e0f1a2b3",
 				},
@@ -34,14 +34,14 @@ func TestReqmdjson_UnmarshalJSON(t *testing.T) {
 		},
 		{
 			name: "empty file hashes",
-			json: `{"FileHashes":{}}`,
+			json: `{"FileURL2FileHash":{}}`,
 			want: Reqmdjson{
-				FileHashes: map[string]string{},
+				FileURL2FileHash: map[string]string{},
 			},
 		},
 		{
 			name:    "invalid json",
-			json:    `{"FileHashes": not_valid_json}`,
+			json:    `{"FileURL2FileHash": not_valid_json}`,
 			wantErr: true,
 		},
 	}
@@ -57,14 +57,14 @@ func TestReqmdjson_UnmarshalJSON(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.want.FileHashes, got.FileHashes)
+			assert.Equal(t, tt.want.FileURL2FileHash, got.FileURL2FileHash)
 		})
 	}
 }
 
 func TestReqmdjson_MarshalJSON_sorted(t *testing.T) {
 	input := Reqmdjson{
-		FileHashes: map[string]string{
+		FileURL2FileHash: map[string]string{
 			// Deliberately not in lexical order
 			"https://github.com/org/repo/blob/main/zzz/last.go":      "hash20",
 			"https://github.com/org/repo/blob/main/src/app.go":       "hash10",
@@ -93,7 +93,7 @@ func TestReqmdjson_MarshalJSON_sorted(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify exact number of entries
-	assert.Equal(t, 20, len(input.FileHashes), "should have exactly 20 entries")
+	assert.Equal(t, 20, len(input.FileURL2FileHash), "should have exactly 20 entries")
 
 	// Unmarshal to verify structure
 	var output Reqmdjson
@@ -101,11 +101,11 @@ func TestReqmdjson_MarshalJSON_sorted(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify content equality
-	assert.Equal(t, input.FileHashes, output.FileHashes)
+	assert.Equal(t, input.FileURL2FileHash, output.FileURL2FileHash)
 
 	// Extract and sort all keys
-	keys := make([]string, 0, len(input.FileHashes))
-	for k := range input.FileHashes {
+	keys := make([]string, 0, len(input.FileURL2FileHash))
+	for k := range input.FileURL2FileHash {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)

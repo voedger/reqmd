@@ -203,7 +203,7 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 					}
 					fileURL := parsedURL.Scheme + "://" + parsedURL.Host + parsedURL.Path
 					if mctx != nil && mctx.rfiles != nil {
-						coverer.FileHash = mctx.rfiles.FileHashes[fileURL]
+						coverer.FileHash = mctx.rfiles.FileURL2FileHash[fileURL]
 					}
 					footnote.Coverers = append(footnote.Coverers, coverer)
 				}
