@@ -157,7 +157,7 @@ The following files may have to be changed
 - ActionAddFileURL: Add new FileURL + FileHash to reqmd.json
 - ActionUpdateHash: Update FileHash in reqmd.json for a given FileURL
 - ActionAddCoverer: Add new Coverer to footnote
-- ActionRemoveCoverer: Add new Coverer to footnote
+- ActionRemoveCoverer: Remove Coverer from footnote
 - ActionUpdateStatus: Update RequirementSite.CoverageStatusWord (covered/uncvrd)
   - Only one action per line is allowed
 - ActionAnnotate: Convert BareRequirementSite to annotated
@@ -206,9 +206,15 @@ The following files may have to be changed
 - If the file does not end with an empty line and the original FileStructure does not have CoverageFootnotes then a new empty line is added (to separate footnotes from the rest of the file)
   - This is done when we're about to add the first footnote
 - New footnotes are added at end of file
-- No specific ordering of footnotes required
+- No specific ordering of new footnotes required
+- Existing footnote ordering shall be preserved
 
 ### Error Handling
+
+**Processing Errors**:
+
+- Processing stops immediately on first error
+- Remaining actions are not processed and the caller receives an error
 
 **Non-atomic Changes**:
 
@@ -216,12 +222,6 @@ The following files may have to be changed
   - Partially updated footnotes
   - Missing coverage annotations
 - No rollback mechanism required
-
-**Processing Errors**:
-
-- Stop immediately on first error
-- Return error to caller
-- Do not process remaining actions
 
 ### Action Structure
 
