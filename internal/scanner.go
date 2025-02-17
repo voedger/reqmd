@@ -116,7 +116,9 @@ func scanMarkdowns(reqPath string) ([]FileStructure, []ProcessingError, error) {
 
 	reqmdProcessor := func(folder string) (FileProcessor, error) {
 		mctx := &MarkdownContext{
-			rfiles: make(ReqmdfilesMap),
+			rfiles: &Reqmdjson{
+				FileHashes: make(map[string]string),
+			},
 		}
 
 		reqmdPath := filepath.Join(folder, reqmdjsonFileName)

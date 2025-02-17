@@ -209,9 +209,13 @@ Input files that are larger than 128KB are not processed.
 
 ### reqmdfiles => reqmd.json
 
-- CopilotAgent.Claude: Switch from reqmdfiles.json to reqmd.json
+- CopilotAgent.Claude: Switch from reqmdfiles.json to reqmd.json🤔
   - Nothing on context
   - CopilotAgent found multiple files to change but still it is necessary to migrate from ReqmdfilesMap to Reqmdjson structure
+- CopilotAgent.Claude: Migrate MarkdownContext.rfiles from ReqmdfilesMap to Reqmjson. Modify processing logic accordingly.👍
+  - But tests do not work🤔
+- CopilotAgent.Claude: Fix Test_ParseCoverageFootnote.👍
+- Copilot.Claude: Implement custom JSON serialization for Reqmdjson to meet the requirements.👍
 
 ### Design: Changes processing
 

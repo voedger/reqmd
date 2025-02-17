@@ -1,8 +1,10 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -121,5 +123,53 @@ type ReqmdfilesMap map[string]string
 
 // Reqmdjson models the structure of the reqmd.json file.
 type Reqmdjson struct {
-	FileUrl2Hash map[string]string //
+	FileHashes map[string]string //
+}
+
+// MarshalJSON implements custom JSON serialization for Reqmdjson
+// to ensure FileURLs are ordered lexically
+func (r *Reqmdjson) MarshalJSON() ([]byte, error) {
+	// Get all keys and sort them
+	keys := make([]string, 0, len(r.FileHashes))
+	for k := range r.FileHashes {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	// Build ordered map manually
+	var b strings.Builder
+	b.WriteString(`{"FileHashes":{`)
+	for i, k := range keys {
+		if i > 0 {
+			b.WriteString(",")
+		}
+		// Marshal key and value properly to handle special characters
+		keyJSON, err := json.Marshal(k)
+		if err != nil {
+			return nil, err
+		}
+		valueJSON, err := json.Marshal(r.FileHashes[k])
+		if err != nil {
+			return nil, err
+		}
+		b.Write(keyJSON)
+		b.WriteString(":")
+		b.Write(valueJSON)
+	}
+	b.WriteString("}}")
+	return []byte(b.String()), nil
+}
+
+// UnmarshalJSON implements custom JSON deserialization for Reqmdjson
+func (r *Reqmdjson) UnmarshalJSON(data []byte) error {
+	// Use a temporary type to avoid infinite recursion
+	type TempReqmdjson struct {
+		FileHashes map[string]string `json:"FileHashes"`
+	}
+	var temp TempReqmdjson
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+	r.FileHashes = temp.FileHashes
+	return nil
 }

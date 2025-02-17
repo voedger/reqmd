@@ -24,7 +24,7 @@ var (
 )
 
 type MarkdownContext struct {
-	rfiles ReqmdfilesMap
+	rfiles *Reqmdjson
 }
 
 // isCodeBlockMarker checks if a line is a code block marker, handling indentation
@@ -202,7 +202,9 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 						CoverageURL:   covMatch[2],
 					}
 					fileURL := parsedURL.Scheme + "://" + parsedURL.Host + parsedURL.Path
-					coverer.FileHash = mctx.rfiles[fileURL]
+					if mctx != nil && mctx.rfiles != nil {
+						coverer.FileHash = mctx.rfiles.FileHashes[fileURL]
+					}
 					footnote.Coverers = append(footnote.Coverers, coverer)
 				}
 			}

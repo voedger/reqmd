@@ -186,17 +186,17 @@ Structure
 
 - FileHashes
   - Maps FileURL to FileHash
-  - FileURLs must be ordered lexically to avoid unnecessary changes and merge conflicts
+  - FileURLs shall be ordered lexically to avoid unnecessary changes and merge conflicts
 
 Example:
 
 ```json
 {
-  "FileHashes" : [
-    {"https://github.com/voedger/voedger/blob/main/pkg/api/handler.go", "979d75b2c7da961f94396ce2b286e7389eb73d75"},
-    {"https://github.com/voedger/voedger/blob/main/pkg/api/handler_test.go", "845a23c8f9d6a8b7e9c2d4f5a6b7c8d9e0f1a2b3"},
-    {"https://gitlab.com/myorg/project/-/blob/main/src/core/processor.ts", "123f45e6c7d8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"}
-  ]
+  "FileHashes" : {
+    "https://github.com/voedger/voedger/blob/main/pkg/api/handler.go": "979d75b2c7da961f94396ce2b286e7389eb73d75",
+    "https://github.com/voedger/voedger/blob/main/pkg/api/handler_test.go", "845a23c8f9d6a8b7e9c2d4f5a6b7c8d9e0f1a2b3", 
+    "https://gitlab.com/myorg/project/-/blob/main/src/core/processor.ts", "123f45e6c7d8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
+  }
 }
 ```
 
