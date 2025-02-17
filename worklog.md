@@ -246,6 +246,9 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
 
 - CopilotAgent.Claude: Implement the `design.md/##Changes processing` for the analyzer.🤔
   - In general it is ok, but the processing for ActionAddCoverer, ActionRemoveCoverer are missing.
+- CopilotAgent.Claude: Refactor RequirementSite.CoverageStatusWord processing to meet the requirements:👍
+  - If the number of new coverers (including new ones) is non-zero and current Coverage.StatusWord is "uncvrd" then it is changed to "covered"
+  - If the number of coverers is zero (considering those that no longer exist) and current Coverage.StatusWord is "covered" then it is changed to "uncvrd"
 
 --------------------
 

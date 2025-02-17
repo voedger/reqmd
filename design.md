@@ -146,10 +146,10 @@ The following files may have to be changed
 - Markdown files
   - Coverer with new FileURL is added
   - Coverer with existing FileURL does not exist anymore
-  - Coverer.FileHash is updated
+  - Coverer.FileHash is updated  
   - RequirementSite.CoverageStatusWord is updated
-    - If the number of coverers is non-zero and current Coverage.StatusWord is "uncvrd" then it is changed to "covered"
-    - If the number of coverers is zero and current Coverage.StatusWord is "covered" then it is changed to "uncvrd"
+    - If the number of old  coverers (including new ones) is non-zero and current Coverage.StatusWord is "uncvrd" then it is changed to "covered"
+    - If the number of coverers is zero (considering those that no longer exist) and current Coverage.StatusWord is "covered" then it is changed to "uncvrd"
   - Some RequirementSite are BareRequirementSite
 
 ### Action Types

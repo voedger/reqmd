@@ -15,20 +15,50 @@ func (a *analyzer) Analyze(files []FileStructure) ([]Action, []ProcessingError) 
 		filePath string
 		line     int
 	}
-	seenReqs := make(map[string]reqLocation) // reqID -> location
+	seenReqs := make(map[string]reqLocation)
 
 	// Track coverage data
 	type coverageInfo struct {
-		count    int      // number of coverers for this requirement
-		coverers []string // coverer labels to detect removals
+		covererCount int      // number of coverers for this requirement
+		coverers     []string // coverer labels to detect removals
 	}
 	reqCoverage := make(map[string]coverageInfo) // requirementID -> coverage info
 
 	// Track file URLs and hashes
 	fileURLHashes := make(map[string]string) // fileURL -> hash from reqmdjson
 
+	// First pass: Process source files to gather coverage information
 	for _, file := range files {
-		// Skip source files at this stage
+		if file.Type == FileTypeSource {
+			fileURL := file.FileURL()
+
+			// Check if file URL needs to be added to reqmd.json
+			if _, exists := fileURLHashes[fileURL]; !exists {
+				action := Action{
+					Type:       ActionAddFileURL,
+					FileStruct: &file,
+					Data:       file.FileHash,
+				}
+				actions = append(actions, action)
+				if IsVerbose {
+					Verbose("ActionAddFileURL: " + action.String())
+				}
+			} else if fileURLHashes[fileURL] != file.FileHash {
+				action := Action{
+					Type:       ActionUpdateHash,
+					FileStruct: &file,
+					Data:       file.FileHash,
+				}
+				actions = append(actions, action)
+				if IsVerbose {
+					Verbose("ActionUpdateHash: " + action.String())
+				}
+			}
+		}
+	}
+
+	// Second pass: Process markdown files
+	for _, file := range files {
 		if file.Type != FileTypeMarkdown {
 			continue
 		}
@@ -39,7 +69,19 @@ func (a *analyzer) Analyze(files []FileStructure) ([]Action, []ProcessingError) 
 			continue
 		}
 
-		// Process the requirements in the file
+		// First gather coverage information from footnotes
+		for _, footnote := range file.CoverageFootnotes {
+			coverage := reqCoverage[footnote.RequirementID]
+			coverage.covererCount = len(footnote.Coverers)
+			coverage.coverers = make([]string, 0, coverage.covererCount)
+			for _, coverer := range footnote.Coverers {
+				coverage.coverers = append(coverage.coverers, coverer.CoverageLabel)
+				fileURLHashes[coverer.CoverageURL] = coverer.FileHash
+			}
+			reqCoverage[footnote.RequirementID] = coverage
+		}
+
+		// Process requirements and check for status changes
 		for _, req := range file.Requirements {
 			reqID := file.PackageID + "/" + req.RequirementName
 			if existing, exists := seenReqs[reqID]; exists {
@@ -69,87 +111,37 @@ func (a *analyzer) Analyze(files []FileStructure) ([]Action, []ProcessingError) 
 				}
 			}
 
-			// Track coverage status changes
-			coverers := 0
+			// Handle coverage status changes
+			coverage := reqCoverage[reqID]
 			if len(req.CoverageStatusWord) > 0 {
-				for _, footnote := range file.CoverageFootnotes {
-					if footnote.RequirementID == reqID {
-						coverers = len(footnote.Coverers)
-						break
-					}
-				}
-
-				// Update coverage status if needed
-				needsUpdate := (coverers > 0 && req.CoverageStatusWord == "uncvrd") ||
-					(coverers == 0 && req.CoverageStatusWord == "covered")
-
-				if needsUpdate {
-					newStatus := "uncvrd"
-					if coverers > 0 {
-						newStatus = "covered"
-					}
+				switch {
+				case coverage.covererCount > 0 && req.CoverageStatusWord == "uncvrd":
+					// Has coverers but marked as uncovered - change to covered
 					action := Action{
 						Type:          ActionUpdateStatus,
 						FileStruct:    &file,
 						Line:          req.Line,
 						RequirementID: reqID,
-						Data:          newStatus,
+						Data:          "covered",
+					}
+					actions = append(actions, action)
+					if IsVerbose {
+						Verbose("ActionUpdateStatus: " + action.String())
+					}
+				case coverage.covererCount == 0 && req.CoverageStatusWord == "covered":
+					// No coverers but marked as covered - change to uncovered
+					action := Action{
+						Type:          ActionUpdateStatus,
+						FileStruct:    &file,
+						Line:          req.Line,
+						RequirementID: reqID,
+						Data:          "uncvrd",
 					}
 					actions = append(actions, action)
 					if IsVerbose {
 						Verbose("ActionUpdateStatus: " + action.String())
 					}
 				}
-			}
-
-			// Store coverage info for later comparison
-			reqCoverage[reqID] = coverageInfo{
-				count:    coverers,
-				coverers: make([]string, 0),
-			}
-		}
-
-		// Process the coverage footnotes
-		for _, footnote := range file.CoverageFootnotes {
-			if coverage, exists := reqCoverage[footnote.RequirementID]; exists {
-				for _, coverer := range footnote.Coverers {
-					coverage.coverers = append(coverage.coverers, coverer.CoverageLabel)
-					fileURLHashes[coverer.CoverageURL] = coverer.FileHash
-				}
-				reqCoverage[footnote.RequirementID] = coverage
-			}
-		}
-	}
-
-	// Now process source files for coverage tags
-	for _, file := range files {
-		if file.Type != FileTypeSource {
-			continue
-		}
-
-		fileURL := file.FileURL()
-
-		// Check if file URL needs to be added to reqmd.json
-		if _, exists := fileURLHashes[fileURL]; !exists {
-			action := Action{
-				Type:       ActionAddFileURL,
-				FileStruct: &file,
-				Data:       file.FileHash,
-			}
-			actions = append(actions, action)
-			if IsVerbose {
-				Verbose("ActionAddFileURL: " + action.String())
-			}
-		} else if fileURLHashes[fileURL] != file.FileHash {
-			// File hash has changed
-			action := Action{
-				Type:       ActionUpdateHash,
-				FileStruct: &file,
-				Data:       file.FileHash,
-			}
-			actions = append(actions, action)
-			if IsVerbose {
-				Verbose("ActionUpdateHash: " + action.String())
 			}
 		}
 	}
