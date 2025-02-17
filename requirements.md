@@ -259,6 +259,12 @@ General processing rules:
   - Coverage annotations for requirement sites
   - Coverage footnotes linking requirements to implementations
 
+- Error handling
+  - Files may be left in inconsistent state if error occurs, e.g.:
+    - Partially updated footnotes
+    - Missing coverage annotations
+  - No rollback mechanism is provided
+
 #### EXIT STATUS
 
 - 0: Success

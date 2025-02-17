@@ -145,40 +145,88 @@ The following files may have to be changed
   - FileHash is updated
 - Markdown files
   - Coverer with new FileURL is added
+  - Coverer with existing FileURL does not exist anymore
   - Coverer.FileHash is updated
-  - Coverage.StatusWord is updated
-    - If the number of coverers is zero and current Coverage.StatusWord is "uncvrd" then it is changed to "covered"
-    - If the number of coverers is non-zero and current Coverage.StatusWord is "covered" then it is changed to "uncvrd"
+  - RequirementSite.CoverageStatusWord is updated
+    - If the number of coverers is non-zero and current Coverage.StatusWord is "uncvrd" then it is changed to "covered"
+    - If the number of coverers is zero and current Coverage.StatusWord is "covered" then it is changed to "uncvrd"
   - Some RequirementSite are BareRequirementSite
 
-### Design requirements
+### Action Types
 
-Analyzer:
+- ActionAddFileURL: Add new FileURL + FileHash to reqmd.json
+- ActionUpdateHash: Update FileHash in reqmd.json for a given FileURL
+- ActionAddCoverer: Add new Coverer to footnote
+- ActionRemoveCoverer: Add new Coverer to footnote
+- ActionUpdateStatus: Update RequirementSite.CoverageStatusWord (covered/uncvrd)
+  - Only one action per line is allowed
+- ActionAnnotate: Convert BareRequirementSite to annotated
+  - Only one action per line is allowed
 
-- Use Action to describe needed actions
-  - ActionTypes
-    - ActionUpdateFileHash
-    - ActionAddCoverer
-    - ActionUpdateStatusWord
-    - AnnotatedRequirementSite
-    - ActionReqmdJson
-      - Create or update reqmd.json
-  - Necessary fields shall be added to the Action
+### File Processing
 
-Applier:
+**Grouping per file**:
 
-- Actions are grouped and executed by FileStructure.Path
-- File is loaded as whole into the memory
-- Lineendings: OS specific are used.
-- Backup is not necessary
-- If the line specified in the Action.Line does not exist, or does not match the expected content, error is returned, the entire Apply operation fails
-- If the last line of the file does not start with `^\s*\[^` then an empty line is added to the file (to separate footnotes)
-- Coverage footnotes are just appended at the very end of the file
+- Actions are grouped and applied per file to minimize I/O - so each file is loaded, processed, and saved once
 
-Error handling:
+**Order of processing for reqmd.json file**:
 
-- Changes may not be atomic per file
-- If any error occurs processing stopps immediately
+- ActionAddFileURL
+- ActionUpdateHash
+
+**Order of processing for markdown file**:
+
+- ActionAnnotate
+- ActionAddCoverer
+- ActionRemoveCoverer
+- ActionUpdateStatus
+
+**Loading**:
+
+- Each file (if it exists) is loaded entirely into memory
+- OS-specific line endings are preserved and used for writing
+- No backup files are created
+
+**Line Validation**:
+
+- Each Action contains Line and RequirementID
+- It is expected that the line with the number exists and it contains the RequirementID
+- If line number doesn't exist or RequirementID in this line doesn't match:
+  - Return error
+  - Stop all processing immediately
+
+**Footnotes**:
+
+- If the file does not end with an empty line and the original FileStructure does not have CoverageFootnotes then a new empty line is added (to separate footnotes from the rest of the file)
+- New footnotes are added at end of file
+- No specific ordering of footnotes required
+
+### Error Handling
+
+**Non-atomic Changes**:
+
+- Files may be left in inconsistent state if error occurs, e.g.:
+  - Partially updated footnotes
+  - Missing coverage annotations
+- No rollback mechanism required
+
+**Processing Errors**:
+
+- Stop immediately on first error
+- Return error to caller
+- Do not process remaining actions
+
+### Action Structure
+
+```go
+type Action struct {
+    Type            ActionType
+    FileStruct      *FileStructure 
+    Line            int           
+    Data            string        // New content for the line
+    RequirementID   string        // Line is expected to contain this RequirementID
+}
+```
 
 ## Implementation details
 

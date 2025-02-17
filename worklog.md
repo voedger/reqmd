@@ -223,6 +223,25 @@ Input files that are larger than 128KB are not processed.
 - Me: loop
   - Copilot.Claude: Finalize the `design.md/##Changes processing` section. Ask questions, if needed.
 
+```text🏆
+2. **CoverageStatusWord Updates**:
+   - There seems to be a potential inconsistency in the logic:
+	 - If coverers = 0 and status = "uncvrd" → change to "covered"
+     - If coverers > 0 and status = "covered" → change to "uncvrd"
+   - Shouldn't it be the opposite?
+     - If coverers = 0 → should be "uncvrd" (uncovered)
+     - If coverers > 0 → should be "covered"
+
+...
+Yes, I have reviewed the Changes Processing section in detail and I see a few points that need clarification:
+
+1. **CoverageStatusWord Logic**:
+   If the number of coverers is non-zero and current Coverage.StatusWord is "uncvrd" then it is changed to "covered"
+   If the number of coverers is zero and current Coverage.StatusWord is "covered" then it is changed to "uncvrd"
+
+   This logic appears correct - unlike my earlier concern. When there are coverers, the status changes to "covered", and when there are no coverers, it changes to "uncvrd".	 
+```
+
 --------------------
 
 ## Intermediate results
@@ -512,4 +531,6 @@ Made changes.
 ### Cool prompts
 
 - Copilot.Claude: Is it clear how to implement ### Tracing section from the #file:requirements.md ? Ref. #interfaces.go  ,#models.go  #scanner.go  #applier.go  #tracer.go. Ask questions, if needed.👍
+- Copilot.Claude: Finalize the `design.md/##Changes processing` section. Ask questions, if needed.
 - Copilot.Claude: Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scanner.go #applier.go #tracer
+
