@@ -143,27 +143,53 @@ The following files may have to be changed
 - reqmd.json
   - New FileURL is added
   - FileHash is updated
-- Markdown files
+- Markdown files updated if
   - Coverer with new FileURL is added
   - Coverer with existing FileURL does not exist anymore
   - Coverer.FileHash is updated  
-  - RequirementSite.CoverageStatusWord is updated
-    - If the number of old  coverers (including new ones) is non-zero and current Coverage.StatusWord is "uncvrd" then it is changed to "covered"
-    - If the number of coverers is zero (considering those that no longer exist) and current Coverage.StatusWord is "covered" then it is changed to "uncvrd"
-  - Some RequirementSite are BareRequirementSite
+  - Some RequirementSite are BareRequirementSite and there are no new Coverers
 
-### Action Types
+### Data structures
+
+Action types
 
 - ActionAddFileURL: Add new FileURL + FileHash to reqmd.json
 - ActionUpdateHash: Update FileHash in reqmd.json for a given FileURL
-- ActionAddCoverer: Add new Coverer to footnote
-- ActionRemoveCoverer: Remove Coverer from footnote
+- ActionFootnote: Create/Update a CoverageFootnote
+  - Only one action per line is allowed
 - ActionUpdateStatus: Update RequirementSite.CoverageStatusWord (covered/uncvrd)
   - Only one action per line is allowed
 - ActionAnnotate: Convert BareRequirementSite to annotated
   - Only one action per line is allowed
 
-### File Processing
+RequirementCoverage
+
+- Site *RequirementSite
+- FileStructure *FileStructure
+- CurrentCoverers []*Coverer
+- NewCoverers []*Coverer
+- footnoteAction *ActionFootnote
+- statusAction *ActionUpdateStatus
+
+### Analysis
+
+Construction of ActionFootnote-s
+
+- `coverages map[RequirementID]*RequirementCoverage` are calculated from all FileStructures
+  - Note that NewErrDuplicateRequirementID can arise here
+  - `coverages.CurrentCoverers` are constructed using FileStructure and FileStructure.CoverageFootnotes.Coverers
+  - `coverages.NewCoverers` are constructed using FileStructure.CoverageTags
+- foreach coverage in `coverages`
+  - if sorted keys of the `coverage.currentCoverers` do not match the sorted keys of the `coverage.newCoverers` then
+    - `newCf CoverageFootnote` is constructed from coverages.newCoverers, coverers are sorted by FileURL
+    - string representation `newCfStr string` of newCf is constructed
+    - New ActionFootnote is created using newCfStr as Data
+    - `coverageStatus` is set to "uncvrd" if there are no NewCoverers and to "covered" otherwise
+    - New ActionUpdateStatus is created using newCfStr as Data
+
+Construction of ActionUpdateStatus-es
+
+### Applying
 
 **Grouping per file**:
 

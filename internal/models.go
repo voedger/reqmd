@@ -20,13 +20,23 @@ const (
 	ActionUpdateStatus  ActionType = "UpdateStatus"
 )
 
+type CoverageStatusWordEnum string
+
+const (
+	CoverageStatusWordEmpty   CoverageStatusWordEnum = ""
+	CoverageStatusWordCovered CoverageStatusWordEnum = "covered"
+	CoverageStatusWordUncvrd  CoverageStatusWordEnum = "uncvrd"
+)
+
+type RequirementID = string
+
 // Action describes a single transformation (add/update/delete) to be applied in a file.
 type Action struct {
 	Type          ActionType     // e.g., Add, Update, Delete
 	FileStruct    *FileStructure // which file is changed
 	Line          int            // the line number where the change is applied
 	Data          string         // new data (if any)
-	RequirementID string         // Line is expected to contain this RequirementID
+	RequirementID RequirementID  // Line is expected to contain this RequirementID
 }
 
 // String returns a human-readable representation of the Action
@@ -93,19 +103,19 @@ func (f *FileStructure) FileURL() string {
 // RequirementSite represents a single requirement reference discovered in a Markdown file.
 type RequirementSite struct {
 	FilePath            string
-	Line                int    // line number where the requirement is defined/referenced
-	RequirementName     string // e.g., "Post.handler"
-	ReferenceName       string // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
-	CoverageStatusWord  string // "covered", "uncvrd", or empty
-	CoverageStatusEmoji string // "✅", "❓", or empty
-	IsAnnotated         bool   // true if it already has coverage annotation, false if it’s bare
+	Line                int                    // line number where the requirement is defined/referenced
+	RequirementName     string                 // e.g., "Post.handler"
+	ReferenceName       string                 // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
+	CoverageStatusWord  CoverageStatusWordEnum // "covered", "uncvrd", or empty
+	CoverageStatusEmoji string                 // "✅", "❓", or empty
+	IsAnnotated         bool                   // true if it already has coverage annotation, false if it’s bare
 }
 
 // CoverageTag represents a coverage marker found in source code.
 type CoverageTag struct {
-	RequirementID string // e.g., "server.api.v2/Post.handler"
-	CoverageType  string // e.g., "impl", "test"
-	Line          int    // line number where the coverage tag was found
+	RequirementID RequirementID // e.g., "server.api.v2/Post.handler"
+	CoverageType  string        // e.g., "impl", "test"
+	Line          int           // line number where the coverage tag was found
 }
 
 // CoverageFootnote represents the footnote in Markdown that references coverage tags.
@@ -113,7 +123,7 @@ type CoverageFootnote struct {
 	FilePath      string
 	Line          int
 	PackageID     string
-	RequirementID string
+	RequirementID RequirementID
 	Coverers      []Coverer
 }
 
