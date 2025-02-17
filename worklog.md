@@ -254,6 +254,8 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
   - Copilot.Claude: Is `design.md/##Changes processing` clear to refactor Analyzer? Ask questions if needed.
 - CopilotAgent.Claude: Refactor analyzer to meet the design
 - Copilot.Claude: If possible get rid of seenReqs in analyzer, use analyzer.coverages instead👍
+- CopilotAgent.Claude: Generate tests to cover semantic errors in analyzer_test.go. Do not use table tests, use separate Run for each error.🏆
+  - Context: analyzer.go
 
 --------------------
 
