@@ -91,7 +91,7 @@ func _srcfile(path string, relativePath string, fileHash string, tags ...Coverag
 }
 
 func TestAnalyzer_Actions(t *testing.T) {
-	t.Run("should generate action for new coverage", func(t *testing.T) {
+	t.Run("should generate footnote action for new coverage", func(t *testing.T) {
 		analyzer := NewAnalyzer()
 		files := []FileStructure{
 			_mdfile2("file1.md", "pkg1", "REQ1", 10, "covered", true, CoverageFootnote{
@@ -112,15 +112,28 @@ func TestAnalyzer_Actions(t *testing.T) {
 		if len(errors) > 0 {
 			t.Fatalf("Expected no errors, got %v", errors)
 		}
-		if len(actions) != 1 {
-			t.Fatalf("Expected 1 action, got %d", len(actions))
+
+		// Should generate ActionFootnote and possibly ActionAddFileURL/ActionUpdateHash
+		var foundFootnote bool
+		var foundFileAction bool
+		for _, action := range actions {
+			switch action.Type {
+			case ActionFootnote:
+				foundFootnote = true
+			case ActionAddFileURL, ActionUpdateHash:
+				foundFileAction = true
+			}
 		}
-		if actions[0].Type != ActionAddCoverer {
-			t.Errorf("Expected ActionAddCoverer, got %v", actions[0].Type)
+
+		if !foundFootnote {
+			t.Error("Expected to find ActionFootnote")
+		}
+		if !foundFileAction {
+			t.Error("Expected to find ActionAddFileURL or ActionUpdateHash")
 		}
 	})
 
-	t.Run("should generate action for uncovered requirement", func(t *testing.T) {
+	t.Run("should generate status update action for uncovered requirement", func(t *testing.T) {
 		analyzer := NewAnalyzer()
 		files := []FileStructure{
 			_mdfile2("file1.md", "pkg1", "REQ1", 10, "covered", true, CoverageFootnote{
@@ -136,22 +149,31 @@ func TestAnalyzer_Actions(t *testing.T) {
 		if len(errors) > 0 {
 			t.Fatalf("Expected no errors, got %v", errors)
 		}
-		if len(actions) != 2 {
-			t.Fatalf("Expected 2 actions, got %d", len(actions))
-		}
+
+		// Should generate ActionFootnote and ActionUpdateStatus
+		var foundFootnote bool
 		var foundStatus bool
 		for _, action := range actions {
-			if action.Type == ActionUpdateStatus && action.Data == string(CoverageStatusWordUncvrd) {
+			switch action.Type {
+			case ActionFootnote:
+				foundFootnote = true
+			case ActionUpdateStatus:
 				foundStatus = true
-				break
+				if action.Data != string(CoverageStatusWordUncvrd) {
+					t.Errorf("Expected status update to uncvrd, got %s", action.Data)
+				}
 			}
 		}
+
+		if !foundFootnote {
+			t.Error("Expected to find ActionFootnote")
+		}
 		if !foundStatus {
-			t.Error("Expected to find ActionUpdateStatus to uncvrd")
+			t.Error("Expected to find ActionUpdateStatus")
 		}
 	})
 
-	t.Run("should generate action for bare requirement", func(t *testing.T) {
+	t.Run("should generate annotate action for bare requirement", func(t *testing.T) {
 		analyzer := NewAnalyzer()
 		files := []FileStructure{
 			_mdfile2("file1.md", "pkg1", "REQ1", 10, "", false),
@@ -166,6 +188,72 @@ func TestAnalyzer_Actions(t *testing.T) {
 		}
 		if actions[0].Type != ActionAnnotate {
 			t.Errorf("Expected ActionAnnotate, got %v", actions[0].Type)
+		}
+	})
+
+	t.Run("should generate file URL action for new source file", func(t *testing.T) {
+		analyzer := NewAnalyzer()
+		files := []FileStructure{
+			_mdfile2("file1.md", "pkg1", "REQ1", 10, "", true),
+			_srcfile("src/new.go", "src/new.go", "newhash", CoverageTag{
+				RequirementID: "pkg1/REQ1",
+				CoverageType:  "test",
+				Line:          20,
+			}),
+		}
+
+		actions, errors := analyzer.Analyze(files)
+		if len(errors) > 0 {
+			t.Fatalf("Expected no errors, got %v", errors)
+		}
+
+		var foundAddFileURL bool
+		for _, action := range actions {
+			if action.Type == ActionAddFileURL {
+				foundAddFileURL = true
+				if action.Data != "newhash" {
+					t.Errorf("Expected file hash newhash, got %s", action.Data)
+				}
+				break
+			}
+		}
+
+		if !foundAddFileURL {
+			t.Error("Expected to find ActionAddFileURL")
+		}
+	})
+
+	t.Run("should generate hash update action for changed file", func(t *testing.T) {
+		analyzer := NewAnalyzer()
+		files := []FileStructure{
+			_mdfile2("file1.md", "pkg1", "REQ1", 10, "", true),
+			_srcfile("src/existing.go", "src/existing.go", "newhash", CoverageTag{
+				RequirementID: "pkg1/REQ1",
+				CoverageType:  "test",
+				Line:          20,
+			}),
+		}
+		// Set RepoRootFolderURL to simulate existing file
+		files[1].RepoRootFolderURL = "http://example.com"
+
+		actions, errors := analyzer.Analyze(files)
+		if len(errors) > 0 {
+			t.Fatalf("Expected no errors, got %v", errors)
+		}
+
+		var foundUpdateHash bool
+		for _, action := range actions {
+			if action.Type == ActionUpdateHash {
+				foundUpdateHash = true
+				if action.Data != "newhash" {
+					t.Errorf("Expected file hash newhash, got %s", action.Data)
+				}
+				break
+			}
+		}
+
+		if !foundUpdateHash {
+			t.Error("Expected to find ActionUpdateHash")
 		}
 	})
 }

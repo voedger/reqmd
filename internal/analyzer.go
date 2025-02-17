@@ -124,7 +124,7 @@ func (a *analyzer) generateActions() []Action {
 
 			// Create footnote action
 			coverage.ActionFootnote = &Action{
-				Type:          ActionAddCoverer,
+				Type:          ActionFootnote,
 				FileStruct:    coverage.FileStructure,
 				Line:          coverage.Site.Line,
 				RequirementID: reqID,
@@ -132,7 +132,7 @@ func (a *analyzer) generateActions() []Action {
 			}
 			actions = append(actions, *coverage.ActionFootnote)
 
-			// Update coverage status
+			// Update coverage status based on number of new coverers
 			coverageStatus := CoverageStatusWordUncvrd
 			if len(coverage.NewCoverers) > 0 {
 				coverageStatus = CoverageStatusWordCovered
@@ -159,6 +159,28 @@ func (a *analyzer) generateActions() []Action {
 				RequirementID: reqID,
 				Data:          reqID,
 			})
+		}
+
+		// Add actions for reqmd.json updates
+		if len(coverage.NewCoverers) > 0 {
+			for _, coverer := range coverage.NewCoverers {
+				fileURL := coverage.FileStructure.FileURL()
+				// For new files, add FileURL action
+				if fileURL == "" {
+					actions = append(actions, Action{
+						Type:       ActionAddFileURL,
+						FileStruct: coverage.FileStructure,
+						Data:       coverer.FileHash,
+					})
+				} else if coverer.FileHash != coverage.FileStructure.FileHash {
+					// For existing files with changed hash
+					actions = append(actions, Action{
+						Type:       ActionUpdateHash,
+						FileStruct: coverage.FileStructure,
+						Data:       coverer.FileHash,
+					})
+				}
+			}
 		}
 	}
 

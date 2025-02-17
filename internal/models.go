@@ -12,12 +12,11 @@ import (
 type ActionType string
 
 const (
-	ActionAnnotate      ActionType = "Annotate"
-	ActionAddFileURL    ActionType = "AddFileURL"
-	ActionUpdateHash    ActionType = "UpdateHash"
-	ActionAddCoverer    ActionType = "AddCoverer"
-	ActionRemoveCoverer ActionType = "RemoveCoverer"
-	ActionUpdateStatus  ActionType = "UpdateStatus"
+	ActionAddFileURL   ActionType = "AddFileURL"   // Add new FileURL + FileHash to reqmd.json
+	ActionUpdateHash   ActionType = "UpdateHash"   // Update FileHash in reqmd.json for a given FileURL
+	ActionFootnote     ActionType = "Footnote"     // Create/Update a CoverageFootnote
+	ActionUpdateStatus ActionType = "UpdateStatus" // Update RequirementSite.CoverageStatusWord
+	ActionAnnotate     ActionType = "Annotate"     // Convert BareRequirementSite to annotated
 )
 
 type CoverageStatusWord string
