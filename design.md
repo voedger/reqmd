@@ -168,29 +168,33 @@ RequirementCoverage
 - FileStructure *FileStructure
 - CurrentCoverers []*Coverer
 - NewCoverers []*Coverer
-- ActionFootnote *ActionFootnote
-- ActionUpdateStatus *ActionUpdateStatus
+- ActionFootnote *Action
+- ActionUpdateStatus *Action
 
 ### Analysis
 
-Construction of ActionFootnote-s
+Analysis is conducted in two separate passes: footnotes first, then annotations.
 
-- `coverages map[RequirementID]*RequirementCoverage` are calculated from all FileStructures
-  - Note that NewErrDuplicateRequirementID can arise here
-  - `coverages.CurrentCoverers` are constructed using FileStructure and FileStructure.CoverageFootnotes.Coverers
-  - `coverages.NewCoverers` are constructed using FileStructure.CoverageTags
+Construction of ActionFootnote and ActionUpdateStatus
+
+- func buildRequirementCoverages()
+  - `coverages map[RequirementID]*RequirementCoverage` are calculated from all FileStructures
+    - Note that NewErrDuplicateRequirementID can arise here
+    - `coverages.CurrentCoverers` are constructed using FileStructure and FileStructure.CoverageFootnotes.Coverers
+    - `coverages.NewCoverers` are constructed using FileStructure.CoverageTags
 - foreach coverage in `coverages`
-  - if sorted keys of the `coverage.currentCoverers` do not match the sorted keys of the `coverage.newCoverers` then
+  - if sorted CoverageURL of the `coverage.currentCoverers` do not match the sorted CoverageURL of the `coverage.newCoverers` then
+    - Use helper func `sortCoverersByFileURL()`
     - `newCf CoverageFootnote` is constructed from coverages.newCoverers, coverers are sorted by FileURL
     - string representation `newCfStr string` of newCf is constructed
     - New ActionFootnote is created using newCfStr as Data
     - `coverageStatus` is set to CoverageStatusWordUncvrd if there are no NewCoverers and to CoverageStatusWordCovered otherwise
     - New ActionUpdateStatus is created using coverageStatus as Data
 
-Construction of ActionAnnotate-s
+Construction of ActionAnnotate
 
 - foreach coverage in `coverages`
-  - if coverage.ActionFootnote is nil then
+  - if coverage.ActionFootnote is nil and !coverage.Site.IsAnnotated  then
     - New ActionAnnotate is created using RequirementSite as Data
 
 ### Applying

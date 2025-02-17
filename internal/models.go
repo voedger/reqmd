@@ -134,6 +134,15 @@ type Coverer struct {
 	FileHash      string // git hash of the file specified in CoverageURL
 }
 
+type RequirementCoverage struct {
+	Site               *RequirementSite
+	FileStructure      *FileStructure
+	CurrentCoverers    []*Coverer
+	NewCoverers        []*Coverer
+	ActionFootnote     *Action
+	ActionUpdateStatus *Action
+}
+
 // Reqmdjson models the structure of the reqmd.json file.
 type Reqmdjson struct {
 	FileURL2FileHash map[string]string //
