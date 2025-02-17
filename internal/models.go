@@ -160,7 +160,12 @@ func (r *Reqmdjson) MarshalJSON() ([]byte, error) {
 	return []byte(b.String()), nil
 }
 
-// UnmarshalJSON implements custom JSON deserialization for Reqmdjson
+// UnmarshalJSON implements custom JSON deserialization for Reqmdjson, in fact it would work without it.
+// Reasons to keep the custom `UnmarshalJSON`:
+// 1. **Symmetry** - We have a custom `MarshalJSON` that ensures lexical ordering of keys. It's good practice to have matching marshal/unmarshal methods for consistency.
+// 2. **Future-proofing** - If we later add validation or transformation logic during unmarshaling, having the method already in place makes it easier.
+// 3. **Explicit contract** - The custom method makes it clear how the JSON deserialization should behave, even if it currently matches the default behavior.
+// So while removing it would work technically, we keep it for maintainability and clarity.
 func (r *Reqmdjson) UnmarshalJSON(data []byte) error {
 	// Use a temporary type to avoid infinite recursion
 	type TempReqmdjson struct {
