@@ -7,26 +7,20 @@ import (
 )
 
 type analyzer struct {
-	coverages map[string]*RequirementCoverage // RequirementID -> RequirementCoverage
+	coverages map[RequirementID]*RequirementCoverage // RequirementID -> RequirementCoverage
 }
 
 func NewAnalyzer() IAnalyzer {
 	return &analyzer{
-		coverages: make(map[string]*RequirementCoverage),
+		coverages: make(map[RequirementID]*RequirementCoverage),
 	}
 }
 
 func (a *analyzer) Analyze(files []FileStructure) ([]Action, []ProcessingError) {
 	var errors []ProcessingError
 
-	// Track requirement IDs to check for duplicates
-	seenReqs := make(map[string]struct {
-		filePath string
-		line     int
-	})
-
 	// First pass: Build RequirementCoverages from all FileStructures
-	if err := a.buildRequirementCoverages(files, seenReqs, &errors); err != nil {
+	if err := a.buildRequirementCoverages(files, &errors); err != nil {
 		return nil, errors
 	}
 
@@ -34,10 +28,7 @@ func (a *analyzer) Analyze(files []FileStructure) ([]Action, []ProcessingError) 
 	return a.generateActions(), errors
 }
 
-func (a *analyzer) buildRequirementCoverages(files []FileStructure, seenReqs map[string]struct {
-	filePath string
-	line     int
-}, errors *[]ProcessingError) error {
+func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]ProcessingError) error {
 	// First collect all requirements and their locations
 	for _, file := range files {
 		if file.Type == FileTypeMarkdown {
@@ -48,30 +39,22 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, seenReqs map
 
 			for _, req := range file.Requirements {
 				reqID := file.PackageID + "/" + req.RequirementName
-				if existing, exists := seenReqs[reqID]; exists {
+
+				// Check for duplicates using coverages map
+				if existing, exists := a.coverages[reqID]; exists {
 					*errors = append(*errors, NewErrDuplicateRequirementID(
-						existing.filePath, existing.line,
+						existing.FileStructure.Path, existing.Site.Line,
 						file.Path, req.Line,
 						reqID))
 					continue
 				}
-				seenReqs[reqID] = struct {
-					filePath string
-					line     int
-				}{
-					filePath: file.Path,
-					line:     req.Line,
-				}
 
-				// Initialize or update RequirementCoverage
-				coverage, exists := a.coverages[reqID]
-				if !exists {
-					coverage = &RequirementCoverage{
-						Site:          &req,
-						FileStructure: &file,
-					}
-					a.coverages[reqID] = coverage
+				// Initialize RequirementCoverage
+				coverage := &RequirementCoverage{
+					Site:          &req,
+					FileStructure: &file,
 				}
+				a.coverages[reqID] = coverage
 
 				// Process existing coverage footnotes
 				for _, footnote := range file.CoverageFootnotes {
