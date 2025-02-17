@@ -20,12 +20,12 @@ const (
 	ActionUpdateStatus  ActionType = "UpdateStatus"
 )
 
-type CoverageStatusWordEnum string
+type CoverageStatusWord string
 
 const (
-	CoverageStatusWordEmpty   CoverageStatusWordEnum = ""
-	CoverageStatusWordCovered CoverageStatusWordEnum = "covered"
-	CoverageStatusWordUncvrd  CoverageStatusWordEnum = "uncvrd"
+	CoverageStatusWordEmpty   CoverageStatusWord = ""
+	CoverageStatusWordCovered CoverageStatusWord = "covered"
+	CoverageStatusWordUncvrd  CoverageStatusWord = "uncvrd"
 )
 
 type RequirementID = string
@@ -103,12 +103,12 @@ func (f *FileStructure) FileURL() string {
 // RequirementSite represents a single requirement reference discovered in a Markdown file.
 type RequirementSite struct {
 	FilePath            string
-	Line                int                    // line number where the requirement is defined/referenced
-	RequirementName     string                 // e.g., "Post.handler"
-	ReferenceName       string                 // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
-	CoverageStatusWord  CoverageStatusWordEnum // "covered", "uncvrd", or empty
-	CoverageStatusEmoji string                 // "✅", "❓", or empty
-	IsAnnotated         bool                   // true if it already has coverage annotation, false if it’s bare
+	Line                int                // line number where the requirement is defined/referenced
+	RequirementName     string             // e.g., "Post.handler"
+	ReferenceName       string             // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
+	CoverageStatusWord  CoverageStatusWord // "covered", "uncvrd", or empty
+	CoverageStatusEmoji string             // "✅", "❓", or empty
+	IsAnnotated         bool               // true if it already has coverage annotation, false if it’s bare
 }
 
 // CoverageTag represents a coverage marker found in source code.

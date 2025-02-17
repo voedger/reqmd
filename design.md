@@ -168,8 +168,8 @@ RequirementCoverage
 - FileStructure *FileStructure
 - CurrentCoverers []*Coverer
 - NewCoverers []*Coverer
-- footnoteAction *ActionFootnote
-- statusAction *ActionUpdateStatus
+- ActionFootnote *ActionFootnote
+- ActionUpdateStatus *ActionUpdateStatus
 
 ### Analysis
 
@@ -184,10 +184,14 @@ Construction of ActionFootnote-s
     - `newCf CoverageFootnote` is constructed from coverages.newCoverers, coverers are sorted by FileURL
     - string representation `newCfStr string` of newCf is constructed
     - New ActionFootnote is created using newCfStr as Data
-    - `coverageStatus` is set to "uncvrd" if there are no NewCoverers and to "covered" otherwise
-    - New ActionUpdateStatus is created using newCfStr as Data
+    - `coverageStatus` is set to CoverageStatusWordUncvrd if there are no NewCoverers and to CoverageStatusWordCovered otherwise
+    - New ActionUpdateStatus is created using coverageStatus as Data
 
-Construction of ActionUpdateStatus-es
+Construction of ActionAnnotate-s
+
+- foreach coverage in `coverages`
+  - if coverage.ActionFootnote is nil then
+    - New ActionAnnotate is created using RequirementSite as Data
 
 ### Applying
 

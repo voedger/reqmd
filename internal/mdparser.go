@@ -143,7 +143,7 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 		req := RequirementSite{
 			FilePath:            filePath,
 			RequirementName:     match[1],
-			CoverageStatusWord:  CoverageStatusWordEnum(match[2]),
+			CoverageStatusWord:  CoverageStatusWord(match[2]),
 			ReferenceName:       match[3],
 			CoverageStatusEmoji: match[4],
 			Line:                lineNum,
