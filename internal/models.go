@@ -12,15 +12,21 @@ import (
 type ActionType string
 
 const (
-	ActionAnnotate ActionType = "Annotate"
+	ActionAnnotate      ActionType = "Annotate"
+	ActionAddFileURL    ActionType = "AddFileURL"
+	ActionUpdateHash    ActionType = "UpdateHash"
+	ActionAddCoverer    ActionType = "AddCoverer"
+	ActionRemoveCoverer ActionType = "RemoveCoverer"
+	ActionUpdateStatus  ActionType = "UpdateStatus"
 )
 
 // Action describes a single transformation (add/update/delete) to be applied in a file.
 type Action struct {
-	Type       ActionType     // e.g., Add, Update, Delete
-	FileStruct *FileStructure // which file is changed
-	Line       int            // the line number where the change is applied
-	Data       string         // new data (if any)
+	Type          ActionType     // e.g., Add, Update, Delete
+	FileStruct    *FileStructure // which file is changed
+	Line          int            // the line number where the change is applied
+	Data          string         // new data (if any)
+	RequirementID string         // Line is expected to contain this RequirementID
 }
 
 // String returns a human-readable representation of the Action

@@ -242,6 +242,11 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
    This logic appears correct - unlike my earlier concern. When there are coverers, the status changes to "covered", and when there are no coverers, it changes to "uncvrd".	 
 ```
 
+### Construction: Changes processing
+
+- CopilotAgent.Claude: Implement the `design.md/##Changes processing` for the analyzer.🤔
+  - In general it is ok, but the processing for ActionAddCoverer, ActionRemoveCoverer are missing.
+
 --------------------
 
 ## Intermediate results
@@ -533,4 +538,3 @@ Made changes.
 - Copilot.Claude: Is it clear how to implement ### Tracing section from the #file:requirements.md ? Ref. #interfaces.go  ,#models.go  #scanner.go  #applier.go  #tracer.go. Ask questions, if needed.👍
 - Copilot.Claude: Finalize the `design.md/##Changes processing` section. Ask questions, if needed.
 - Copilot.Claude: Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scanner.go #applier.go #tracer
-
