@@ -181,6 +181,12 @@ The following files may have to be changed
 - ActionRemoveCoverer
 - ActionUpdateStatus
 
+**Grouping per line of markdown file**:
+
+- All actions for a single line are grouped, new resulting line structure is created and then the apporopriate line is replaced
+  - Resulting line structure can be: RequirementSite, CoverageFootnote
+- There is not specific order of processing for actions on a single line
+
 **Loading**:
 
 - Each file (if it exists) is loaded entirely into memory
@@ -190,7 +196,7 @@ The following files may have to be changed
 **Line Validation**:
 
 - Each Action contains Line and RequirementID
-- It is expected that the line with the number exists and it contains the RequirementID
+- It is expected that the line with the number exists and contains the RequirementSite or CoverageFootnote with the given RequirementID
 - If line number doesn't exist or RequirementID in this line doesn't match:
   - Return error
   - Stop all processing immediately
@@ -198,6 +204,7 @@ The following files may have to be changed
 **Footnotes**:
 
 - If the file does not end with an empty line and the original FileStructure does not have CoverageFootnotes then a new empty line is added (to separate footnotes from the rest of the file)
+  - This is done when we're about to add the first footnote
 - New footnotes are added at end of file
 - No specific ordering of footnotes required
 
