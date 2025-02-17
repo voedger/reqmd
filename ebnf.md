@@ -58,7 +58,7 @@ PlainText      = { AnyCharacter } ;
   An annotated requirement site includes coverage status and a footnote reference. 
 *)
 
-RequirementSite = RequirementSiteLabel [ CoverageStatus CoverageFootnoteReference ] [ CoverageStatusEmoji ] ;
+RequirementSite = RequirementSiteLabel [ CoverageStatusWord CoverageFootnoteReference ] [ CoverageStatusEmoji ] ;
 CoverageStatusWord = "covered" | "uncvrd" ;
 CoverageStatusEmoji = "✅" | "❓" ;
 RequirementSiteLabel = "`" RequirementSiteID "`" ;

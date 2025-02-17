@@ -58,7 +58,9 @@ Constraints:
 - Node that code block can have identation specified by spaces or a tab.
 
 ```ebnf
-RequirementSite = RequirementSiteID [( "covered" | "uncvrd" ) CoverageFootnoteReference] ("✅" | "❓")
+RequirementSite = RequirementSiteID [CoverageStatusWord CoverageFootnoteReference] ("✅" | "❓")
+
+CoverageStatusWord = "covered" | "uncvrd"
 
 RequirementSiteLabel = "`" RequirementSiteID  "`"
 

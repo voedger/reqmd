@@ -220,6 +220,8 @@ Input files that are larger than 128KB are not processed.
 ### Design: Changes processing
 
 - Me: design.md/Changes processing
+- Me: loop
+  - Copilot.Claude: Finalize the `design.md/##Changes processing` section. Ask questions, if needed.
 
 --------------------
 

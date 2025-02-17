@@ -136,33 +136,49 @@ URL structure examples:
 
 ## Changes processing
 
+### Problem statement
+
 The following files may have to be changed
 
 - reqmd.json
-  - New URL is added
+  - New FileURL is added
+  - FileHash is updated
 - Markdown files
+  - Coverer with new FileURL is added
+  - Coverer.FileHash is updated
+  - Coverage.StatusWord is updated
+    - If the number of coverers is zero and current Coverage.StatusWord is "uncvrd" then it is changed to "covered"
+    - If the number of coverers is non-zero and current Coverage.StatusWord is "covered" then it is changed to "uncvrd"
+  - Some RequirementSite are BareRequirementSite
 
-## ActionAnnotate processing
+### Design requirements
 
-Processing overview
+Analyzer:
 
-- First all ActionAnnotate actions are processed for all files, then other actions shall be processed
-- ActionAnnotate shall be grouped by file and applied to the file in order of appearance
-- During ActionAnnotate processing it is necessary to annotate RequirementSite and add a coverage footnote.
+- Use Action to describe needed actions
+  - ActionTypes
+    - ActionUpdateFileHash
+    - ActionAddCoverer
+    - ActionUpdateStatusWord
+    - AnnotatedRequirementSite
+    - ActionReqmdJson
+      - Create or update reqmd.json
+  - Necessary fields shall be added to the Action
+
+Applier:
+
+- Actions are grouped and executed by FileStructure.Path
 - File is loaded as whole into the memory
-- Original lineendings shall be preserved (adding new lines use the first lineending found in the file)
+- Lineendings: OS specific are used.
 - Backup is not necessary
-
-RequirementSite processing
-
-- Replace the bare requirement (e.g., "~REQ001~") with the annotated version (e.g., "~REQ001~uncvrd[^REQ001]✅")-
-- Bare requirement shall be exactly on the line that is specified in the Action.Line
-- If the RequirementSite is not found, error is returned, the entire Apply operation fails
-
-Footnotes processing
-
-- If the last line of the file starts with "[^" then and empty line is added before the footnotes
+- If the line specified in the Action.Line does not exist, or does not match the expected content, error is returned, the entire Apply operation fails
+- If the last line of the file does not start with `^\s*\[^` then an empty line is added to the file (to separate footnotes)
 - Coverage footnotes are just appended at the very end of the file
+
+Error handling:
+
+- Changes may not be atomic per file
+- If any error occurs processing stopps immediately
 
 ## Implementation details
 
