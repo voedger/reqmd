@@ -207,6 +207,25 @@ Input files that are larger than 128KB are not processed.
     - Or do we need to construct it from some components?
     - Should we maintain any specific order of footnotes?
 
+### reqmdfiles => reqmd.json
+
+- CopilotAgent.Claude: Switch from reqmdfiles.json to reqmd.json
+  - Nothing on context
+  - CopilotAgent found multiple files to change but still it is necessary to migrate from ReqmdfilesMap to Reqmdjson structure
+
+### Design: Changes processing
+
+```text
+## Changes processing
+
+### Problem statement
+
+The following files may have to be changed
+
+- reqmd.json
+- Markdown files
+```
+
 --------------------
 
 ## Intermediate results

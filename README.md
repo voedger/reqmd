@@ -11,7 +11,7 @@
 - Extracts requirement references from Markdown files
 - Scans source files for coverage tags
 - Generates and updates coverage footnotes in Markdown
-- Maintains a reqmdfiles.json file for tracking file hashes
+- Maintains a reqmd.json file for tracking file hashes
 - Fast & scalable – uses Go concurrency to process files efficiently
 
 ## Installation

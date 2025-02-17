@@ -118,3 +118,8 @@ type Coverer struct {
 
 // ReqmdfilesMap corresponds to the structure in reqmdfiles.json, mapping file URLs to their current hash.
 type ReqmdfilesMap map[string]string
+
+// Reqmdjson models the structure of the reqmd.json file.
+type Reqmdjson struct {
+	FileUrl2Hash map[string]string //
+}

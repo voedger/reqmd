@@ -13,7 +13,7 @@ const (
 	// File extensions and patterns
 	markdownExtension = ".md"
 	gitFolderName     = ".git"
-	reqmdConfigFile   = "reqmdfiles.json"
+	reqmdjsonFileName = "reqmd.json"
 
 	// Scanner configuration
 	defaultMaxWorkers      = 32
@@ -119,10 +119,10 @@ func scanMarkdowns(reqPath string) ([]FileStructure, []ProcessingError, error) {
 			rfiles: make(ReqmdfilesMap),
 		}
 
-		reqmdPath := filepath.Join(folder, reqmdConfigFile)
+		reqmdPath := filepath.Join(folder, reqmdjsonFileName)
 		if content, err := os.ReadFile(reqmdPath); err == nil {
 			if err := json.Unmarshal(content, &mctx.rfiles); err != nil {
-				return nil, fmt.Errorf("failed to parse %s: %w", reqmdConfigFile, err)
+				return nil, fmt.Errorf("failed to parse %s: %w", reqmdjsonFileName, err)
 			}
 		}
 

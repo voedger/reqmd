@@ -20,13 +20,13 @@ The tool follows a three-stage pipeline architecture:
    - Ensures requirement IDs are unique
    - Determines which coverage footnotes need updates
    - Identifies requirements needing coverage annotations
-   - Verifies file hashes against reqmdfiles.json
+   - Verifies file hashes against reqmd.json
    - Generates a list of required file modifications
 
 3. **Apply** – Update Files
    - Updates or creates coverage footnotes
    - Appends coverage annotations to requirements
-   - Maintains reqmdfiles.json for file tracking
+   - Maintains reqmd.json for file tracking
    - Ensures changes are made only when no errors exist
 
 The system is designed using SOLID principles:
@@ -78,7 +78,7 @@ Summary of responsibilities
 - **scanner.go**: Implement `IScanner`, discover and parse files into structured data.  
 - **mdparser.go / srccoverparser.go**: Specialized parsing logic for Markdown / source coverage tags.  
 - **analyzer.go**: Implement `IAnalyzer`, checks for semantic errors, determine required transformations.  
-- **applier.go**: Implement `IApplier`, applly transformations to markdown and `reqmdfiles.json`.  
+- **applier.go**: Implement `IApplier`, applly transformations to markdown and `reqmd.json`.  
 - **utils.go**: Common helper functions.
 - **gogit.go**: Implement IGit interface using `go-git` library.
 

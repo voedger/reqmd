@@ -176,6 +176,30 @@ Breakdown of the `[~server.api.v2/Post.handler~test]`:
 - `Post.handler` is the RequirementName.
 - `test` is the CoverageType that is Name.
 
+## reqmd.json
+
+- reqmd.json contains information necessary for the tool to process the requirements
+- reqmd.json files are updated by the tool during the processing of the requirements and shall be committed to the repository
+- This file is create per folder if markdown files are present and contains RequirementSites
+
+Structure
+
+- FileHashes
+  - Maps FileURL to FileHash
+  - FileURLs must be ordered lexically to avoid unnecessary changes and merge conflicts
+
+Example:
+
+```json
+{
+  "FileHashes" : [
+    {"https://github.com/voedger/voedger/blob/main/pkg/api/handler.go", "979d75b2c7da961f94396ce2b286e7389eb73d75"},
+    {"https://github.com/voedger/voedger/blob/main/pkg/api/handler_test.go", "845a23c8f9d6a8b7e9c2d4f5a6b7c8d9e0f1a2b3"},
+    {"https://gitlab.com/myorg/project/-/blob/main/src/core/processor.ts", "123f45e6c7d8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"}
+  ]
+}
+```
+
 ## reqmdfiles.json
 
 This file maps FileURL to FileHash for all FileURLs found in markdown files in the folder. FileURLs must be ordered lexically to avoid merge conflicts.
