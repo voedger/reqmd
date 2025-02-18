@@ -140,8 +140,8 @@ URL structure examples:
 
 The following files may have to be changed
 
-- reqmd.json
-  - New FileURL is added
+- reqmd.json is updated if
+  - FileUrl is added/removed
   - FileHash is updated
 - Markdown files updated if
   - Coverer with new FileURL is added
@@ -153,8 +153,6 @@ The following files may have to be changed
 
 Action types
 
-- ActionAddFileURL: Add new FileURL + FileHash to reqmd.json
-- ActionUpdateHash: Update FileHash in reqmd.json for a given FileURL
 - ActionFootnote: Create/Update a CoverageFootnote
   - Only one action per line is allowed
 - ActionUpdateStatus: Update RequirementSite.CoverageStatusWord (covered/uncvrd)
@@ -175,33 +173,34 @@ RequirementCoverage
 
 Analysis is conducted in few separate passes:
 
-- ActionFootnote, ActionUpdateStatus
-- ActionAnnotate
-- ActionAddFileURL, ActionUpdateHash
+- Construction of AnalyzerResult.MdActions: ActionFootnote, ActionUpdateStatus
+- Construction of AnalyzerResult.MdActions: ActionAnnotate
+- Construction of AnalyzerResult.Reqmdjsons
 
-Construction of ActionFootnote and ActionUpdateStatus
+#### Construction of ActionFootnote and ActionUpdateStatus
 
-- func buildRequirementCoverages()
-  - `coverages map[RequirementID]*RequirementCoverage` are calculated from all FileStructures
-    - Note that NewErrDuplicateRequirementID can arise here
-    - `coverages.CurrentCoverers` are constructed using FileStructure and FileStructure.CoverageFootnotes.Coverers
-    - `coverages.NewCoverers` are constructed using FileStructure.CoverageTags
+- `coverages map[RequirementID]*RequirementCoverage` are calculated from all FileStructures
+  - func buildRequirementCoverages()
+  - Note that NewErrDuplicateRequirementID can arise here
+  - `coverages.CurrentCoverers` are constructed using FileStructure and FileStructure.CoverageFootnotes.Coverers
+  - `coverages.NewCoverers` are constructed using FileStructure.CoverageTags
+
 - foreach coverage in `coverages`
   - if sorted CoverageURL of the `coverage.currentCoverers` do not match the sorted CoverageURL of the `coverage.newCoverers` then
     - Use helper func `sortCoverersByFileURL()`
     - `newCf CoverageFootnote` is constructed from coverages.newCoverers, coverers are sorted by FileURL
     - string representation `newCfStr string` of newCf is constructed
-    - New ActionFootnote is created using newCfStr as Data
-    - `coverageStatus` is set to CoverageStatusWordUncvrd if there are no NewCoverers and to CoverageStatusWordCovered otherwise
-    - New ActionUpdateStatus is created using coverageStatus as Data
+    - New ActionFootnote is created using newCfStr as Data and added to AnalyzerResult.MdActions
+      - `coverageStatus` is set to CoverageStatusWordUncvrd if there are no NewCoverers and to CoverageStatusWordCovered otherwise
+    - New ActionUpdateStatus is created using coverageStatus as Data and added to AnalyzerResult.MdActions
 
-Construction of ActionAnnotate
+#### Construction of ActionAnnotate
 
 - foreach coverage in `coverages`
   - if coverage.ActionFootnote is nil and !coverage.Site.IsAnnotated  then
-    - New ActionAnnotate is created using RequirementSite as Data
+    - New ActionAnnotate is created using RequirementSite as Data and added to AnalyzerResult.MdActions
 
-Construction of ActionAddFileURL and ActionUpdateHash
+#### Construction of ActionAddFileURL and ActionUpdateHash
 
 - foreach coverage in `coverages`
   - foreach coverer in NewCoverers

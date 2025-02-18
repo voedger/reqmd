@@ -17,6 +17,7 @@ const (
 )
 
 type RequirementID = string
+type FilePath = string
 
 // SyntaxError captures syntax and semantic errors.
 
@@ -207,6 +208,7 @@ const (
 
 // AnalyzerResult contains results from the analysis phase
 type AnalyzerResult struct {
-	Actions          []MdAction //TODO remove
+	MdActions        map[FilePath][]MdAction
+	Reqmdjsons       map[FilePath]*Reqmdjson
 	ProcessingErrors []ProcessingError
 }
