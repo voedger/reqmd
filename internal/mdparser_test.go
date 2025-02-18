@@ -41,7 +41,7 @@ func TestMdParser_ParseMarkdownFile(t *testing.T) {
 		assert.Len(t, basicFile.CoverageFootnotes, 1, "should have 1 coverage footnote")
 		if len(basicFile.CoverageFootnotes) > 0 {
 			footnote := basicFile.CoverageFootnotes[0]
-			assert.Equal(t, "REQ002", footnote.RequirementID, "incorrect requirement ID in footnote")
+			assert.Equal(t, "REQ002", footnote.RequirementName, "incorrect requirement ID in footnote")
 			assert.Equal(t, "com.example.basic", footnote.PackageID, "incorrect package ID in footnote")
 
 			require.Len(t, footnote.Coverers, 2, "should have 2 coverage references")
@@ -195,7 +195,7 @@ func Test_ParseCoverageFootnote(t *testing.T) {
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 
-	assert.Equal(t, "REQ002", note.RequirementID, "incorrect requirement ID in footnote")
+	assert.Equal(t, "REQ002", note.RequirementName, "incorrect requirement ID in footnote")
 	assert.Equal(t, "com.example.basic", note.PackageID, "incorrect package ID in footnote")
 
 	require.Len(t, note.Coverers, 2, "should have 2 coverage references")

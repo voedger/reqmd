@@ -178,10 +178,10 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 	matches := CoverageFootnoteRegex.FindStringSubmatch(line)
 	if len(matches) > 0 {
 		footnote = &CoverageFootnote{
-			FilePath:      filePath,
-			RequirementID: matches[1],
-			PackageID:     matches[2],
-			Line:          lineNum,
+			FilePath:        filePath,
+			RequirementName: matches[1],
+			PackageID:       matches[2],
+			Line:            lineNum,
 		}
 
 		// Parse coverers if present

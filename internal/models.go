@@ -17,6 +17,7 @@ const (
 )
 
 type RequirementID = string
+type RequirementName = string
 type FilePath = string
 
 // SyntaxError captures syntax and semantic errors.
@@ -54,8 +55,9 @@ type RequirementSite struct {
 	ReferenceName       string             // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
 	CoverageStatusWord  CoverageStatusWord // "covered", "uncvrd", or empty
 	CoverageStatusEmoji string             // "✅", "❓", or empty
-	IsAnnotated         bool               // true if it already has coverage annotation, false if it’s bare
+	IsAnnotated         bool               // true if it already has coverage annotation reference, false if it’s bare
 }
+
 
 // CoverageTag represents a coverage marker found in source code.
 type CoverageTag struct {
@@ -66,11 +68,11 @@ type CoverageTag struct {
 
 // CoverageFootnote represents the footnote in Markdown that references coverage tags.
 type CoverageFootnote struct {
-	FilePath      string
-	Line          int
-	PackageID     string
-	RequirementID RequirementID
-	Coverers      []Coverer
+	FilePath        string
+	Line            int
+	PackageID       string
+	RequirementName RequirementName
+	Coverers        []Coverer
 }
 
 // Coverer represents one coverage reference within a footnote, e.g., [folder/file:line:impl](URL)
@@ -81,11 +83,11 @@ type Coverer struct {
 }
 
 type RequirementCoverage struct {
-	Site               *RequirementSite
-	FileStructure      *FileStructure
-	CurrentCoverers    []*Coverer
-	NewCoverers        []*Coverer
-	ActionFootnote     *MdAction
+	Site            *RequirementSite
+	FileStructure   *FileStructure
+	CurrentCoverers []*Coverer
+	NewCoverers     []*Coverer
+	ActionFootnote  *MdAction
 }
 
 // Reqmdjson models the structure of the reqmd.json file.
@@ -182,27 +184,21 @@ type MdActionType string
 
 // MdAction describes a single transformation (add/update/delete) to be applied in a file.
 type MdAction struct {
-	Type          MdActionType  // e.g., Add, Update, Delete
-	Path          string        // file path
-	Line          int           // the line number where the change is applied
-	Data          string        // new data (if any)
-	RequirementID RequirementID // Line is expected to contain this RequirementID
+	Type            MdActionType  // e.g., Add, Update, Delete
+	Path            string        // file path
+	Line            int           // the line number where the change is applied
+	Data            string        // new data (if any)
+	RequirementName RequirementID // Line is expected to contain this RequirementID
 }
 
 // String returns a human-readable representation of the Action
 func (a *MdAction) String() string {
-	switch a.Type {
-	case ActionAnnotate:
-		return fmt.Sprintf("%s at %s:%d: %s", a.Type, a.Path, a.Line, a.Data)
-	default:
-		return fmt.Sprintf("Unknown action at %s:%d", a.Path, a.Line)
-	}
+	return fmt.Sprintf("%s at %s:%d: %s", a.Type, a.Path, a.Line, a.Data)
 }
 
 const (
-	ActionFootnote     MdActionType = "Footnote"     // Create/Update a CoverageFootnote
-	ActionUpdateStatus MdActionType = "UpdateStatus" // Update RequirementSite.CoverageStatusWord
-	ActionAnnotate     MdActionType = "Annotate"     // Convert BareRequirementSite to annotated
+	ActionFootnote MdActionType = "Footnote" // Create/Update a CoverageFootnote
+	ActionSite     MdActionType = "Site"     // Update RequirementSite
 )
 
 // AnalyzerResult contains results from the analysis phase

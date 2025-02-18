@@ -27,6 +27,7 @@ func (a *analyzer) Analyze(files []FileStructure) (*AnalyzerResult, error) {
 	}
 
 	a.buildMd1(result)
+	a.buildMd2(result)
 
 	return result, nil
 }
@@ -41,19 +42,26 @@ func (a *analyzer) buildMd1(result *AnalyzerResult) {
 		if !coverersEqual(coverage.CurrentCoverers, coverage.NewCoverers) {
 			// Create footnote action
 			newCf := &CoverageFootnote{
-				RequirementID: coverage.Site.RequirementName,
-				Coverers:      make([]Coverer, len(coverage.NewCoverers)),
+				RequirementName: coverage.Site.RequirementName,
+				Coverers:        make([]Coverer, len(coverage.NewCoverers)),
 			}
 			for i, c := range coverage.NewCoverers {
 				newCf.Coverers[i] = *c // Convert *Coverer to Coverer
 			}
 
 			footnoteAction := MdAction{
-				Type:          ActionFootnote,
-				Path:          coverage.FileStructure.Path,
-				Line:          coverage.Site.Line,
-				Data:          formatCoverageFootnote(newCf),
-				RequirementID: coverage.Site.RequirementName,
+				Type:            ActionFootnote,
+				Path:            coverage.FileStructure.Path,
+				RequirementName: coverage.Site.RequirementName,
+				Data:            formatCoverageFootnote(newCf),
+			}
+
+			// Find annotation line, keep 0 if not found
+			for _, cf := range coverage.FileStructure.CoverageFootnotes {
+				if cf.RequirementName == coverage.Site.RequirementName {
+					footnoteAction.Line = cf.Line
+					break
+				}
 			}
 
 			// Create status update action
@@ -63,11 +71,11 @@ func (a *analyzer) buildMd1(result *AnalyzerResult) {
 			}
 
 			statusAction := MdAction{
-				Type:          ActionUpdateStatus,
-				Path:          coverage.FileStructure.Path,
-				Line:          coverage.Site.Line,
-				Data:          string(coverageStatus),
-				RequirementID: coverage.Site.RequirementName,
+				Type:            ActionSite,
+				Path:            coverage.FileStructure.Path,
+				Line:            coverage.Site.Line,
+				RequirementName: coverage.Site.RequirementName,
+				Data:            formatRequirementSite(coverage.Site.RequirementName, coverageStatus),
 			}
 
 			// Add actions to result
@@ -75,6 +83,27 @@ func (a *analyzer) buildMd1(result *AnalyzerResult) {
 				result.MdActions[coverage.FileStructure.Path],
 				footnoteAction,
 				statusAction,
+			)
+		}
+	}
+}
+
+func (a *analyzer) buildMd2(result *AnalyzerResult) {
+	for _, coverage := range a.coverages {
+		// Only process if there's no existing footnote action and the site is not annotated
+		if !coverage.Site.IsAnnotated {
+			// Create annotation action
+			annotateAction := MdAction{
+				Type:            ActionSite,
+				Path:            coverage.FileStructure.Path,
+				Line:            coverage.Site.Line,
+				RequirementName: coverage.Site.RequirementName,
+				Data:            formatRequirementSite(coverage.Site.RequirementName, CoverageStatusWordUncvrd),
+			}
+			// Add action to result
+			result.MdActions[coverage.FileStructure.Path] = append(
+				result.MdActions[coverage.FileStructure.Path],
+				annotateAction,
 			)
 		}
 	}
@@ -110,7 +139,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 
 				// Process existing coverage footnotes
 				for _, footnote := range file.CoverageFootnotes {
-					if footnote.RequirementID == reqID {
+					if footnote.RequirementName == reqID {
 						// Convert []Coverer to []*Coverer
 						coverage.CurrentCoverers = make([]*Coverer, len(footnote.Coverers))
 						for i := range footnote.Coverers {
@@ -169,5 +198,18 @@ func formatCoverageFootnote(cf *CoverageFootnote) string {
 	for _, coverer := range cf.Coverers {
 		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageURL))
 	}
-	return fmt.Sprintf("[^~%s~]: %s", cf.RequirementID, strings.Join(refs, ", "))
+	return fmt.Sprintf("[^~%s~]: %s", cf.RequirementName, strings.Join(refs, ", "))
+}
+
+// Build a string representation of the RequirementSite according to the requirements
+// CoverageStatusEmoji is ✅ for "covered", and ❓ for "uncvrd"
+func formatRequirementSite(requirementName string, coverageStatusWord CoverageStatusWord) string {
+	result := fmt.Sprintf("`~%s~`", requirementName)
+
+	emoji := "✅"
+	if coverageStatusWord == CoverageStatusWordUncvrd {
+		emoji = "❓"
+	}
+
+	return fmt.Sprintf("%s%s[^~%s~]%s", result, coverageStatusWord, requirementName, emoji)
 }

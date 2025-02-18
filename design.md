@@ -173,32 +173,9 @@ RequirementCoverage
 
 Analysis is conducted in few separate passes:
 
-- Construction of AnalyzerResult.MdActions: ActionFootnote, ActionUpdateStatus
-- Construction of AnalyzerResult.MdActions: ActionAnnotate
+- Construction of AnalyzerResult.MdActions: ActionFootnote, ActionUpdateStatus: buildMd1()
+- Construction of AnalyzerResult.MdActions: ActionAnnotate: buildMd2()
 - Construction of AnalyzerResult.Reqmdjsons
-
-#### Construction of ActionFootnote and ActionUpdateStatus (buildMd1())
-
-- `coverages map[RequirementID]*RequirementCoverage` are calculated from all FileStructures
-  - func buildRequirementCoverages()
-  - Note that NewErrDuplicateRequirementID can arise here
-  - `coverages.CurrentCoverers` are constructed using FileStructure and FileStructure.CoverageFootnotes.Coverers
-  - `coverages.NewCoverers` are constructed using FileStructure.CoverageTags
-
-- foreach coverage in `coverages`
-  - if sorted list of the CoverageURL of the `coverage.currentCoverers` do not match the sorted list of the CoverageURL of the `coverage.newCoverers` then
-    - Use helper func `sortCoverersByFileURL()`
-    - `newCf CoverageFootnote` is constructed from coverages.newCoverers, coverers are sorted by FileURL
-    - string representation `newCfStr string` of newCf is constructed
-    - New ActionFootnote is created using newCfStr as Data and added to AnalyzerResult.MdActions
-      - `coverageStatus` is set to CoverageStatusWordUncvrd if there are no NewCoverers and to CoverageStatusWordCovered otherwise
-    - New ActionUpdateStatus is created using coverageStatus as Data and added to AnalyzerResult.MdActions
-
-#### Construction of ActionAnnotate (buildMd2())
-
-- foreach coverage in `coverages`
-  - if coverage.ActionFootnote is nil and !coverage.Site.IsAnnotated  then
-    - New ActionAnnotate is created using RequirementSite as Data and added to AnalyzerResult.MdActions
 
 #### Construction of ActionAddFileURL and ActionUpdateHash
 
