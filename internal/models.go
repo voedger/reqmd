@@ -8,17 +8,6 @@ import (
 	"strings"
 )
 
-// ActionType represents the type of transformation needed.
-type ActionType string
-
-const (
-	ActionAddFileURL   ActionType = "AddFileURL"   // Add new FileURL + FileHash to reqmd.json
-	ActionUpdateHash   ActionType = "UpdateHash"   // Update FileHash in reqmd.json for a given FileURL
-	ActionFootnote     ActionType = "Footnote"     // Create/Update a CoverageFootnote
-	ActionUpdateStatus ActionType = "UpdateStatus" // Update RequirementSite.CoverageStatusWord
-	ActionAnnotate     ActionType = "Annotate"     // Convert BareRequirementSite to annotated
-)
-
 type CoverageStatusWord string
 
 const (
@@ -29,50 +18,7 @@ const (
 
 type RequirementID = string
 
-// Action describes a single transformation (add/update/delete) to be applied in a file.
-type Action struct {
-	Type          ActionType    // e.g., Add, Update, Delete
-	Path          string        // file path
-	Line          int           // the line number where the change is applied
-	Data          string        // new data (if any)
-	RequirementID RequirementID // Line is expected to contain this RequirementID
-}
-
-// String returns a human-readable representation of the Action
-func (a *Action) String() string {
-	switch a.Type {
-	case ActionAnnotate:
-		return fmt.Sprintf("%s at %s:%d: %s", a.Type, a.Path, a.Line, a.Data)
-	default:
-		return fmt.Sprintf("Unknown action at %s:%d", a.Path, a.Line)
-	}
-}
-
 // SyntaxError captures syntax and semantic errors.
-type ProcessingError struct {
-	Code     string // error code (e.g., "pkgident")
-	FilePath string // file that has a syntax error
-	Line     int    // line number where the syntax error is detected
-	Message  string // human-readable description
-}
-
-// Collection of ProcessingErrors
-// Implements Error interface
-type ProcessingErrors struct {
-	Errors []ProcessingError
-}
-
-func (e *ProcessingErrors) Error() string {
-	if len(e.Errors) == 0 {
-		return ""
-	}
-
-	var msgs []string
-	for _, err := range e.Errors {
-		msgs = append(msgs, fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message))
-	}
-	return strings.Join(msgs, "\n")
-}
 
 // FileType distinguishes between different file categories (Markdown vs source, etc.).
 type FileType int
@@ -200,11 +146,66 @@ func (r *Reqmdjson) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type ProcessingError struct {
+	Code     string // error code (e.g., "pkgident")
+	FilePath string // file that has a syntax error
+	Line     int    // line number where the syntax error is detected
+	Message  string // human-readable description
+}
+
+// Collection of ProcessingErrors
+// Implements Error interface
+type ProcessingErrors struct {
+	Errors []ProcessingError
+}
+
+func (e *ProcessingErrors) Error() string {
+	if len(e.Errors) == 0 {
+		return ""
+	}
+
+	var msgs []string
+	for _, err := range e.Errors {
+		msgs = append(msgs, fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message))
+	}
+	return strings.Join(msgs, "\n")
+}
+
 // ScannerResult contains results from the scanning phase
 type ScannerResult struct {
 	Files            []FileStructure
 	ProcessingErrors []ProcessingError
 }
+
+// ActionType represents the type of transformation needed.
+type ActionType string
+
+// Action describes a single transformation (add/update/delete) to be applied in a file.
+type Action struct {
+	Type          ActionType    // e.g., Add, Update, Delete
+	Path          string        // file path
+	Line          int           // the line number where the change is applied
+	Data          string        // new data (if any)
+	RequirementID RequirementID // Line is expected to contain this RequirementID
+}
+
+// String returns a human-readable representation of the Action
+func (a *Action) String() string {
+	switch a.Type {
+	case ActionAnnotate:
+		return fmt.Sprintf("%s at %s:%d: %s", a.Type, a.Path, a.Line, a.Data)
+	default:
+		return fmt.Sprintf("Unknown action at %s:%d", a.Path, a.Line)
+	}
+}
+
+const (
+	ActionAddFileURL   ActionType = "AddFileURL"   // Add new FileURL + FileHash to reqmd.json
+	ActionUpdateHash   ActionType = "UpdateHash"   // Update FileHash in reqmd.json for a given FileURL
+	ActionFootnote     ActionType = "Footnote"     // Create/Update a CoverageFootnote
+	ActionUpdateStatus ActionType = "UpdateStatus" // Update RequirementSite.CoverageStatusWord
+	ActionAnnotate     ActionType = "Annotate"     // Convert BareRequirementSite to annotated
+)
 
 // AnalyzerResult contains results from the analysis phase
 type AnalyzerResult struct {
