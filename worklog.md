@@ -271,6 +271,7 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
 - Me: loop
   - Copilot.Claude: Is `design.md/#### Construction of ActionFootnote and ActionUpdateStatus` clear to refactor Analyzer? Ask questions if needed.👍
 - CopilotAgent.Claude: Apply `design.md/#### Construction of ActionAnnotate (buildMd2())` to analyzer.go.
+- CopilotAgent.Claude: Generate tests to cover semantic errors in analyzer_test.go. Do not use table tests, use separate Run for each error👍
 
 --------------------
 
