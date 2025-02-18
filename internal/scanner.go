@@ -42,12 +42,8 @@ func NewScanner(extensions string) IScanner {
 	return s
 }
 
-func (s *scanner) Scan(reqPath string, srcPaths []string) ([]FileStructure, []ProcessingError, error) {
-	result, err := s.scan(reqPath, srcPaths)
-	if err != nil {
-		return nil, nil, err
-	}
-	return result.Files, result.ProcessingErrors, nil
+func (s *scanner) Scan(reqPath string, srcPaths []string) (*ScannerResult, error) {
+	return s.scan(reqPath, srcPaths)
 }
 
 type scanner struct {
@@ -60,11 +56,6 @@ type scanner struct {
 	}
 }
 
-type ScanResult struct {
-	Files            []FileStructure
-	ProcessingErrors []ProcessingError
-}
-
 /*
 
 - Scan accepts list of source file extensions as a parameter (besides other parameters) to allow scanning only specific types of source files
@@ -72,14 +63,14 @@ type ScanResult struct {
 
 */
 
-func (s *scanner) scan(reqPath string, srcPaths []string) (*ScanResult, error) {
+func (s *scanner) scan(reqPath string, srcPaths []string) (*ScannerResult, error) {
 	// Reset statistics
 	s.stats.processedFiles.Store(0)
 	s.stats.processedBytes.Store(0)
 	s.stats.skippedFiles.Store(0)
 	s.stats.skippedBytes.Store(0)
 
-	result := &ScanResult{}
+	result := &ScannerResult{}
 
 	// Scan markdown files
 	files, errs, err := scanMarkdowns(reqPath)

@@ -35,22 +35,26 @@ func NewTracer(scanner IScanner, analyzer IAnalyzer, applier IApplier, reqPath s
 }
 
 func (t *tracer) Trace() error {
-	files, procErrs, err := t.scanner.Scan(t.reqPath, t.srcPaths)
+	// Scanning phase
+	scanResult, err := t.scanner.Scan(t.reqPath, t.srcPaths)
 	if err != nil {
 		return err
 	}
-	if len(procErrs) > 0 {
-		return &ProcessingErrors{Errors: procErrs}
+	if len(scanResult.ProcessingErrors) > 0 {
+		return &ProcessingErrors{Errors: scanResult.ProcessingErrors}
 	}
 
 	// Analyzing phase
-	actions, procErrs := t.analyzer.Analyze(files)
-	if len(procErrs) > 0 {
-		return &ProcessingErrors{Errors: procErrs}
+	analyzeResult, err := t.analyzer.Analyze(scanResult.Files)
+	if err != nil {
+		return err
+	}
+	if len(analyzeResult.ProcessingErrors) > 0 {
+		return &ProcessingErrors{Errors: analyzeResult.ProcessingErrors}
 	}
 
 	// Applying phase
-	if err := t.applier.Apply(actions); err != nil {
+	if err := t.applier.Apply(analyzeResult.Actions); err != nil {
 		return err
 	}
 

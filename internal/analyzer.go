@@ -16,16 +16,17 @@ func NewAnalyzer() IAnalyzer {
 	}
 }
 
-func (a *analyzer) Analyze(files []FileStructure) ([]Action, []ProcessingError) {
-	var errors []ProcessingError
+func (a *analyzer) Analyze(files []FileStructure) (*AnalyzerResult, error) {
+	var result AnalyzerResult
 
 	// First pass: Build RequirementCoverages from all FileStructures
-	if err := a.buildRequirementCoverages(files, &errors); err != nil {
-		return nil, errors
+	if err := a.buildRequirementCoverages(files, &result.ProcessingErrors); err != nil {
+		return &result, err
 	}
 
 	// Second pass: Generate actions based on coverage analysis
-	return a.generateActions(), errors
+	result.Actions = a.generateActions()
+	return &result, nil
 }
 
 func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]ProcessingError) error {

@@ -199,3 +199,15 @@ func (r *Reqmdjson) UnmarshalJSON(data []byte) error {
 	r.FileURL2FileHash = temp.FileHashes
 	return nil
 }
+
+// ScannerResult contains results from the scanning phase
+type ScannerResult struct {
+	Files            []FileStructure
+	ProcessingErrors []ProcessingError
+}
+
+// AnalyzerResult contains results from the analysis phase
+type AnalyzerResult struct {
+	Actions          []Action
+	ProcessingErrors []ProcessingError
+}

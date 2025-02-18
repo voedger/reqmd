@@ -264,6 +264,9 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
 - CopilotAgent.Claude: Update analyzer_test.go to match the `design.md/Action types`👍
 - Me: oops, Construction of ActionAddFileURL and ActionUpdateHash is missed in the design
 - CopilotAgent.Claude: Design the construction of ActionAddFileURL and ActionUpdateHash, amend `design.md/## Changes processing`🤔
+- CopilotAgent.Claude: Refactor code so that:👍
+  - IScanner shall return (*ScannerResult, []ProcessingError, error)
+  - IAnalyzer shall return (*AnalyzerResult, []ProcessingError, error)
 
 --------------------
 

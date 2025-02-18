@@ -6,42 +6,44 @@ import (
 
 func TestAnalyzer_SemanticErrors(t *testing.T) {
 	t.Run("should detect duplicate requirement IDs", func(t *testing.T) {
-		// Setup
 		analyzer := NewAnalyzer()
 		files := []FileStructure{
 			_mdfile1("file1.md", "pkg1", "REQ1", 10),
 			_mdfile1("file2.md", "pkg1", "REQ1", 5),
 		}
 
-		// Act
-		_, errors := analyzer.Analyze(files)
-
-		if len(errors) != 1 {
-			t.Fatalf("Expected 1 error, got %d", len(errors))
+		result, err := analyzer.Analyze(files)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
 		}
-		if errors[0].Code != "dupreqid" {
-			t.Errorf("Expected error code 'dupreqid', got '%s'", errors[0].Code)
+
+		if len(result.ProcessingErrors) != 1 {
+			t.Fatalf("Expected 1 error, got %d", len(result.ProcessingErrors))
+		}
+		if result.ProcessingErrors[0].Code != "dupreqid" {
+			t.Errorf("Expected error code 'dupreqid', got '%s'", result.ProcessingErrors[0].Code)
 		}
 	})
 
 	t.Run("should detect missing package ID when requirements exist", func(t *testing.T) {
-		// Setup
 		analyzer := NewAnalyzer()
 		files := []FileStructure{
 			_mdfile1("file1.md", "", "REQ1", 10),
 		}
 
-		// Act
-		_, errors := analyzer.Analyze(files)
+		result, err := analyzer.Analyze(files)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
 
-		if len(errors) != 1 {
-			t.Fatalf("Expected 1 error, got %d", len(errors))
+		if len(result.ProcessingErrors) != 1 {
+			t.Fatalf("Expected 1 error, got %d", len(result.ProcessingErrors))
 		}
-		if errors[0].Code != "nopkgidreqs" {
-			t.Errorf("Expected error code 'nopkgidreqs', got '%s'", errors[0].Code)
+		if result.ProcessingErrors[0].Code != "nopkgidreqs" {
+			t.Errorf("Expected error code 'nopkgidreqs', got '%s'", result.ProcessingErrors[0].Code)
 		}
-		if errors[0].Line != 10 {
-			t.Errorf("Expected error on line 10, got line %d", errors[0].Line)
+		if result.ProcessingErrors[0].Line != 10 {
+			t.Errorf("Expected error on line 10, got line %d", result.ProcessingErrors[0].Line)
 		}
 	})
 }
@@ -108,15 +110,18 @@ func TestAnalyzer_Actions(t *testing.T) {
 			}),
 		}
 
-		actions, errors := analyzer.Analyze(files)
-		if len(errors) > 0 {
-			t.Fatalf("Expected no errors, got %v", errors)
+		result, err := analyzer.Analyze(files)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+		if len(result.ProcessingErrors) > 0 {
+			t.Fatalf("Expected no errors, got %v", result.ProcessingErrors)
 		}
 
 		// Should generate ActionFootnote and possibly ActionAddFileURL/ActionUpdateHash
 		var foundFootnote bool
 		var foundFileAction bool
-		for _, action := range actions {
+		for _, action := range result.Actions {
 			switch action.Type {
 			case ActionFootnote:
 				foundFootnote = true
@@ -145,15 +150,18 @@ func TestAnalyzer_Actions(t *testing.T) {
 			}),
 		}
 
-		actions, errors := analyzer.Analyze(files)
-		if len(errors) > 0 {
-			t.Fatalf("Expected no errors, got %v", errors)
+		result, err := analyzer.Analyze(files)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+		if len(result.ProcessingErrors) > 0 {
+			t.Fatalf("Expected no errors, got %v", result.ProcessingErrors)
 		}
 
 		// Should generate ActionFootnote and ActionUpdateStatus
 		var foundFootnote bool
 		var foundStatus bool
-		for _, action := range actions {
+		for _, action := range result.Actions {
 			switch action.Type {
 			case ActionFootnote:
 				foundFootnote = true
@@ -179,49 +187,20 @@ func TestAnalyzer_Actions(t *testing.T) {
 			_mdfile2("file1.md", "pkg1", "REQ1", 10, "", false),
 		}
 
-		actions, errors := analyzer.Analyze(files)
-		if len(errors) > 0 {
-			t.Fatalf("Expected no errors, got %v", errors)
+		result, err := analyzer.Analyze(files)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
 		}
-		if len(actions) != 1 {
-			t.Fatalf("Expected 1 action, got %d", len(actions))
+		if len(result.ProcessingErrors) > 0 {
+			t.Fatalf("Expected no errors, got %v", result.ProcessingErrors)
 		}
-		if actions[0].Type != ActionAnnotate {
-			t.Errorf("Expected ActionAnnotate, got %v", actions[0].Type)
+		if len(result.Actions) != 1 {
+			t.Fatalf("Expected 1 action, got %d", len(result.Actions))
+		}
+		if result.Actions[0].Type != ActionAnnotate {
+			t.Errorf("Expected ActionAnnotate, got %v", result.Actions[0].Type)
 		}
 	})
-
-	// t.Run("should generate file URL action for new source file", func(t *testing.T) {
-	// 	analyzer := NewAnalyzer()
-	// 	files := []FileStructure{
-	// 		_mdfile2("file1.md", "pkg1", "REQ1", 10, "", true),
-	// 		_srcfile("src/new.go", "src/new.go", "newhash", CoverageTag{
-	// 			RequirementID: "pkg1/REQ1",
-	// 			CoverageType:  "test",
-	// 			Line:          20,
-	// 		}),
-	// 	}
-
-	// 	actions, errors := analyzer.Analyze(files)
-	// 	if len(errors) > 0 {
-	// 		t.Fatalf("Expected no errors, got %v", errors)
-	// 	}
-
-	// 	var foundAddFileURL bool
-	// 	for _, action := range actions {
-	// 		if action.Type == ActionAddFileURL {
-	// 			foundAddFileURL = true
-	// 			if action.Data != "newhash" {
-	// 				t.Errorf("Expected file hash newhash, got %s", action.Data)
-	// 			}
-	// 			break
-	// 		}
-	// 	}
-
-	// 	if !foundAddFileURL {
-	// 		t.Error("Expected to find ActionAddFileURL")
-	// 	}
-	// })
 
 	t.Run("should generate hash update action for changed file", func(t *testing.T) {
 		analyzer := NewAnalyzer()
@@ -236,13 +215,16 @@ func TestAnalyzer_Actions(t *testing.T) {
 		// Set RepoRootFolderURL to simulate existing file
 		files[1].RepoRootFolderURL = "http://example.com"
 
-		actions, errors := analyzer.Analyze(files)
-		if len(errors) > 0 {
-			t.Fatalf("Expected no errors, got %v", errors)
+		result, err := analyzer.Analyze(files)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+		if len(result.ProcessingErrors) > 0 {
+			t.Fatalf("Expected no errors, got %v", result.ProcessingErrors)
 		}
 
 		var foundUpdateHash bool
-		for _, action := range actions {
+		for _, action := range result.Actions {
 			if action.Type == ActionUpdateHash {
 				foundUpdateHash = true
 				if action.Data != "newhash" {
