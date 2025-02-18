@@ -2,8 +2,6 @@ package internal
 
 import (
 	"fmt"
-	"sort"
-	"strings"
 )
 
 type analyzer struct {
@@ -25,7 +23,6 @@ func (a *analyzer) Analyze(files []FileStructure) (*AnalyzerResult, error) {
 	}
 
 	// Second pass: Generate actions based on coverage analysis
-	result.Actions = a.generateActions()
 	return &result, nil
 }
 
@@ -92,122 +89,33 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 	return nil
 }
 
-// Helper function to sort coverers by FileURL
-func sortCoverersByFileURL(coverers []*Coverer) {
-	sort.Slice(coverers, func(i, j int) bool {
-		return coverers[i].CoverageURL < coverers[j].CoverageURL
-	})
-}
+// // Helper function to sort coverers by FileURL
+// func sortCoverersByFileURL(coverers []*Coverer) {
+// 	sort.Slice(coverers, func(i, j int) bool {
+// 		return coverers[i].CoverageURL < coverers[j].CoverageURL
+// 	})
+// }
 
-func (a *analyzer) generateActions() []Action {
-	var actions []Action
+// // Helper function to check if two coverer slices are equal
+// func coverersEqual(a []*Coverer, b []*Coverer) bool {
+// 	if len(a) != len(b) {
+// 		return false
+// 	}
+// 	for i := range a {
+// 		if a[i].CoverageURL != b[i].CoverageURL ||
+// 			a[i].CoverageLabel != b[i].CoverageLabel ||
+// 			a[i].FileHash != b[i].FileHash {
+// 			return false
+// 		}
+// 	}
+// 	return true
+// }
 
-	// Process each requirement coverage
-	for reqID, coverage := range a.coverages {
-		// Sort both current and new coverers for comparison
-		sortCoverersByFileURL(coverage.CurrentCoverers)
-		sortCoverersByFileURL(coverage.NewCoverers)
-
-		// Check if coverage has changed
-		if !coverersEqual(coverage.CurrentCoverers, coverage.NewCoverers) {
-			// Convert []*Coverer to []Coverer for the footnote
-			coverers := make([]Coverer, len(coverage.NewCoverers))
-			for i, c := range coverage.NewCoverers {
-				coverers[i] = *c
-			}
-
-			// Construct new footnote
-			newCf := CoverageFootnote{
-				RequirementID: reqID,
-				PackageID:     coverage.FileStructure.PackageID,
-				Coverers:      coverers,
-			}
-
-			// Create footnote action
-			coverage.ActionFootnote = &Action{
-				Type:          ActionFootnote,
-				FileStruct:    coverage.FileStructure,
-				Line:          coverage.Site.Line,
-				RequirementID: reqID,
-				Data:          formatCoverageFootnote(&newCf),
-			}
-			actions = append(actions, *coverage.ActionFootnote)
-
-			// Update coverage status based on number of new coverers
-			coverageStatus := CoverageStatusWordUncvrd
-			if len(coverage.NewCoverers) > 0 {
-				coverageStatus = CoverageStatusWordCovered
-			}
-
-			if coverage.Site.CoverageStatusWord != coverageStatus {
-				coverage.ActionUpdateStatus = &Action{
-					Type:          ActionUpdateStatus,
-					FileStruct:    coverage.FileStructure,
-					Line:          coverage.Site.Line,
-					RequirementID: reqID,
-					Data:          string(coverageStatus),
-				}
-				actions = append(actions, *coverage.ActionUpdateStatus)
-			}
-		}
-
-		// Handle bare requirement sites
-		if coverage.ActionFootnote == nil && !coverage.Site.IsAnnotated {
-			actions = append(actions, Action{
-				Type:          ActionAnnotate,
-				FileStruct:    coverage.FileStructure,
-				Line:          coverage.Site.Line,
-				RequirementID: reqID,
-				Data:          reqID,
-			})
-		}
-
-		// Add actions for reqmd.json updates
-		if len(coverage.NewCoverers) > 0 {
-			for _, coverer := range coverage.NewCoverers {
-				fileURL := coverage.FileStructure.FileURL()
-				// For new files, add FileURL action
-				if fileURL == "" {
-					actions = append(actions, Action{
-						Type:       ActionAddFileURL,
-						FileStruct: coverage.FileStructure,
-						Data:       coverer.FileHash,
-					})
-				} else if coverer.FileHash != coverage.FileStructure.FileHash {
-					// For existing files with changed hash
-					actions = append(actions, Action{
-						Type:       ActionUpdateHash,
-						FileStruct: coverage.FileStructure,
-						Data:       coverer.FileHash,
-					})
-				}
-			}
-		}
-	}
-
-	return actions
-}
-
-// Helper function to check if two coverer slices are equal
-func coverersEqual(a []*Coverer, b []*Coverer) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i].CoverageURL != b[i].CoverageURL ||
-			a[i].CoverageLabel != b[i].CoverageLabel ||
-			a[i].FileHash != b[i].FileHash {
-			return false
-		}
-	}
-	return true
-}
-
-// Helper function to format a coverage footnote as a string
-func formatCoverageFootnote(cf *CoverageFootnote) string {
-	var refs []string
-	for _, coverer := range cf.Coverers {
-		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageURL))
-	}
-	return fmt.Sprintf("[^~%s~]: %s", cf.RequirementID, strings.Join(refs, ", "))
-}
+// // Helper function to format a coverage footnote as a string
+// func formatCoverageFootnote(cf *CoverageFootnote) string {
+// 	var refs []string
+// 	for _, coverer := range cf.Coverers {
+// 		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageURL))
+// 	}
+// 	return fmt.Sprintf("[^~%s~]: %s", cf.RequirementID, strings.Join(refs, ", "))
+// }

@@ -31,20 +31,20 @@ type RequirementID = string
 
 // Action describes a single transformation (add/update/delete) to be applied in a file.
 type Action struct {
-	Type          ActionType     // e.g., Add, Update, Delete
-	FileStruct    *FileStructure // which file is changed
-	Line          int            // the line number where the change is applied
-	Data          string         // new data (if any)
-	RequirementID RequirementID  // Line is expected to contain this RequirementID
+	Type          ActionType    // e.g., Add, Update, Delete
+	Path          string        // file path
+	Line          int           // the line number where the change is applied
+	Data          string        // new data (if any)
+	RequirementID RequirementID // Line is expected to contain this RequirementID
 }
 
 // String returns a human-readable representation of the Action
 func (a *Action) String() string {
 	switch a.Type {
 	case ActionAnnotate:
-		return fmt.Sprintf("%s at %s:%d: %s", a.Type, a.FileStruct.Path, a.Line, a.Data)
+		return fmt.Sprintf("%s at %s:%d: %s", a.Type, a.Path, a.Line, a.Data)
 	default:
-		return fmt.Sprintf("Unknown action at %s:%d", a.FileStruct.Path, a.Line)
+		return fmt.Sprintf("Unknown action at %s:%d", a.Path, a.Line)
 	}
 }
 
@@ -208,6 +208,6 @@ type ScannerResult struct {
 
 // AnalyzerResult contains results from the analysis phase
 type AnalyzerResult struct {
-	Actions          []Action
+	Actions          []Action //TODO remove
 	ProcessingErrors []ProcessingError
 }

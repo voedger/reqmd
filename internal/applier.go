@@ -13,7 +13,7 @@ func (a *dummyApplier) Apply(actions []Action) error {
 		switch action.Type {
 		case ActionAnnotate:
 			log.Printf("[DUMMY] Would update content at %s:%d: %s\n",
-				action.FileStruct.Path, action.Line, action.Data)
+				action.Path, action.Line, action.Data)
 		default:
 			log.Printf("[DUMMY] Unknown action type: %v\n", action.Type)
 		}

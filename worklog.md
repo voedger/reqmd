@@ -267,6 +267,7 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
 - CopilotAgent.Claude: Refactor code so that:👍
   - IScanner shall return (*ScannerResult, []ProcessingError, error)
   - IAnalyzer shall return (*AnalyzerResult, []ProcessingError, error)
+- Me: Analyzer has to be rebuilt since the design is changed. Current [version](https://github.com/voedger/reqmd/tree/a08fc356d8825823a53717603d8f30f02b16ab88) :(
 
 --------------------
 
