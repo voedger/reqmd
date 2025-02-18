@@ -84,8 +84,8 @@ type RequirementCoverage struct {
 	FileStructure      *FileStructure
 	CurrentCoverers    []*Coverer
 	NewCoverers        []*Coverer
-	ActionFootnote     *Action
-	ActionUpdateStatus *Action
+	ActionFootnote     *MdAction
+	ActionUpdateStatus *MdAction
 }
 
 // Reqmdjson models the structure of the reqmd.json file.
@@ -177,12 +177,12 @@ type ScannerResult struct {
 	ProcessingErrors []ProcessingError
 }
 
-// ActionType represents the type of transformation needed.
-type ActionType string
+// MdActionType represents the type of markdown transformation needed.
+type MdActionType string
 
-// Action describes a single transformation (add/update/delete) to be applied in a file.
-type Action struct {
-	Type          ActionType    // e.g., Add, Update, Delete
+// MdAction describes a single transformation (add/update/delete) to be applied in a file.
+type MdAction struct {
+	Type          MdActionType  // e.g., Add, Update, Delete
 	Path          string        // file path
 	Line          int           // the line number where the change is applied
 	Data          string        // new data (if any)
@@ -190,7 +190,7 @@ type Action struct {
 }
 
 // String returns a human-readable representation of the Action
-func (a *Action) String() string {
+func (a *MdAction) String() string {
 	switch a.Type {
 	case ActionAnnotate:
 		return fmt.Sprintf("%s at %s:%d: %s", a.Type, a.Path, a.Line, a.Data)
@@ -200,15 +200,13 @@ func (a *Action) String() string {
 }
 
 const (
-	ActionAddFileURL   ActionType = "AddFileURL"   // Add new FileURL + FileHash to reqmd.json
-	ActionUpdateHash   ActionType = "UpdateHash"   // Update FileHash in reqmd.json for a given FileURL
-	ActionFootnote     ActionType = "Footnote"     // Create/Update a CoverageFootnote
-	ActionUpdateStatus ActionType = "UpdateStatus" // Update RequirementSite.CoverageStatusWord
-	ActionAnnotate     ActionType = "Annotate"     // Convert BareRequirementSite to annotated
+	ActionFootnote     MdActionType = "Footnote"     // Create/Update a CoverageFootnote
+	ActionUpdateStatus MdActionType = "UpdateStatus" // Update RequirementSite.CoverageStatusWord
+	ActionAnnotate     MdActionType = "Annotate"     // Convert BareRequirementSite to annotated
 )
 
 // AnalyzerResult contains results from the analysis phase
 type AnalyzerResult struct {
-	Actions          []Action //TODO remove
+	Actions          []MdAction //TODO remove
 	ProcessingErrors []ProcessingError
 }

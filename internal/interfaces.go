@@ -18,7 +18,7 @@ type IAnalyzer interface {
 
 // IApplier applies the Actions (file updates, footnote generation, etc.).
 type IApplier interface {
-	Apply(actions []Action) error
+	Apply(*AnalyzerResult) error
 }
 
 type IGit interface {

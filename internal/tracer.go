@@ -54,7 +54,7 @@ func (t *tracer) Trace() error {
 	}
 
 	// Applying phase
-	if err := t.applier.Apply(analyzeResult.Actions); err != nil {
+	if err := t.applier.Apply(analyzeResult); err != nil {
 		return err
 	}
 
