@@ -177,7 +177,7 @@ Analysis is conducted in few separate passes:
 - Construction of AnalyzerResult.MdActions: ActionAnnotate
 - Construction of AnalyzerResult.Reqmdjsons
 
-#### Construction of ActionFootnote and ActionUpdateStatus
+#### Construction of ActionFootnote and ActionUpdateStatus (buildMd1())
 
 - `coverages map[RequirementID]*RequirementCoverage` are calculated from all FileStructures
   - func buildRequirementCoverages()
@@ -186,7 +186,7 @@ Analysis is conducted in few separate passes:
   - `coverages.NewCoverers` are constructed using FileStructure.CoverageTags
 
 - foreach coverage in `coverages`
-  - if sorted CoverageURL of the `coverage.currentCoverers` do not match the sorted CoverageURL of the `coverage.newCoverers` then
+  - if sorted list of the CoverageURL of the `coverage.currentCoverers` do not match the sorted list of the CoverageURL of the `coverage.newCoverers` then
     - Use helper func `sortCoverersByFileURL()`
     - `newCf CoverageFootnote` is constructed from coverages.newCoverers, coverers are sorted by FileURL
     - string representation `newCfStr string` of newCf is constructed
@@ -194,7 +194,7 @@ Analysis is conducted in few separate passes:
       - `coverageStatus` is set to CoverageStatusWordUncvrd if there are no NewCoverers and to CoverageStatusWordCovered otherwise
     - New ActionUpdateStatus is created using coverageStatus as Data and added to AnalyzerResult.MdActions
 
-#### Construction of ActionAnnotate
+#### Construction of ActionAnnotate (buildMd2())
 
 - foreach coverage in `coverages`
   - if coverage.ActionFootnote is nil and !coverage.Site.IsAnnotated  then

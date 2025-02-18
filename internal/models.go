@@ -86,7 +86,6 @@ type RequirementCoverage struct {
 	CurrentCoverers    []*Coverer
 	NewCoverers        []*Coverer
 	ActionFootnote     *MdAction
-	ActionUpdateStatus *MdAction
 }
 
 // Reqmdjson models the structure of the reqmd.json file.
