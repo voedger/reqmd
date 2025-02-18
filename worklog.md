@@ -270,7 +270,6 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
 - Me: Analyzer has to be rebuilt since the design is changed. Current [version](https://github.com/voedger/reqmd/tree/a08fc356d8825823a53717603d8f30f02b16ab88) :(
 - Me: loop
   - Copilot.Claude: Is `design.md/#### Construction of ActionFootnote and ActionUpdateStatus` clear to refactor Analyzer? Ask questions if needed.👍
-- CopilotAgent.Claude: Apply `design.md/#### Construction of ActionAnnotate (buildMd2())` to analyzer.go.
 - CopilotAgent.Claude: Generate tests to cover semantic errors in analyzer_test.go. Do not use table tests, use separate Run for each error👍
 
 --------------------
