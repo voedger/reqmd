@@ -565,3 +565,4 @@ Made changes.
 - Copilot.Claude: Finalize the `design.md/##Changes processing` section. Ask questions, if needed.
 - Copilot.Claude: Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scanner.go #applier.go #tracer
 - Me: Oops, models.go does not match the design (created it manually)
+- It is cool to review each function using UI (it is way faster then Copilot) but it takes more time in total

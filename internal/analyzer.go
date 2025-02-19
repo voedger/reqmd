@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -35,8 +36,8 @@ func (a *analyzer) buildMd(result *AnalyzerResult) {
 	// Process each coverage to generate actions
 	for _, coverage := range a.coverages {
 		// Sort both lists by FileURL for comparison
-		sortCoverersByFileURL(coverage.CurrentCoverers)
-		sortCoverersByFileURL(coverage.NewCoverers)
+		sortCoverersByFileHash(coverage.CurrentCoverers)
+		sortCoverersByFileHash(coverage.NewCoverers)
 
 		// coverageStatus is "covered" if there are new coverers
 		coverageStatus := CoverageStatusWordUncvrd
@@ -61,7 +62,7 @@ func (a *analyzer) buildMd(result *AnalyzerResult) {
 		}
 
 		// Footnote action is needed if coverers are different
-		if !coverersEqual(coverage.CurrentCoverers, coverage.NewCoverers) {
+		if !areCoverersEqualByHashes(coverage.CurrentCoverers, coverage.NewCoverers) {
 
 			// Create footnote action
 			newCf := &CoverageFootnote{
@@ -160,23 +161,34 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 }
 
 // Helper function to sort coverers by FileURL
-func sortCoverersByFileURL(coverers []*Coverer) {
+func sortCoverersByFileHash(coverers []*Coverer) {
 	sort.Slice(coverers, func(i, j int) bool {
-		return coverers[i].CoverageURL < coverers[j].CoverageURL
+		return coverers[i].FileHash < coverers[j].FileHash
 	})
 }
 
-// Helper function to check if two coverer lists have matching URLs
-func coverersEqual(a []*Coverer, b []*Coverer) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i].CoverageURL != b[i].CoverageURL {
-			return false
+// areCoverersEqualByHashes compares two slices of Coverer pointers for equality
+// based on their FileHash values. Returns true if both slices contain the same
+// FileHash values regardless of order, false otherwise.
+//
+// Preconditions:
+// - Slices must be non-nil
+// - All elements must be non-nil
+// - Empty slices are considered equal
+//
+// Time complexity: O(n log n) where n is the length of the longer slice
+func areCoverersEqualByHashes(a []*Coverer, b []*Coverer) bool {
+	comparator := func(c1, c2 *Coverer) int {
+		switch {
+		case c1.FileHash < c2.FileHash:
+			return -1
+		case c1.FileHash > c2.FileHash:
+			return 1
+		default:
+			return 0
 		}
 	}
-	return true
+	return 0 == slices.CompareFunc(a, b, comparator)
 }
 
 // Helper function to format a coverage footnote
