@@ -164,13 +164,22 @@ func TestAnalyzer_ActionStatusUpdate_AnCov_NoCovs(t *testing.T) {
 	// Create a markdown file with covered requirement but no actual coverage
 	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordCovered)
 
-	result, err := analyzer.Analyze([]FileStructure{mdFile})
+	// Create source files with coverage
+	srcFile := createSourceFileStructure(
+		"src/impl.go",
+		"https://github.com/org/repo/blob/main/src/impl.go#L20",
+		[]CoverageTag{
+			createCoverageTag("pkg1/REQ001", "impl", 20),
+		},
+	)
+
+	result, err := analyzer.Analyze([]FileStructure{mdFile, srcFile})
 	require.NoError(t, err)
 	require.Empty(t, result.ProcessingErrors)
 
 	// Should generate status update action to uncovered
 	actions := result.MdActions[mdFile.Path]
-	require.Len(t, actions, 1)
+	require.Len(t, actions, 2)
 
 	assert.Equal(t, ActionSite, actions[0].Type)
 	assert.Equal(t, "REQ001", actions[0].RequirementName)
