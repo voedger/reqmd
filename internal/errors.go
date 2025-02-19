@@ -78,8 +78,8 @@ func NewErrDuplicateRequirementID(filePath1 string, line1 int, filePath2 string,
 		Code:     "dupreqid",
 		FilePath: filePath1,
 		Line:     line1,
-		Message: fmt.Sprintf("Duplicate RequirementID detected: %s found in %s:%d and %s:%d",
-			reqID, filePath1, line1, filePath2, line2),
+		Message: fmt.Sprintf("Duplicate RequirementID detected:\n\t%s\n\t%s:%d",
+			reqID, filePath2, line2),
 	}
 }
 
