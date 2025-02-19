@@ -30,6 +30,14 @@ const (
 	FileTypeSource
 )
 
+type CoverageStatusEmoji string
+
+const (
+	CoverageStatusEmojiEmpty   CoverageStatusEmoji = ""
+	CoverageStatusEmojiCovered CoverageStatusEmoji = "✅"
+	CoverageStatusEmojiUncvrd  CoverageStatusEmoji = "❓"
+)
+
 // FileStructure merges the parsed data from an input file (Markdown or source).
 type FileStructure struct {
 	Path              string
@@ -54,8 +62,21 @@ type RequirementSite struct {
 	RequirementName     string             // e.g., "Post.handler"
 	ReferenceName       string             // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
 	CoverageStatusWord  CoverageStatusWord // "covered", "uncvrd", or empty
-	CoverageStatusEmoji string             // "✅", "❓", or empty
-	IsAnnotated         bool               // true if it already has coverage annotation reference, false if it’s bare
+	CoverageStatusEmoji CoverageStatusEmoji
+	IsAnnotated         bool // true if it already has coverage annotation reference, false if it’s bare
+}
+
+// Build a string representation of the RequirementSite according to the requirements
+// CoverageStatusEmoji is ✅ for "covered", and ❓ for "uncvrd"
+func FormatRequirementSite(requirementName string, coverageStatusWord CoverageStatusWord) string {
+	result := fmt.Sprintf("`~%s~`", requirementName)
+
+	emoji := CoverageStatusEmojiUncvrd
+	if coverageStatusWord == CoverageStatusWordCovered {
+		emoji = CoverageStatusEmojiCovered
+	}
+
+	return fmt.Sprintf("%s%s[^~%s~]%s", result, coverageStatusWord, requirementName, emoji)
 }
 
 // CoverageTag represents a coverage marker found in source code.

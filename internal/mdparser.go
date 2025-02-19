@@ -145,10 +145,12 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 			RequirementName:     match[1],
 			CoverageStatusWord:  CoverageStatusWord(match[2]),
 			ReferenceName:       match[3],
-			CoverageStatusEmoji: match[4],
+			CoverageStatusEmoji: CoverageStatusEmoji(match[4]),
 			Line:                lineNum,
 			IsAnnotated:         match[3] != "",
 		}
+
+		// TODO syntax error to match CoverageStatusEmoji and CoverageStatusWord
 
 		if req.IsAnnotated && covStatus == "" {
 			*errors = append(*errors, NewErrCoverageStatusWord(filePath, lineNum, covStatus))

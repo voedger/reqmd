@@ -52,7 +52,7 @@ func (a *analyzer) buildMd(result *AnalyzerResult) {
 				Path:            coverage.FileStructure.Path,
 				Line:            coverage.Site.Line,
 				RequirementName: coverage.Site.RequirementName,
-				Data:            formatRequirementSite(coverage.Site.RequirementName, coverageStatus),
+				Data:            FormatRequirementSite(coverage.Site.RequirementName, coverageStatus),
 			}
 			// Add actions to result
 			result.MdActions[coverage.FileStructure.Path] = append(
@@ -127,7 +127,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 
 				// Process existing coverage footnotes
 				for _, footnote := range file.CoverageFootnotes {
-					if footnote.RequirementName == reqID {
+					if footnote.RequirementName == req.RequirementName {
 						// Convert []Coverer to []*Coverer
 						coverage.CurrentCoverers = make([]*Coverer, len(footnote.Coverers))
 						for i := range footnote.Coverers {
@@ -198,17 +198,4 @@ func formatCoverageFootnote(cf *CoverageFootnote) string {
 		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageURL))
 	}
 	return fmt.Sprintf("[^~%s~]: %s", cf.RequirementName, strings.Join(refs, ", "))
-}
-
-// Build a string representation of the RequirementSite according to the requirements
-// CoverageStatusEmoji is ✅ for "covered", and ❓ for "uncvrd"
-func formatRequirementSite(requirementName string, coverageStatusWord CoverageStatusWord) string {
-	result := fmt.Sprintf("`~%s~`", requirementName)
-
-	emoji := "✅"
-	if coverageStatusWord == CoverageStatusWordUncvrd {
-		emoji = "❓"
-	}
-
-	return fmt.Sprintf("%s%s[^~%s~]%s", result, coverageStatusWord, requirementName, emoji)
 }

@@ -82,18 +82,19 @@ func TestAnalyzer_error_MissingPackageID(t *testing.T) {
 	}
 }
 
-func TestAnalyzer_ActionFootnote_NewCoverage(t *testing.T) {
+func TestAnalyzer_ActionFootnote_NonAnnotated_NewCoverer(t *testing.T) {
 	analyzer := NewAnalyzer()
 
 	// Create a markdown file with one requirement
-	mdFile := createFileStructure("req.md", "pkg1", "REQ001", 10)
+	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordUncvrd)
+	mdFile.Requirements[0].IsAnnotated = false
 
 	// Create a source file with coverage for that requirement
 	srcFile := createSourceFileStructure(
 		"src/impl.go",
 		"https://github.com/org/repo/blob/main/src/impl.go",
 		[]CoverageTag{
-			createCoverageTag("pkg1/REQ001", "impl", 20),
+			createCoverageTag("pkg1/REQ001", "impl1", 20),
 		},
 	)
 
@@ -105,25 +106,25 @@ func TestAnalyzer_ActionFootnote_NewCoverage(t *testing.T) {
 	actions := result.MdActions[mdFile.Path]
 	require.Len(t, actions, 2)
 
-	// Verify footnote action
-	assert.Equal(t, ActionFootnote, actions[0].Type)
-	assert.Equal(t, "REQ001", actions[0].RequirementName)
-	assert.Contains(t, actions[0].Data, "[^~REQ001~]")
-	assert.Contains(t, actions[0].Data, "src/impl.go:20:impl")
-
 	// Verify status update action
-	assert.Equal(t, ActionSite, actions[1].Type)
+	assert.Equal(t, ActionSite, actions[0].Type)
+	assert.Equal(t, "REQ001", actions[0].RequirementName)
+	assert.Equal(t, 10, actions[0].Line)
+	assert.Equal(t, actions[0].Data, FormatRequirementSite("REQ001", CoverageStatusWordCovered))
+
+	// Verify footnote action
+	assert.Equal(t, ActionFootnote, actions[1].Type)
 	assert.Equal(t, "REQ001", actions[1].RequirementName)
-	assert.Equal(t, 10, actions[1].Line)
-	assert.Contains(t, actions[1].Data, "covered")
+	assert.Contains(t, actions[1].Data, "[^~REQ001~]")
+	assert.Contains(t, actions[1].Data, "src/impl.go:20:impl1")
+
 }
 
-func TestAnalyzer_ActionStatusUpdate_ExistingCoverage(t *testing.T) {
+func TestAnalyzer_ActionStatusUpdate_AnnotatedUncovered_NewCoverer(t *testing.T) {
 	analyzer := NewAnalyzer()
 
 	// Create a markdown file with an annotated requirement but incorrect status
-	mdFile := createFileStructure("req.md", "pkg1", "REQ001", 10)
-	mdFile.Requirements[0].IsAnnotated = true
+	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ002", CoverageStatusWordUncvrd)
 	mdFile.Requirements[0].CoverageStatusWord = CoverageStatusWordUncvrd
 
 	// Create source files with coverage
@@ -131,7 +132,7 @@ func TestAnalyzer_ActionStatusUpdate_ExistingCoverage(t *testing.T) {
 		"src/impl.go",
 		"https://github.com/org/repo/blob/main/src/impl.go#L20",
 		[]CoverageTag{
-			createCoverageTag("pkg1/REQ001", "impl", 20),
+			createCoverageTag("pkg1/REQ002", "impl", 20),
 		},
 	)
 
@@ -145,25 +146,23 @@ func TestAnalyzer_ActionStatusUpdate_ExistingCoverage(t *testing.T) {
 
 	// Verify site action
 	assert.Equal(t, ActionSite, actions[0].Type)
-	assert.Equal(t, "REQ001", actions[0].RequirementName)
+	assert.Equal(t, "REQ002", actions[0].RequirementName)
 	assert.Equal(t, 10, actions[0].Line)
-	assert.Contains(t, actions[0].Data, "covered")
+	assert.Equal(t, actions[0].Data, FormatRequirementSite("REQ002", CoverageStatusWordCovered))
 
 	// Verify footnote action
 	assert.Equal(t, ActionFootnote, actions[1].Type)
-	assert.Equal(t, "REQ001", actions[1].RequirementName)
-	assert.Contains(t, actions[1].Data, "[^~REQ001~]")
+	assert.Equal(t, "REQ002", actions[1].RequirementName)
+	assert.Contains(t, actions[1].Data, "[^~REQ002~]")
 	assert.Contains(t, actions[1].Data, "src/impl.go:20:impl")
 	assert.Contains(t, actions[1].Data, "https://github.com/org/repo/blob/main/src/impl.go#L20")
 }
 
-func TestAnalyzer_ActionStatusUpdate_RemoveCoverage(t *testing.T) {
+func TestAnalyzer_ActionStatusUpdate_AnCov_NoCovs(t *testing.T) {
 	analyzer := NewAnalyzer()
 
 	// Create a markdown file with covered requirement but no actual coverage
-	mdFile := createFileStructure("req.md", "pkg1", "REQ001", 10)
-	mdFile.Requirements[0].IsAnnotated = true
-	mdFile.Requirements[0].CoverageStatusWord = CoverageStatusWordCovered
+	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordCovered)
 
 	result, err := analyzer.Analyze([]FileStructure{mdFile})
 	require.NoError(t, err)
@@ -174,16 +173,21 @@ func TestAnalyzer_ActionStatusUpdate_RemoveCoverage(t *testing.T) {
 	require.Len(t, actions, 1)
 
 	assert.Equal(t, ActionSite, actions[0].Type)
-	assert.Equal(t, "pkg1/REQ001", actions[0].RequirementName)
+	assert.Equal(t, "REQ001", actions[0].RequirementName)
 	assert.Equal(t, 10, actions[0].Line)
-	assert.Contains(t, actions[0].Data, "uncvrd")
+	assert.Contains(t, actions[0].Data, FormatRequirementSite("REQ001", CoverageStatusWordUncvrd))
 }
 
-func TestAnalyzer_ActionFootnote_UpdateExisting(t *testing.T) {
+func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 	analyzer := NewAnalyzer()
 
+	OldCoverageURL := "https://github.com/org/repo/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/old/file.go"
+	OldFileHash := "oldhash"
+	NewCoverageURL := "https://github.com/org/repo/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/new/file.go"
+	NewFileHash := "newhash"
+
 	// Create a markdown file with a requirement and existing footnote
-	mdFile := createFileStructure("req.md", "pkg1", "REQ001", 10)
+	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordCovered)
 	mdFile.CoverageFootnotes = []CoverageFootnote{
 		{
 			RequirementName: "REQ001",
@@ -191,48 +195,97 @@ func TestAnalyzer_ActionFootnote_UpdateExisting(t *testing.T) {
 			Coverers: []Coverer{
 				{
 					CoverageLabel: "old/file.go:15:impl",
-					CoverageURL:   "https://github.com/org/repo/blob/main/old/file.go",
-					FileHash:      "oldhash",
+					CoverageURL:   OldCoverageURL,
+					FileHash:      OldFileHash,
 				},
 			},
 		},
 	}
 
-	// Create a source file with new coverage
+	// Source file with the same Url but new hash
 	srcFile := createSourceFileStructure(
 		"src/impl.go",
-		"https://github.com/org/repo/blob/main",
+		NewCoverageURL,
 		[]CoverageTag{
 			createCoverageTag("pkg1/REQ001", "impl", 20),
 		},
 	)
+	srcFile.FileHash = NewFileHash
 
 	result, err := analyzer.Analyze([]FileStructure{mdFile, srcFile})
 	require.NoError(t, err)
 	require.Empty(t, result.ProcessingErrors)
 
 	actions := result.MdActions[mdFile.Path]
-	require.Len(t, actions, 2)
+	require.Len(t, actions, 1)
 
 	// Verify footnote update action uses existing line number
-	assert.Equal(t, ActionFootnote, actions[0].Type)
-	assert.Equal(t, "pkg1/REQ001", actions[0].RequirementName)
-	assert.Equal(t, 20, actions[0].Line)
-	assert.Contains(t, actions[0].Data, "src/impl.go:20:impl")
-	assert.NotContains(t, actions[0].Data, "old/file.go")
+	assert.NotContains(t, actions[0].Data, OldCoverageURL)
+	assert.Contains(t, actions[0].Data, NewCoverageURL)
 }
 
-// Helper function to create a simple FileStructure with one requirement
-func createFileStructure(path, pkgID string, reqName string, line int) FileStructure {
+func TestAnalyzer_ActionFootnote_AnCov_SameHash(t *testing.T) {
+	analyzer := NewAnalyzer()
+
+	OldCoverageURL := "https://github.com/org/repo/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/old/file.go"
+	OldFileHash := "oldhash"
+	NewCoverageURL := "https://github.com/org/repo/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/new/file.go"
+	NewFileHash := OldFileHash
+
+	// Create a markdown file with a requirement and existing footnote
+	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordCovered)
+	mdFile.CoverageFootnotes = []CoverageFootnote{
+		{
+			RequirementName: "REQ001",
+			Line:            20,
+			Coverers: []Coverer{
+				{
+					CoverageLabel: "old/file.go:15:impl",
+					CoverageURL:   OldCoverageURL,
+					FileHash:      OldFileHash,
+				},
+			},
+		},
+	}
+
+	// Source file with the same Url but new hash
+	srcFile := createSourceFileStructure(
+		"src/impl.go",
+		NewCoverageURL,
+		[]CoverageTag{
+			createCoverageTag("pkg1/REQ001", "impl", 20),
+		},
+	)
+	srcFile.FileHash = NewFileHash
+
+	result, err := analyzer.Analyze([]FileStructure{mdFile, srcFile})
+	require.NoError(t, err)
+	require.Empty(t, result.ProcessingErrors)
+
+	actions := result.MdActions[mdFile.Path]
+	require.Len(t, actions, 0)
+}
+
+// Helper function to create a simple FileStructure with one annotated requirement that has cw coverage
+func createMdStructureA(path, pkgID string, line int, reqName string, cw CoverageStatusWord) FileStructure {
+
+	emoji := CoverageStatusEmojiUncvrd
+	if cw == CoverageStatusWordCovered {
+		emoji = CoverageStatusEmojiCovered
+	}
+
 	return FileStructure{
 		Path:      path,
 		Type:      FileTypeMarkdown,
 		PackageID: pkgID,
 		Requirements: []RequirementSite{
 			{
-				FilePath:        path,
-				RequirementName: reqName,
-				Line:            line,
+				FilePath:            path,
+				RequirementName:     reqName,
+				Line:                line,
+				IsAnnotated:         true,
+				CoverageStatusWord:  cw,
+				CoverageStatusEmoji: emoji,
 			},
 		},
 	}
