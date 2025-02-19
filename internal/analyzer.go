@@ -26,20 +26,43 @@ func (a *analyzer) Analyze(files []FileStructure) (*AnalyzerResult, error) {
 		return result, err
 	}
 
-	a.buildMd1(result)
-	a.buildMd2(result)
+	a.buildMd(result)
 
 	return result, nil
 }
 
-func (a *analyzer) buildMd1(result *AnalyzerResult) {
+func (a *analyzer) buildMd(result *AnalyzerResult) {
 	// Process each coverage to generate actions
 	for _, coverage := range a.coverages {
 		// Sort both lists by FileURL for comparison
 		sortCoverersByFileURL(coverage.CurrentCoverers)
 		sortCoverersByFileURL(coverage.NewCoverers)
 
+		// coverageStatus is "covered" if there are new coverers
+		coverageStatus := CoverageStatusWordUncvrd
+		if len(coverage.NewCoverers) > 0 {
+			coverageStatus = CoverageStatusWordCovered
+		}
+
+		// Check if site action is needed
+		if !coverage.Site.IsAnnotated || coverage.Site.CoverageStatusWord != coverageStatus {
+			siteAction := MdAction{
+				Type:            ActionSite,
+				Path:            coverage.FileStructure.Path,
+				Line:            coverage.Site.Line,
+				RequirementName: coverage.Site.RequirementName,
+				Data:            formatRequirementSite(coverage.Site.RequirementName, coverageStatus),
+			}
+			// Add actions to result
+			result.MdActions[coverage.FileStructure.Path] = append(
+				result.MdActions[coverage.FileStructure.Path],
+				siteAction,
+			)
+		}
+
+		// Footnote action is needed if coverers are different
 		if !coverersEqual(coverage.CurrentCoverers, coverage.NewCoverers) {
+
 			// Create footnote action
 			newCf := &CoverageFootnote{
 				RequirementName: coverage.Site.RequirementName,
@@ -64,46 +87,10 @@ func (a *analyzer) buildMd1(result *AnalyzerResult) {
 				}
 			}
 
-			// Create status update action
-			coverageStatus := CoverageStatusWordUncvrd
-			if len(coverage.NewCoverers) > 0 {
-				coverageStatus = CoverageStatusWordCovered
-			}
-
-			statusAction := MdAction{
-				Type:            ActionSite,
-				Path:            coverage.FileStructure.Path,
-				Line:            coverage.Site.Line,
-				RequirementName: coverage.Site.RequirementName,
-				Data:            formatRequirementSite(coverage.Site.RequirementName, coverageStatus),
-			}
-
 			// Add actions to result
 			result.MdActions[coverage.FileStructure.Path] = append(
 				result.MdActions[coverage.FileStructure.Path],
 				footnoteAction,
-				statusAction,
-			)
-		}
-	}
-}
-
-func (a *analyzer) buildMd2(result *AnalyzerResult) {
-	for _, coverage := range a.coverages {
-		// Only process if there's no existing footnote action and the site is not annotated
-		if !coverage.Site.IsAnnotated {
-			// Create annotation action
-			annotateAction := MdAction{
-				Type:            ActionSite,
-				Path:            coverage.FileStructure.Path,
-				Line:            coverage.Site.Line,
-				RequirementName: coverage.Site.RequirementName,
-				Data:            formatRequirementSite(coverage.Site.RequirementName, CoverageStatusWordUncvrd),
-			}
-			// Add action to result
-			result.MdActions[coverage.FileStructure.Path] = append(
-				result.MdActions[coverage.FileStructure.Path],
-				annotateAction,
 			)
 		}
 	}

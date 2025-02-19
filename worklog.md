@@ -271,6 +271,7 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
 - Me: loop
   - Copilot.Claude: Is `design.md/#### Construction of ActionFootnote and ActionUpdateStatus` clear to refactor Analyzer? Ask questions if needed.👍
 - CopilotAgent.Claude: Generate tests to cover semantic errors in analyzer_test.go. Do not use table tests, use separate Run for each error👍
+- CopilotAgent.Claude: analyzer_test.go: Construct tests to cover ActionFootnote and ActionUpdateStatus.  Do not use table tests, use separate Runs. Construct new helper functions to create FileStructures and other structs, if needed.
 
 --------------------
 

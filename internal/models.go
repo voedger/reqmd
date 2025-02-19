@@ -58,7 +58,6 @@ type RequirementSite struct {
 	IsAnnotated         bool               // true if it already has coverage annotation reference, false if it’s bare
 }
 
-
 // CoverageTag represents a coverage marker found in source code.
 type CoverageTag struct {
 	RequirementID RequirementID // e.g., "server.api.v2/Post.handler"
@@ -87,7 +86,7 @@ type RequirementCoverage struct {
 	FileStructure   *FileStructure
 	CurrentCoverers []*Coverer
 	NewCoverers     []*Coverer
-	ActionFootnote  *MdAction
+	SiteAction      *MdAction
 }
 
 // Reqmdjson models the structure of the reqmd.json file.

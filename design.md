@@ -149,32 +149,11 @@ The following files may have to be changed
   - Coverer.FileHash is updated  
   - Some RequirementSite are BareRequirementSite and there are no new Coverers
 
-### Data structures
-
-Action types
-
-- ActionFootnote: Create/Update a CoverageFootnote
-  - Only one action per line is allowed
-- ActionUpdateStatus: Update RequirementSite.CoverageStatusWord (covered/uncvrd)
-  - Only one action per line is allowed
-- ActionAnnotate: Convert BareRequirementSite to annotated
-  - Only one action per line is allowed
-
-RequirementCoverage
-
-- Site *RequirementSite
-- FileStructure *FileStructure
-- CurrentCoverers []*Coverer
-- NewCoverers []*Coverer
-- ActionFootnote *Action
-- ActionUpdateStatus *Action
-
 ### Analysis
 
 Analysis is conducted in few separate passes:
 
-- Construction of AnalyzerResult.MdActions: ActionFootnote, ActionUpdateStatus: buildMd1()
-- Construction of AnalyzerResult.MdActions: ActionAnnotate: buildMd2()
+- Construction of AnalyzerResult.MdActions: ActionFootnote, ActionSite: buildMd()
 - Construction of AnalyzerResult.Reqmdjsons
 
 #### Construction of ActionAddFileURL and ActionUpdateHash
