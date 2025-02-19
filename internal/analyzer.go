@@ -197,5 +197,9 @@ func formatCoverageFootnote(cf *CoverageFootnote) string {
 	for _, coverer := range cf.Coverers {
 		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageURL))
 	}
-	return fmt.Sprintf("[^~%s~]: %s", cf.RequirementName, strings.Join(refs, ", "))
+	hint := fmt.Sprintf("`[~%s~impl]`", cf.RequirementName)
+	if len(refs) > 0 {
+		return fmt.Sprintf("[^~%s~]: %s %s", cf.RequirementName, hint, strings.Join(refs, ", "))
+	}
+	return fmt.Sprintf("[^~%s~]: %s", cf.RequirementName, hint)
 }

@@ -82,7 +82,8 @@ func TestAnalyzer_error_MissingPackageID(t *testing.T) {
 	}
 }
 
-func TestAnalyzer_ActionFootnote_NonAnnotated_NewCoverer(t *testing.T) {
+// Non-annotated requirement with new coverer
+func TestAnalyzer_ActionFootnote_Nan_NewCoverer(t *testing.T) {
 	analyzer := NewAnalyzer()
 
 	// Create a markdown file with one requirement
@@ -120,12 +121,11 @@ func TestAnalyzer_ActionFootnote_NonAnnotated_NewCoverer(t *testing.T) {
 
 }
 
-func TestAnalyzer_ActionStatusUpdate_AnnotatedUncovered_NewCoverer(t *testing.T) {
+// Annotated uncovered requirement
+func TestAnalyzer_ActionStatusUpdate_AnUncov_NewCoverer(t *testing.T) {
 	analyzer := NewAnalyzer()
 
-	// Create a markdown file with an annotated requirement but incorrect status
 	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ002", CoverageStatusWordUncvrd)
-	mdFile.Requirements[0].CoverageStatusWord = CoverageStatusWordUncvrd
 
 	// Create source files with coverage
 	srcFile := createSourceFileStructure(
@@ -158,22 +158,13 @@ func TestAnalyzer_ActionStatusUpdate_AnnotatedUncovered_NewCoverer(t *testing.T)
 	assert.Contains(t, actions[1].Data, "https://github.com/org/repo/blob/main/src/impl.go#L20")
 }
 
-func TestAnalyzer_ActionStatusUpdate_AnCov_NoCovs(t *testing.T) {
+func TestAnalyzer_ActionStatusUpdate_AnCov_NoCoverers(t *testing.T) {
 	analyzer := NewAnalyzer()
 
 	// Create a markdown file with covered requirement but no actual coverage
-	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordCovered)
+	mdFile := createMdStructureA("req.md", "pkg1", 11, "REQ001", CoverageStatusWordCovered)
 
-	// Create source files with coverage
-	srcFile := createSourceFileStructure(
-		"src/impl.go",
-		"https://github.com/org/repo/blob/main/src/impl.go#L20",
-		[]CoverageTag{
-			createCoverageTag("pkg1/REQ001", "impl", 20),
-		},
-	)
-
-	result, err := analyzer.Analyze([]FileStructure{mdFile, srcFile})
+	result, err := analyzer.Analyze([]FileStructure{mdFile})
 	require.NoError(t, err)
 	require.Empty(t, result.ProcessingErrors)
 
@@ -181,10 +172,16 @@ func TestAnalyzer_ActionStatusUpdate_AnCov_NoCovs(t *testing.T) {
 	actions := result.MdActions[mdFile.Path]
 	require.Len(t, actions, 2)
 
+	// Verify site action
 	assert.Equal(t, ActionSite, actions[0].Type)
 	assert.Equal(t, "REQ001", actions[0].RequirementName)
-	assert.Equal(t, 10, actions[0].Line)
+	assert.Equal(t, 11, actions[0].Line)
 	assert.Contains(t, actions[0].Data, FormatRequirementSite("REQ001", CoverageStatusWordUncvrd))
+
+	// Verify footnote action
+	assert.Equal(t, ActionFootnote, actions[1].Type)
+	assert.Equal(t, "[^~REQ001~]: `[~REQ001~impl]`", actions[1].Data)
+	assert.Equal(t, 11+10, actions[1].Line)
 }
 
 func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
@@ -229,6 +226,7 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 	require.Len(t, actions, 1)
 
 	// Verify footnote update action uses existing line number
+	assert.Equal(t, ActionFootnote, actions[0].Type)
 	assert.NotContains(t, actions[0].Data, OldCoverageURL)
 	assert.Contains(t, actions[0].Data, NewCoverageURL)
 }
@@ -283,7 +281,7 @@ func createMdStructureA(path, pkgID string, line int, reqName string, cw Coverag
 		emoji = CoverageStatusEmojiCovered
 	}
 
-	return FileStructure{
+	fs := FileStructure{
 		Path:      path,
 		Type:      FileTypeMarkdown,
 		PackageID: pkgID,
@@ -298,6 +296,24 @@ func createMdStructureA(path, pkgID string, line int, reqName string, cw Coverag
 			},
 		},
 	}
+
+	if cw == CoverageStatusWordCovered {
+		fs.CoverageFootnotes = []CoverageFootnote{
+			{
+				RequirementName: reqName,
+				Line:            line + 10,
+				Coverers: []Coverer{
+					{
+						CoverageLabel: "somefolder/somefile.go:15:impl",
+						CoverageURL:   "someurl",
+						FileHash:      "somehash",
+					},
+				},
+			},
+		}
+	}
+
+	return fs
 }
 
 // Helper function to create a CoverageTag
