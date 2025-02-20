@@ -48,6 +48,12 @@ func TestFoldersScanner(t *testing.T) {
 	}
 	defer os.RemoveAll(root)
 
+	// Convert root to absolute path
+	absRoot, err := filepath.Abs(root)
+	if err != nil {
+		t.Fatalf("Failed to get absolute path: %v", err)
+	}
+
 	// Define test structure
 	structure := testStructure{
 		name:  "root",
@@ -80,7 +86,7 @@ func TestFoldersScanner(t *testing.T) {
 	}
 
 	// Create test structure
-	if err := createTestStructure(t, root, structure); err != nil {
+	if err := createTestStructure(t, absRoot, structure); err != nil {
 		t.Fatalf("Failed to create test structure: %v", err)
 	}
 
@@ -116,6 +122,10 @@ func TestFoldersScanner(t *testing.T) {
 			nroutines:    0,
 			expectErrors: true,
 		},
+		{
+			name:      "verify absolute paths",
+			nroutines: 1,
+		},
 	}
 
 	for _, tt := range tests {
@@ -126,7 +136,7 @@ func TestFoldersScanner(t *testing.T) {
 
 			// Create folder processor
 			fp := func(folder string) (FileProcessor, error) {
-				relPath, _ := filepath.Rel(root, folder)
+				relPath, _ := filepath.Rel(absRoot, folder)
 				mu.Lock()
 				processedFolders = append(processedFolders, relPath)
 				mu.Unlock()
@@ -136,7 +146,7 @@ func TestFoldersScanner(t *testing.T) {
 				}
 
 				return func(filePath string) error {
-					relPath, _ := filepath.Rel(root, filePath)
+					relPath, _ := filepath.Rel(absRoot, filePath)
 					mu.Lock()
 					processedFiles = append(processedFiles, relPath)
 					mu.Unlock()
@@ -149,7 +159,7 @@ func TestFoldersScanner(t *testing.T) {
 			}
 
 			// Run scanner
-			errs := FoldersScanner(tt.nroutines, 100, root, fp)
+			errs := FoldersScanner(tt.nroutines, 100, absRoot, fp)
 
 			// Verify results
 			if tt.expectErrors && len(errs) == 0 {
@@ -215,6 +225,12 @@ func TestFoldersScanner_ALotOfErrors(t *testing.T) {
 	}
 	defer os.RemoveAll(root)
 
+	// Convert root to absolute path
+	absRoot, err := filepath.Abs(root)
+	if err != nil {
+		t.Fatalf("Failed to get absolute path: %v", err)
+	}
+
 	// Create test structure with many files
 	structure := testStructure{
 		name:  "root",
@@ -248,7 +264,7 @@ func TestFoldersScanner_ALotOfErrors(t *testing.T) {
 	}
 
 	// Create test structure
-	if err := createTestStructure(t, root, structure); err != nil {
+	if err := createTestStructure(t, absRoot, structure); err != nil {
 		t.Fatalf("Failed to create test structure: %v", err)
 	}
 
@@ -266,7 +282,7 @@ func TestFoldersScanner_ALotOfErrors(t *testing.T) {
 	}
 
 	// Run scanner with small error channel capacity
-	errs := FoldersScanner(4, 10, root, fp)
+	errs := FoldersScanner(4, 10, absRoot, fp)
 
 	// Verify that we processed all files despite error channel being full
 	mu.Lock()

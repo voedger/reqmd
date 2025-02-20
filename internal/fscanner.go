@@ -10,20 +10,23 @@ import (
 // FolderProcessor is a function type that processes a folder and returns a FileProcessor
 // for handling files within that folder. If an error occurs during folder processing,
 // it returns the error and a nil FileProcessor.
-type FolderProcessor func(folder string) (FileProcessor, error)
+// The folder path provided is always absolute.
+type FolderProcessor func(absFolderPath string) (FileProcessor, error)
 
 // FileProcessor is a function type that processes a single file and returns an error
 // if the processing fails.
-type FileProcessor func(filePath string) error
+// The file path provided is always absolute.
+type FileProcessor func(absFilePath string) error
 
 // FoldersScanner performs concurrent processing of files in a directory tree.
 // It traverses the directory structure in breadth-first order, using FolderProcessor
 // to obtain FileProcessor instances for each folder, then processes files using
-// a pool of goroutines.
+// a pool of goroutines. All paths passed to processors are absolute paths.
 //
 // Parameters:
 //   - nroutines: Number of concurrent goroutines for file processing (must be > 0)
-//   - root: Root directory path to start scanning from
+//   - nerrors: Maximum number of errors to buffer in the error channel
+//   - root: Root directory path to start scanning from (will be converted to absolute)
 //   - fp: FolderProcessor function to process folders and obtain FileProcessors
 //
 // Returns:
@@ -39,6 +42,12 @@ type FileProcessor func(filePath string) error
 func FoldersScanner(nroutines int, nerrors int, root string, fp FolderProcessor) []error {
 	if nroutines < 1 {
 		return []error{fmt.Errorf("number of routines must be positive")}
+	}
+
+	// Convert root to absolute path
+	absRoot, err := filepath.Abs(root)
+	if err != nil {
+		return []error{fmt.Errorf("failed to get absolute path: %v", err)}
 	}
 
 	// Channel for collecting file processors
@@ -70,7 +79,7 @@ func FoldersScanner(nroutines int, nerrors int, root string, fp FolderProcessor)
 	}
 
 	// Process folders breadth-first
-	folders := []string{root}
+	folders := []string{absRoot}
 	for len(folders) > 0 {
 		currentFolder := folders[0]
 		folders = folders[1:]
