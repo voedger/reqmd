@@ -86,6 +86,11 @@ func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, 
 					errors = append(errors, NewErrPkgIdent(filePath, lineNum, pkgID))
 				}
 				structure.PackageID = pkgID
+				// Ignore files with package "ignoreme"
+
+				if strings.HasPrefix(pkgID, "ignoreme") {
+					return structure, nil, nil
+				}
 			}
 			continue
 		}
@@ -170,7 +175,7 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 var (
 	// "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L10), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#l15)"
 	CoverageFootnoteRegex = regexp.MustCompile(`^\s*\[\^~([^~]+)~\]:\s*` + //Footnote reference
-		"`\\[~([^~/]+)/([^~]+)~([^\\]]+)\\]`" + // Hint with package and coverage type
+		"`\\[~([^~/]+)/([^~]+)~([^\\]]+)?\\]`" + // Hint with package and coverage type
 		`(?:\s*(.+))?$`) // Optional coverer list
 	CovererRegex = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
 )

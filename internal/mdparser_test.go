@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -207,6 +208,25 @@ func Test_ParseCoverageFootnote(t *testing.T) {
 	assert.Equal(t, "hash2", note.Coverers[1].FileHash)
 }
 
+func Test_ParseCoverageFootnote2(t *testing.T) {
+	line := "[^~VVMLeader.def~]: `[~server.design.orch/VVMLeader.def~]` [apps/app.go:80:impl](https://example.com/pkg1/filename1#L80)"
+	ctx := &MarkdownContext{
+		rfiles: &Reqmdjson{
+			FileURL2FileHash: map[string]string{
+				"https://example.com/pkg1/filename1": "hash1",
+			},
+		},
+	}
+	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
+	require.NotNil(t, note)
+
+	assert.Equal(t, "VVMLeader.def", note.RequirementName, "incorrect requirement ID in footnote")
+	assert.Equal(t, "server.design.orch", note.PackageID, "incorrect package ID in footnote")
+
+	require.Len(t, note.Coverers, 1, "should have 1 coverer")
+	assert.Equal(t, "apps/app.go:80:impl", note.Coverers[0].CoverageLabel)
+}
+
 func Test_ParseCoverageFootnote_errors(t *testing.T) {
 	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder2/filename2:line2:test](://example.com/path)"
 
@@ -300,4 +320,24 @@ func TestParseRequirements_errors(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMdParser_ParseMarkdownFile_IgnorePackage(t *testing.T) {
+	// Create a temporary file for testing
+	content := []byte(`---
+reqmd.package: ignoreme
+---
+This content should be ignored. ` + "`~REQ001~`" + `
+`)
+	tmpfile := filepath.Join(t.TempDir(), "test.md")
+	require.NoError(t, os.WriteFile(tmpfile, content, 0644))
+
+	// Parse the file
+	structure, errs, err := ParseMarkdownFile(newMdCtx(), tmpfile)
+	require.NoError(t, err)
+	assert.Empty(t, errs)
+	assert.NotNil(t, structure)
+	assert.Equal(t, "ignoreme", structure.PackageID)
+	assert.Empty(t, structure.Requirements)
+	assert.Empty(t, structure.CoverageFootnotes)
 }

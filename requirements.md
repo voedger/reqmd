@@ -42,6 +42,8 @@ reqmd.package: system.reqs
 ---
 ```
 
+Content of the MarkdownFiles where reqmd.package is started with "ignoreme" is ignored.
+
 Markdown body is a sequence of different text elements. The tool processes:
 
 - RequirementSite, can be:

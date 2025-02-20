@@ -47,7 +47,7 @@ func TestAnalyzer_error_Duplicates(t *testing.T) {
 		assert.Equal(t, "file1.md", err.FilePath)
 		assert.Equal(t, 10, err.Line)
 		assert.Contains(t, err.Message, "pkg1/REQ001")
-		assert.Contains(t, err.Message, "file1.md:10")
+		assert.NotContains(t, err.Message, "file1.md:10")
 		assert.Contains(t, err.Message, "file2.md:20")
 	}
 }

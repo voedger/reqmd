@@ -36,6 +36,7 @@ func (a *analyzer) buildMd(result *AnalyzerResult) {
 	// Process each coverage to generate actions
 	for _, coverage := range a.coverages {
 		// Sort both lists by FileURL for comparison
+		// FIXME: Can we compare hashes??? E.g. is line can be changed?
 		sortCoverersByFileHash(coverage.CurrentCoverers)
 		sortCoverersByFileHash(coverage.NewCoverers)
 
