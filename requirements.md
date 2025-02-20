@@ -28,11 +28,17 @@ Name = Letter { Letter | Digit | "_" }
 
 Identifier = Name {"." Name}
 
+Digit          = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+Number         = Digit { Digit }
+
 ```
 
 ## Markdown files
 
 A MarkdownFile is a text file with a `.md` extension. Each Markdown file contains a header and a body.
+
+### Header
 
 The header specifies a PackageID (which is an Identifier), for example:
 
@@ -41,6 +47,8 @@ The header specifies a PackageID (which is an Identifier), for example:
 reqmd.package: system.reqs
 ---
 ```
+
+### Content
 
 Content of the MarkdownFiles where reqmd.package is started with "ignoreme" is ignored.
 
@@ -58,6 +66,8 @@ Constraints:
 - Only one RequirementSite is allowed per line.
 - RequirementSite are not processed inside code blocks.
 - Node that code block can have identation specified by spaces or a tab.
+
+### RequirementSite
 
 ```ebnf
 RequirementSite = RequirementSiteID [CoverageStatusWord CoverageFootnoteReference] [CoverageStatusEmoji]
@@ -98,14 +108,23 @@ Example of an UncoveredAnnotatedRequirementSite:
 - The system shall handle incoming POST requests and return an HTTP 200 response upon successful processing. `~Post.handler~`uncvrd[^~Post.handler~]❓.
 ```
 
+### CoverageFootnote
+
 CoverageFootnote contains a CoverageFootnoteHint and an optional list of Coverers. A Coverer contains "[" CoverageLabel "]" followed by "(" CoverageURL ")". An example:
 
 ```ebnf
-CoverageFootnote = "[^" RequirementSiteID "]" ":" "`[" CoverageFootnoteHint "]`" [Coverer {"," Coverer}]
+CoverageFootnote = "[^" RequirementSiteID "]" ":" "`[" CoverageFootnoteHint "]`" [Coverers]
+
+Coverers = Coverer {"," Coverer}
 
 Coverer = "[" CoverageLabel "]" "(" CoverageURL ")"
 
+CoverageLabel  = FilePath ":" Number ":" CoverageType ;
 ```
+
+Coverers requirements:
+
+- Coverers shall be sorted by CoverageType, then by FilePath, then by Number, then by CoverageURL.
 
 An example:
 

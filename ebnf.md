@@ -18,6 +18,8 @@ Letter         = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" |
 
 Digit          = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
 
+Number         = Digit { Digit }
+
 HexDigit       = Digit | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F" ;
 
 Name           = Letter { Letter | Digit | "_" } ;
@@ -75,11 +77,11 @@ CoverageFootnoteReference = "[^" RequirementSiteID "]" ;
   optional comma-separated coverers. 
 *)
 
-CoverageFootnote = "[^" RequirementSiteID "]:" CoverageFootnoteHint [ CovererList ] ;
+CoverageFootnote = "[^" RequirementSiteID "]:" CoverageFootnoteHint [ Coverers ] ;
 CoverageFootnoteHint = "`[" "~" PackageID "/" RequirementName "~impl]`" ;
-CovererList    = Coverer { "," WS Coverer } ;
+Coverers    = Coverer { "," Coverer } ;
 Coverer        = "[" CoverageLabel "]" "(" CoverageURL ")" ;
-CoverageLabel  = FilePath ":" "line" Digit { Digit } ":" CoverageType ;
+CoverageLabel  = FilePath ":" "line" Number ":" CoverageType ;
 
 (* 
   Coverage URL 
@@ -97,7 +99,7 @@ Owner          = Identifier ;
 Repository     = Identifier ;
 CommitHash     = HexDigit { HexDigit } ;
 FilePath       = { AnyCharacter - ("?" | "#") } ;
-CoverageArea   = "L" Digit { Digit } ;
+CoverageArea   = "L" Number ;
 ```
 
 ## Source Files

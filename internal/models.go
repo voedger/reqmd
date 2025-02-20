@@ -95,6 +95,19 @@ type CoverageFootnote struct {
 	Coverers        []Coverer
 }
 
+// Helper function to format a coverage footnote
+func FormatCoverageFootnote(cf *CoverageFootnote) string {
+	var refs []string
+	for _, coverer := range cf.Coverers {
+		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageURL))
+	}
+	hint := fmt.Sprintf("`[~%s~impl]`", cf.RequirementName)
+	if len(refs) > 0 {
+		return fmt.Sprintf("[^~%s~]: %s %s", cf.RequirementName, hint, strings.Join(refs, ", "))
+	}
+	return fmt.Sprintf("[^~%s~]: %s", cf.RequirementName, hint)
+}
+
 // Coverer represents one coverage reference within a footnote, e.g., [folder/file:line:impl](URL)
 type Coverer struct {
 	CoverageLabel string // e.g., "folder/file.go:42:impl"

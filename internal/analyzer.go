@@ -5,7 +5,6 @@ import (
 	"slices"
 	"sort"
 	"strconv"
-	"strings"
 )
 
 type analyzer struct {
@@ -79,7 +78,7 @@ func (a *analyzer) buildMd(result *AnalyzerResult) {
 				Type:            ActionFootnote,
 				Path:            coverage.FileStructure.Path,
 				RequirementName: coverage.Site.RequirementName,
-				Data:            formatCoverageFootnote(newCf),
+				Data:            FormatCoverageFootnote(newCf),
 			}
 
 			// Find annotation line, keep 0 if not found
@@ -191,17 +190,4 @@ func areCoverersEqualByHashes(a []*Coverer, b []*Coverer) bool {
 		}
 	}
 	return 0 == slices.CompareFunc(a, b, comparator)
-}
-
-// Helper function to format a coverage footnote
-func formatCoverageFootnote(cf *CoverageFootnote) string {
-	var refs []string
-	for _, coverer := range cf.Coverers {
-		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageURL))
-	}
-	hint := fmt.Sprintf("`[~%s~impl]`", cf.RequirementName)
-	if len(refs) > 0 {
-		return fmt.Sprintf("[^~%s~]: %s %s", cf.RequirementName, hint, strings.Join(refs, ", "))
-	}
-	return fmt.Sprintf("[^~%s~]: %s", cf.RequirementName, hint)
 }
