@@ -130,7 +130,7 @@ func sortCoverers(coverers []Coverer) {
 		}
 
 		// Finally compare by CoverageURL
-		return coverers[i].CoverageURL < coverers[j].CoverageURL
+		return coverers[i].CoverageUrL < coverers[j].CoverageUrL
 	})
 }
 
@@ -141,7 +141,7 @@ func FormatCoverageFootnote(cf *CoverageFootnote) string {
 
 	var refs []string
 	for _, coverer := range cf.Coverers {
-		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageURL))
+		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageUrL))
 	}
 	hint := fmt.Sprintf("`[~%s~impl]`", cf.RequirementName)
 	if len(refs) > 0 {
@@ -153,7 +153,7 @@ func FormatCoverageFootnote(cf *CoverageFootnote) string {
 // Coverer represents one coverage reference within a footnote, e.g., [folder/file:line:impl](URL)
 type Coverer struct {
 	CoverageLabel string // e.g., "folder/file.go:42:impl"
-	CoverageURL   string // full URL including commit hash
+	CoverageUrL   string // full URL including commit hash
 	FileHash      string // git hash of the file specified in CoverageURL
 }
 
@@ -170,7 +170,6 @@ type RequirementCoverage struct {
 	FileStructure   *FileStructure
 	CurrentCoverers []*Coverer
 	NewCoverers     []*Coverer
-	SiteAction      *MdAction
 }
 
 // Reqmdjson models the structure of the reqmd.json file.

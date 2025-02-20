@@ -206,6 +206,7 @@ Breakdown of the `[~server.api.v2/Post.handler~test]`:
 - reqmd.json contains information necessary for the tool to process the requirements
 - reqmd.json files are updated by the tool during the processing of the requirements and shall be committed to the repository
 - This file is create per folder if markdown files are present and contains RequirementSites
+- Processing shall survive the deletion of the reqmd.json file and missing FileURLs
 
 Structure
 
@@ -218,9 +219,9 @@ Example:
 ```json
 {
   "FileHashes" : {
-    "https://github.com/voedger/voedger/blob/main/pkg/api/handler.go": "979d75b2c7da961f94396ce2b286e7389eb73d75",
-    "https://github.com/voedger/voedger/blob/main/pkg/api/handler_test.go", "845a23c8f9d6a8b7e9c2d4f5a6b7c8d9e0f1a2b3", 
-    "https://gitlab.com/myorg/project/-/blob/main/src/core/processor.ts", "123f45e6c7d8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
+    "https://github.com/voedger/voedger/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/pkg/api/handler.go": "979d75b2c7da961f94396ce2b286e7389eb73d75",
+    "https://github.com/voedger/voedger/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/pkg/api/handler_test.go", "845a23c8f9d6a8b7e9c2d4f5a6b7c8d9e0f1a2b3", 
+    "https://gitlab.com/myorg/project/-/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/src/core/processor.ts", "123f45e6c7d8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
   }
 }
 ```

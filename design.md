@@ -138,36 +138,16 @@ URL structure examples:
 
 ### Problem statement
 
-The following files may have to be changed
+The following files may have to be changed:
 
-- reqmd.json is updated if
+- reqmd.json is updated if, not exhaustively
   - FileUrl is added/removed
   - FileHash is updated
-- Markdown files updated if
+- Markdown files updated if, not exhaustively
   - Coverer with new FileURL is added
   - Coverer with existing FileURL does not exist anymore
   - Coverer.FileHash is updated  
   - Some RequirementSite are BareRequirementSite and there are no new Coverers
-
-### Analysis
-
-Analysis is conducted in few separate passes:
-
-- Construction of AnalyzerResult.MdActions: ActionFootnote, ActionSite: buildMd()
-- Construction of AnalyzerResult.Reqmdjsons
-
-#### Construction of ActionAddFileURL and ActionUpdateHash
-
-- foreach coverage in `coverages`
-  - foreach coverer in NewCoverers
-    - if CoverageURL does not exist NewCoverers
-      - New ActionAddFileURL is created
-        - FileStruct is set to coverage.FileStructure
-        - Data is set to coverer.FileHash
-    - else if coverer.FileHash != coverage.FileStructure.FileHash then
-      - New ActionUpdateHash is created
-        - FileStruct is set to coverage.FileStructure
-        - Data is set to coverer.FileHash
 
 ### Applying
 

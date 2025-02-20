@@ -206,7 +206,7 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 
 					coverer := Coverer{
 						CoverageLabel: covMatch[1],
-						CoverageURL:   covMatch[2],
+						CoverageUrL:   covMatch[2],
 					}
 					fileURL := parsedURL.Scheme + "://" + parsedURL.Host + parsedURL.Path
 					if mctx != nil && mctx.rfiles != nil {

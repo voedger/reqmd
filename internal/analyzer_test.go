@@ -201,7 +201,7 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 			Coverers: []Coverer{
 				{
 					CoverageLabel: "old/file.go:15:impl",
-					CoverageURL:   OldCoverageURL,
+					CoverageUrL:   OldCoverageURL,
 					FileHash:      OldFileHash,
 				},
 			},
@@ -248,7 +248,7 @@ func TestAnalyzer_ActionFootnote_AnCov_SameHash(t *testing.T) {
 			Coverers: []Coverer{
 				{
 					CoverageLabel: "old/file.go:15:impl",
-					CoverageURL:   OldCoverageURL,
+					CoverageUrL:   OldCoverageURL,
 					FileHash:      OldFileHash,
 				},
 			},
@@ -272,6 +272,202 @@ func TestAnalyzer_ActionFootnote_AnCov_SameHash(t *testing.T) {
 	actions := result.MdActions[mdFile.Path]
 	require.Len(t, actions, 0)
 }
+
+// func TestAnalyzer_buildReqmdjsons(t *testing.T) {
+// 	tests := []struct {
+// 		name             string
+// 		files            []FileStructure
+// 		changedFootnotes map[RequirementID]bool
+// 		want             map[FilePath]*Reqmdjson
+// 	}{
+// 		{
+// 			name: "no changes, no jsons in result",
+// 			files: []FileStructure{
+// 				{
+// 					Path:      "docs/req1.md",
+// 					Type:      FileTypeMarkdown,
+// 					PackageID: "pkg1",
+// 					Requirements: []RequirementSite{
+// 						{RequirementName: "REQ001"},
+// 					},
+// 					CoverageFootnotes: []CoverageFootnote{
+// 						{
+// 							RequirementName: "REQ001",
+// 							Coverers: []Coverer{
+// 								{CoverageLabel: "file.go:1:impl", CoverageUrL: "url1#L1", FileHash: "hash1"},
+// 							},
+// 						},
+// 					},
+// 				},
+// 			},
+// 			changedFootnotes: map[RequirementID]bool{},
+// 			want:             map[FilePath]*Reqmdjson{},
+// 		},
+// 		{
+// 			name: "changed footnotes, update json",
+// 			files: []FileStructure{
+// 				{
+// 					Path:      "docs/req1.md",
+// 					Type:      FileTypeMarkdown,
+// 					PackageID: "pkg1",
+// 					Requirements: []RequirementSite{
+// 						{RequirementName: "REQ001"},
+// 					},
+// 					CoverageFootnotes: []CoverageFootnote{
+// 						{
+// 							RequirementName: "REQ001",
+// 							Coverers: []Coverer{
+// 								{CoverageLabel: "old.go:1:impl", CoverageUrL: "old_url#L1", FileHash: "old_hash"},
+// 							},
+// 						},
+// 					},
+// 				},
+// 			},
+// 			changedFootnotes: map[RequirementID]bool{
+// 				"pkg1/REQ001": true,
+// 			},
+// 			want: map[FilePath]*Reqmdjson{
+// 				"docs": {
+// 					FileURL2FileHash: map[string]string{
+// 						"new_url": "new_hash",
+// 					},
+// 				},
+// 			},
+// 		},
+// 		{
+// 			name: "multiple files in same folder",
+// 			files: []FileStructure{
+// 				{
+// 					Path:      "docs/req1.md",
+// 					Type:      FileTypeMarkdown,
+// 					PackageID: "pkg1",
+// 					Requirements: []RequirementSite{
+// 						{RequirementName: "REQ001"},
+// 					},
+// 					CoverageFootnotes: []CoverageFootnote{
+// 						{
+// 							RequirementName: "REQ001",
+// 							Coverers: []Coverer{
+// 								{CoverageLabel: "file1.go:1:impl", CoverageUrL: "url1#L1", FileHash: "hash1"},
+// 							},
+// 						},
+// 					},
+// 				},
+// 				{
+// 					Path:      "docs/req2.md",
+// 					Type:      FileTypeMarkdown,
+// 					PackageID: "pkg1",
+// 					Requirements: []RequirementSite{
+// 						{RequirementName: "REQ002"},
+// 					},
+// 					CoverageFootnotes: []CoverageFootnote{
+// 						{
+// 							RequirementName: "REQ002",
+// 							Coverers: []Coverer{
+// 								{CoverageLabel: "file2.go:1:impl", CoverageUrL: "url2#L1", FileHash: "hash2"},
+// 							},
+// 						},
+// 					},
+// 				},
+// 			},
+// 			changedFootnotes: map[RequirementID]bool{
+// 				"pkg1/REQ001": true,
+// 			},
+// 			want: map[FilePath]*Reqmdjson{
+// 				"docs": {
+// 					FileURL2FileHash: map[string]string{
+// 						"url1": "new_hash1",
+// 						"url2": "hash2",
+// 					},
+// 				},
+// 			},
+// 		},
+// 		{
+// 			name: "files in different folders",
+// 			files: []FileStructure{
+// 				{
+// 					Path:      "docs/pkg1/req1.md",
+// 					Type:      FileTypeMarkdown,
+// 					PackageID: "pkg1",
+// 					Requirements: []RequirementSite{
+// 						{RequirementName: "REQ001"},
+// 					},
+// 					CoverageFootnotes: []CoverageFootnote{
+// 						{
+// 							RequirementName: "REQ001",
+// 							Coverers: []Coverer{
+// 								{CoverageLabel: "file1.go:1:impl", CoverageUrL: "url1#L1", FileHash: "hash1"},
+// 							},
+// 						},
+// 					},
+// 				},
+// 				{
+// 					Path:      "docs/pkg2/req2.md",
+// 					Type:      FileTypeMarkdown,
+// 					PackageID: "pkg2",
+// 					Requirements: []RequirementSite{
+// 						{RequirementName: "REQ001"},
+// 					},
+// 					CoverageFootnotes: []CoverageFootnote{
+// 						{
+// 							RequirementName: "REQ001",
+// 							Coverers: []Coverer{
+// 								{CoverageLabel: "file2.go:1:impl", CoverageUrL: "url2#L1", FileHash: "hash2"},
+// 							},
+// 						},
+// 					},
+// 				},
+// 			},
+// 			changedFootnotes: map[RequirementID]bool{
+// 				"pkg1/REQ001": true,
+// 			},
+// 			want: map[FilePath]*Reqmdjson{
+// 				"docs/pkg1": {
+// 					FileURL2FileHash: map[string]string{
+// 						"url1": "new_hash1",
+// 					},
+// 				},
+// 			},
+// 		},
+// 	}
+
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			// Create analyzer and cast to concrete type
+// 			a := NewAnalyzer().(*analyzer)
+
+// 			// Initialize analyzer state
+// 			result, err := a.Analyze(tt.files)
+// 			require.NoError(t, err)
+
+// 			// Set changed footnotes
+// 			a.changedFootnotes = tt.changedFootnotes
+
+// 			// Process coverages
+// 			for requirementID, coverage := range a.coverages {
+// 				if a.changedFootnotes[requirementID] {
+// 					// Add new coverers
+// 					coverage.NewCoverers = []*Coverer{
+// 						{
+// 							CoverageLabel: "new.go:1:impl",
+// 							CoverageUrL:   "new_url#L1",
+// 							FileHash:      "new_hash",
+// 						},
+// 					}
+// 				}
+// 			}
+
+// 			// Clear result reqmdjsons before rebuilding
+// 			result.Reqmdjsons = make(map[FilePath]*Reqmdjson)
+
+// 			// Rebuild reqmdjsons
+// 			a.buildReqmdjsons(result)
+
+// 			// Verify result
+// 			assert.Equal(t, tt.want, result.Reqmdjsons)
+// 		})
+// 	}
+// }
 
 // Helper function to create a simple FileStructure with one annotated requirement that has cw coverage
 func createMdStructureA(path, pkgID string, line int, reqName string, cw CoverageStatusWord) FileStructure {
@@ -305,7 +501,7 @@ func createMdStructureA(path, pkgID string, line int, reqName string, cw Coverag
 				Coverers: []Coverer{
 					{
 						CoverageLabel: "somefolder/somefile.go:15:impl",
-						CoverageURL:   "someurl",
+						CoverageUrL:   "someurl",
 						FileHash:      "somehash",
 					},
 				},

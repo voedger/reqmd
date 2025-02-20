@@ -2,24 +2,28 @@ package internal
 
 import (
 	"fmt"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
 )
 
 type analyzer struct {
-	coverages map[RequirementID]*RequirementCoverage // RequirementID -> RequirementCoverage
+	coverages        map[RequirementID]*RequirementCoverage // RequirementID -> RequirementCoverage
+	changedFootnotes map[RequirementID]bool
 }
 
 func NewAnalyzer() IAnalyzer {
 	return &analyzer{
-		coverages: make(map[RequirementID]*RequirementCoverage),
+		coverages:        make(map[RequirementID]*RequirementCoverage),
+		changedFootnotes: make(map[RequirementID]bool),
 	}
 }
 
 func (a *analyzer) Analyze(files []FileStructure) (*AnalyzerResult, error) {
 	result := &AnalyzerResult{
-		MdActions: make(map[FilePath][]MdAction),
+		MdActions:  make(map[FilePath][]MdAction),
+		Reqmdjsons: make(map[FilePath]*Reqmdjson),
 	}
 
 	// Build RequirementCoverages from all FileStructures
@@ -27,16 +31,16 @@ func (a *analyzer) Analyze(files []FileStructure) (*AnalyzerResult, error) {
 		return result, err
 	}
 
-	a.buildMd(result)
+	a.buildMdActions(result)
+	a.buildReqmdjsons(result)
 
 	return result, nil
 }
 
-func (a *analyzer) buildMd(result *AnalyzerResult) {
+func (a *analyzer) buildMdActions(result *AnalyzerResult) {
 	// Process each coverage to generate actions
-	for _, coverage := range a.coverages {
-		// Sort both lists by FileURL for comparison
-		// FIXME: Can we compare hashes??? E.g. is line can be changed?
+	for requirementID, coverage := range a.coverages {
+		// Sort both lists by FileHash for comparison
 		sortCoverersByFileHash(coverage.CurrentCoverers)
 		sortCoverersByFileHash(coverage.NewCoverers)
 
@@ -64,6 +68,8 @@ func (a *analyzer) buildMd(result *AnalyzerResult) {
 
 		// Footnote action is needed if coverers are different
 		if !areCoverersEqualByHashes(coverage.CurrentCoverers, coverage.NewCoverers) {
+
+			a.changedFootnotes[requirementID] = true
 
 			// Create footnote action
 			newCf := &CoverageFootnote{
@@ -94,6 +100,87 @@ func (a *analyzer) buildMd(result *AnalyzerResult) {
 				result.MdActions[coverage.FileStructure.Path],
 				footnoteAction,
 			)
+		}
+	}
+}
+
+/*
+Principles:
+
+- If a folder has any requirement with changed footnotes, the whole folder's reqmd.json needs updating
+- FileUrl() helper function is used to strip line numbers from CoverageURLs
+
+Flow:
+
+- allJsons is created, map[requirementFolder]*Reqmdjson
+  - requirementFolder is determined as filepath.Dir(coverage.FileStructure.Path)
+
+- changedJsons is created, map[requirementFolder]bool
+- First allJsons is populated from coverages with non-changed footnotes
+  - All FileURL(coverer.CoverageUrl) and FileHashes from CurrentCoverers
+
+- Then allJsons and changedJsons are populated from coverages with changed footnotes
+  - All FileUrL(coverer.CoverageUrl) and FileHashes from NewCoverers
+  - changedJsons for a given folder is set to true
+
+- Reqmdjson from allJsons which are mentioned in changedJsons are added to result
+*/
+func (a *analyzer) buildReqmdjsons(result *AnalyzerResult) {
+	// Map to track json files per folder
+	allJsons := make(map[string]*Reqmdjson) // folder -> Reqmdjson
+	changedJsons := make(map[string]bool)   // folder -> isChanged
+
+	// Process coverages in two passes:
+	// 1. Non-changed footnotes
+	// 2. Changed footnotes
+
+	// First pass: Process coverages with non-changed footnotes
+	for requirementID, coverage := range a.coverages {
+		if !a.changedFootnotes[requirementID] {
+			folder := filepath.Dir(coverage.FileStructure.Path)
+
+			// Initialize Reqmdjson for this folder if not exists
+			if _, exists := allJsons[folder]; !exists {
+				allJsons[folder] = &Reqmdjson{
+					FileURL2FileHash: make(map[string]string),
+				}
+			}
+
+			// Add FileURLs and hashes from current coverers
+			for _, c := range coverage.CurrentCoverers {
+				fileURL := FileUrl(c.CoverageUrL)
+				allJsons[folder].FileURL2FileHash[fileURL] = c.FileHash
+			}
+		}
+	}
+
+	// Second pass: Process coverages with changed footnotes
+	for requirementID, coverage := range a.coverages {
+		if a.changedFootnotes[requirementID] {
+			folder := filepath.Dir(coverage.FileStructure.Path)
+
+			// Initialize Reqmdjson for this folder if not exists
+			if _, exists := allJsons[folder]; !exists {
+				allJsons[folder] = &Reqmdjson{
+					FileURL2FileHash: make(map[string]string),
+				}
+			}
+
+			// Mark folder as changed
+			changedJsons[folder] = true
+
+			// Add FileURLs and hashes from new coverers
+			for _, c := range coverage.NewCoverers {
+				fileURL := FileUrl(c.CoverageUrL)
+				allJsons[folder].FileURL2FileHash[fileURL] = c.FileHash
+			}
+		}
+	}
+
+	// Add changed jsons to result
+	for folder, json := range allJsons {
+		if changedJsons[folder] {
+			result.Reqmdjsons[folder] = json
 		}
 	}
 }
@@ -149,7 +236,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 				if coverage, exists := a.coverages[tag.RequirementID]; exists {
 					coverer := &Coverer{
 						CoverageLabel: file.RelativePath + ":" + fmt.Sprint(tag.Line) + ":" + tag.CoverageType,
-						CoverageURL:   file.FileURL() + "#" + strconv.Itoa(tag.Line),
+						CoverageUrL:   file.FileURL() + "#" + strconv.Itoa(tag.Line),
 						FileHash:      file.FileHash,
 					}
 					coverage.NewCoverers = append(coverage.NewCoverers, coverer)
