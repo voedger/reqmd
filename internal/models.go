@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -95,8 +96,49 @@ type CoverageFootnote struct {
 	Coverers        []Coverer
 }
 
+// Sort Coverers according to requirements:
+// - Coverers shall be sorted by CoverageType, then by FilePath, then by Number, then by CoverageURL
+func sortCoverers(coverers []Coverer) {
+	sort.Slice(coverers, func(i, j int) bool {
+		// Split CoverageLabel to get FilePath, Number and CoverageType
+		// Format is filepath:number:coveragetype
+		iParts := strings.Split(coverers[i].CoverageLabel, ":")
+		jParts := strings.Split(coverers[j].CoverageLabel, ":")
+
+		if len(iParts) != 3 || len(jParts) != 3 {
+			return coverers[i].CoverageLabel < coverers[j].CoverageLabel
+		}
+
+		iFilePath, iNumStr, iType := iParts[0], iParts[1], iParts[2]
+		jFilePath, jNumStr, jType := jParts[0], jParts[1], jParts[2]
+
+		// Compare CoverageType first
+		if iType != jType {
+			return iType < jType
+		}
+
+		// Then compare FilePath
+		if iFilePath != jFilePath {
+			return iFilePath < jFilePath
+		}
+
+		// Convert number strings to integers for comparison
+		iNum, iErr := strconv.Atoi(iNumStr)
+		jNum, jErr := strconv.Atoi(jNumStr)
+		if iErr == nil && jErr == nil && iNum != jNum {
+			return iNum < jNum
+		}
+
+		// Finally compare by CoverageURL
+		return coverers[i].CoverageURL < coverers[j].CoverageURL
+	})
+}
+
 // Helper function to format a coverage footnote
 func FormatCoverageFootnote(cf *CoverageFootnote) string {
+	// Sort coverers before formatting
+	sortCoverers(cf.Coverers)
+
 	var refs []string
 	for _, coverer := range cf.Coverers {
 		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageURL))
