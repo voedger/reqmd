@@ -41,12 +41,9 @@ func createTestStructure(t *testing.T, root string, structure testStructure) err
 }
 
 func TestFoldersScanner(t *testing.T) {
+
 	// Create temporary root directory
-	root, err := os.MkdirTemp("", "folders-scanner-test-*")
-	if err != nil {
-		t.Fatalf("Failed to create temp directory: %v", err)
-	}
-	defer os.RemoveAll(root)
+	root := t.TempDir()
 
 	// Convert root to absolute path
 	absRoot, err := filepath.Abs(root)
@@ -136,6 +133,11 @@ func TestFoldersScanner(t *testing.T) {
 
 			// Create folder processor
 			fp := func(folder string) (FileProcessor, error) {
+				// Verify folder path is absolute
+				if tt.name == "verify absolute paths" && !filepath.IsAbs(folder) {
+					t.Errorf("Expected absolute folder path, got: %s", folder)
+				}
+
 				relPath, _ := filepath.Rel(absRoot, folder)
 				mu.Lock()
 				processedFolders = append(processedFolders, relPath)
@@ -146,6 +148,11 @@ func TestFoldersScanner(t *testing.T) {
 				}
 
 				return func(filePath string) error {
+					// Verify file path is absolute
+					if tt.name == "verify absolute paths" && !filepath.IsAbs(filePath) {
+						t.Errorf("Expected absolute file path, got: %s", filePath)
+					}
+
 					relPath, _ := filepath.Rel(absRoot, filePath)
 					mu.Lock()
 					processedFiles = append(processedFiles, relPath)
@@ -219,11 +226,7 @@ func TestFoldersScanner(t *testing.T) {
 // TestFoldersScanner_ALotOfErrors tests the FoldersScanner function with a large number of errors that more than the error channel capacity
 func TestFoldersScanner_ALotOfErrors(t *testing.T) {
 	// Create temporary root directory
-	root, err := os.MkdirTemp("", "folders-scanner-errors-test-*")
-	if err != nil {
-		t.Fatalf("Failed to create temp directory: %v", err)
-	}
-	defer os.RemoveAll(root)
+	root := t.TempDir()
 
 	// Convert root to absolute path
 	absRoot, err := filepath.Abs(root)
