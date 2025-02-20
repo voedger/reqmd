@@ -157,6 +157,14 @@ type Coverer struct {
 	FileHash      string // git hash of the file specified in CoverageURL
 }
 
+func FileUrl(coverageURL string) string {
+	idx := strings.LastIndex(coverageURL, "#")
+	if idx == -1 {
+		return coverageURL
+	}
+	return coverageURL[:strings.LastIndex(coverageURL, "#")]
+}
+
 type RequirementCoverage struct {
 	Site            *RequirementSite
 	FileStructure   *FileStructure
