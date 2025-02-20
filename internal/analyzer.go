@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -149,7 +150,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 				if coverage, exists := a.coverages[tag.RequirementID]; exists {
 					coverer := &Coverer{
 						CoverageLabel: file.RelativePath + ":" + fmt.Sprint(tag.Line) + ":" + tag.CoverageType,
-						CoverageURL:   file.FileURL(),
+						CoverageURL:   file.FileURL() + "#" + strconv.Itoa(tag.Line),
 						FileHash:      file.FileHash,
 					}
 					coverage.NewCoverers = append(coverage.NewCoverers, coverer)

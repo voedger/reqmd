@@ -117,7 +117,7 @@ func TestAnalyzer_ActionFootnote_Nan_NewCoverer(t *testing.T) {
 	assert.Equal(t, ActionFootnote, actions[1].Type)
 	assert.Equal(t, "REQ001", actions[1].RequirementName)
 	assert.Contains(t, actions[1].Data, "[^~REQ001~]")
-	assert.Contains(t, actions[1].Data, "src/impl.go:20:impl1")
+	assert.Equal(t, actions[1].Data, "[^~REQ001~]: `[~REQ001~impl]` [src/impl.go:20:impl1](https://github.com/org/repo/blob/main/src/impl.go/src/impl.go#20)")
 
 }
 
