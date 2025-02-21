@@ -149,27 +149,38 @@ The following files may have to be changed:
   - Coverer.FileHash is updated  
   - Some RequirementSite are BareRequirementSite and there are no new Coverers
 
-### Applying
+### Apply Markdown actions
 
-**Loading**:
+#### Loading
 
 - Each file (if it exists) is loaded entirely into memory
 - OS-specific line endings are preserved and used for writing
 - No backup files are created
 
-**Line Validation for markdown files**:
+#### Order of processing
 
+- Actions are processed in the order they are received
+
+#### Line Validation for markdown files
+
+- There are two Actions: ActionFootnote and ActionSite
 - Each Action contains Line and RequirementID
-- It is expected that the line with the number exists and contains the RequirementSite or CoverageFootnote with the given RequirementID
-- If line number doesn't exist or RequirementID in this line doesn't match:
-  - Return error
-  - Stop all processing immediately
+- Note that RequirementID is unique within all markdown files
+- If Action.Line > 0
+  - It is expected that the line with the number exists and contains the RequirementSite or CoverageFootnote with the given RequirementID
+    - RequirementSiteRegex or CoverageFootnoteRegex is used to validate the line
+  - If line number doesn't exist or RequirementID in this line doesn't match:
+    - Return error
+    - Stop all processing immediately
+  - Only the part of the line that matches the regex is replaced, the rest of the line is preserved
+- Else
+  - The action is CoverageFootnote and the line is appended to the end of the file, ref. Footnotes
 
-**Footnotes**:
+#### Footnotes
 
 - If the file does not end with an empty line and the original FileStructure does not have CoverageFootnotes then a new empty line is added (to separate footnotes from the rest of the file)
   - This is done when we're about to add the first footnote
-- New footnotes are added at end of file
+- New footnotes (ActionFootnote.Line = 0) are added at end of file one after another with no extra blank lines in between
 - No specific ordering of new footnotes required
 - Existing footnote ordering shall be preserved
 

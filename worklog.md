@@ -285,6 +285,12 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
   - Context: applier.go, models.go
   - Better function descirption is needed.
 - Copilot.Claude: Implement `func applyMdActions`. Do not create tests yet.🤔  
+- Me: loop
+  - Copilot.Claude: Is `design.md/### Apply Markdown actions` clear to implement applyMdActions? Ask questions if needed.🤔
+    - Context: desigm.md, applier.go, models.go,
+  - Copilot.o1: Is `design.md/### Apply Markdown actions` clear to implement applyMdActions? Ask questions if needed.
+- ⚡Copilot.o1: Implements applyMdActions according to the design.md/### Apply Markdown actions
+  - Cool, but deprecated functions like ioutil.ReadAll were used👍
 
 --------------------
 
