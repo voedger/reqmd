@@ -12,11 +12,6 @@ import (
 //go:embed version
 var version string
 
-var (
-	extensions string
-	dryRun     bool
-)
-
 func main() {
 	if err := execRootCmd(os.Args, version); err != nil {
 		os.Exit(1)
@@ -46,15 +41,17 @@ func prepareRootCmd(use, short string, args []string, ver string, cmds ...*cobra
 		Short:   short,
 	}
 	rootCmd.PersistentFlags().BoolVarP(&internal.IsVerbose, "verbose", "v", false, "Enable verbose output showing detailed processing information")
-	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Show what would be done, but make no changes to files")
 	rootCmd.SetArgs(args[1:])
 	rootCmd.AddCommand(cmds...)
 	return rootCmd
 }
 
 func newTraceCmd() *cobra.Command {
+	var extensions string
+	var dryRun bool
+
 	cmd := &cobra.Command{
-		Use:           "trace [-e extensions] <path-to-markdowns> [source-paths...]",
+		Use:           "trace [flags] <path-to-markdowns> [source-paths...]",
 		Short:         "Trace requirements in markdown files",
 		Args:          cobra.MinimumNArgs(1),
 		SilenceUsage:  true,
@@ -76,6 +73,7 @@ func newTraceCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&extensions, "extensions", "e", "", "Comma-separated list of source file extensions to process (e.g., .go,.ts,.js)")
+	cmd.Flags().StringVarP(&extensions, "extensions", "e", "", "Comma-separated list of source file extensions to process (e.g. .go,.ts,.js)")
+	cmd.Flags().BoolVarP(&dryRun, "dry-run", "n", false, "Show what would be done, but make no changes to files")
 	return cmd
 }

@@ -241,7 +241,7 @@ go install github.com/voedger/reqmd@latest
 #### SYNOPSIS
 
 ```bash
-reqmd trace [-v] [-e <extensions>] <path-to-markdowns> [<path-to-sources>...]
+reqmd [-v] trace [ (-e | --extensions) <extensions>] [--dry-run | -n] <path-to-markdowns> [<path-to-sources>...]
 ```
 
 #### DESCRIPTION
@@ -264,6 +264,8 @@ General processing rules:
     .go,.js,.ts,.jsx,.tsx,.java,.cs,.cpp,.c,.h,.hpp,.py,.rb,.php,.rs,.kt,.scala,.m,.swift,.fs,.md,.sql,.vsql
     ```
   - Extensions must include the dot prefix.  
+- `-n`, `--dry-run`:
+  - Perform a dry run without modifying files.
 
 #### ARGUMENTS
 
