@@ -66,8 +66,8 @@ func (a *analyzer) buildMdActions(result *AnalyzerResult) {
 			)
 		}
 
-		// Footnote action is needed if coverers are different
-		if !areCoverersEqualByHashes(coverage.CurrentCoverers, coverage.NewCoverers) {
+		// Footnote action is needed if coverers are different or site is not annotated
+		if !areCoverersEqualByHashes(coverage.CurrentCoverers, coverage.NewCoverers) || !coverage.Site.IsAnnotated {
 
 			a.changedFootnotes[requirementID] = true
 
@@ -77,7 +77,7 @@ func (a *analyzer) buildMdActions(result *AnalyzerResult) {
 				Coverers:        make([]Coverer, len(coverage.NewCoverers)),
 			}
 			for i, c := range coverage.NewCoverers {
-				newCf.Coverers[i] = *c // Convert *Coverer to Coverer
+				newCf.Coverers[i] = *c
 			}
 
 			footnoteAction := MdAction{

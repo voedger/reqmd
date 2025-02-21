@@ -82,6 +82,35 @@ func TestAnalyzer_error_MissingPackageID(t *testing.T) {
 	}
 }
 
+// Non-annotated requirement
+func TestAnalyzer_ActionFootnote_Nan(t *testing.T) {
+	analyzer := NewAnalyzer()
+
+	// Create a markdown file with one requirement
+	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordUncvrd)
+	mdFile.Requirements[0].IsAnnotated = false
+
+	result, err := analyzer.Analyze([]FileStructure{mdFile})
+	require.NoError(t, err)
+	require.Empty(t, result.ProcessingErrors)
+
+	// Should generate both a footnote and status update action
+	actions := result.MdActions[mdFile.Path]
+	require.Len(t, actions, 2)
+
+	// Verify status update action
+	assert.Equal(t, ActionSite, actions[0].Type)
+	assert.Equal(t, "REQ001", actions[0].RequirementName)
+	assert.Equal(t, 10, actions[0].Line)
+	assert.Equal(t, FormatRequirementSite("REQ001", CoverageStatusWordUncvrd), actions[0].Data)
+
+	// Verify footnote action
+	assert.Equal(t, ActionFootnote, actions[1].Type)
+	assert.Equal(t, "REQ001", actions[1].RequirementName)
+	assert.Contains(t, actions[1].Data, "[^~REQ001~]")
+	assert.Equal(t, actions[1].Data, "[^~REQ001~]: `[~REQ001~impl]`")
+}
+
 // Non-annotated requirement with new coverer
 func TestAnalyzer_ActionFootnote_Nan_NewCoverer(t *testing.T) {
 	analyzer := NewAnalyzer()

@@ -275,7 +275,7 @@ type MdAction struct {
 
 // String returns a human-readable representation of the Action
 func (a *MdAction) String() string {
-	return fmt.Sprintf("%s at %s:%d: %s", a.Type, a.Path, a.Line, a.Data)
+	return fmt.Sprintf("%s\n\t%s:%d\n\tRequirement: %s\n\tData: %s", a.Type, a.Path, a.Line, a.RequirementName, a.Data)
 }
 
 const (
