@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -67,6 +68,14 @@ type RequirementSite struct {
 	IsAnnotated         bool // true if it already has coverage annotation reference, false if it’s bare
 }
 
+var RequirementSiteRegex = regexp.MustCompile(
+	"`~([^~]+)~`" + // RequirementSiteLabel = "`" "~" RequirementName "~" "`"
+		"(?:" + // Optional group for coverage status and footnote
+		"\\s*([a-zA-Z]+)?" + // Optional CoverageStatusWord
+		"\\s*\\[\\^~([^~]+)~\\]" + // CoverageFootnoteReference
+		"\\s*(✅|❓)?" + // Optional CoverageStatusEmoji
+		")?")
+
 // Build a string representation of the RequirementSite according to the requirements
 // CoverageStatusEmoji is ✅ for "covered", and ❓ for "uncvrd"
 func FormatRequirementSite(requirementName string, coverageStatusWord CoverageStatusWord) string {
@@ -95,6 +104,14 @@ type CoverageFootnote struct {
 	RequirementName RequirementName
 	Coverers        []Coverer
 }
+
+var (
+	// "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L10), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#l15)"
+	CoverageFootnoteRegex = regexp.MustCompile(`^\s*\[\^~([^~]+)~\]:\s*` + //Footnote reference
+		"`\\[~([^~/]+)/([^~]+)~([^\\]]+)?\\]`" + // Hint with package and coverage type
+		`(?:\s*(.+))?$`) // Optional coverer list
+	CovererRegex = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
+)
 
 // Sort Coverers according to requirements:
 // - Coverers shall be sorted by CoverageType, then by FilePath, then by Number, then by CoverageURL

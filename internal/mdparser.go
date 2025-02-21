@@ -12,13 +12,6 @@ import (
 // Regular expressions for parsing markdown elements
 var (
 	headerRegex          = regexp.MustCompile(`^reqmd\.package:\s*(.+)$`)
-	RequirementSiteRegex = regexp.MustCompile(
-		"`~([^~]+)~`" + // RequirementSiteLabel = "`" "~" RequirementName "~" "`"
-			"(?:" + // Optional group for coverage status and footnote
-			"\\s*([a-zA-Z]+)?" + // Optional CoverageStatusWord
-			"\\s*\\[\\^~([^~]+)~\\]" + // CoverageFootnoteReference
-			"\\s*(✅|❓)?" + // Optional CoverageStatusEmoji
-			")?")
 	identifierRegex      = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*(?:\.[a-zA-Z][a-zA-Z0-9_]*)*$`)
 	codeBlockMarkerRegex = regexp.MustCompile(`^\s*` + "```")
 )
@@ -171,14 +164,6 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 
 	return requirements
 }
-
-var (
-	// "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L10), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#l15)"
-	CoverageFootnoteRegex = regexp.MustCompile(`^\s*\[\^~([^~]+)~\]:\s*` + //Footnote reference
-		"`\\[~([^~/]+)/([^~]+)~([^\\]]+)?\\]`" + // Hint with package and coverage type
-		`(?:\s*(.+))?$`) // Optional coverer list
-	CovererRegex = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
-)
 
 func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, lineNum int, errs *[]ProcessingError) (footnote *CoverageFootnote) {
 

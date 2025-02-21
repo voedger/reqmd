@@ -22,5 +22,20 @@ func (a *applier) Apply(ar *AnalyzerResult) error {
 			return nil
 		}
 	}
+	if a.dryRun {
+		return nil
+	}
+
+	for path, actions := range ar.MdActions {
+		err := applyActions(path, actions)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func applyActions(_ FilePath, _ []MdAction) error {
 	return nil
 }
