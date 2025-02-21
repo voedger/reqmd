@@ -566,3 +566,4 @@ Made changes.
 - Copilot.Claude: Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scanner.go #applier.go #tracer
 - Me: Oops, models.go does not match the design (created it manually)
 - It is cool to review each function using UI (it is way faster then Copilot) but it takes more time in total
+- Coversions is made reading lines one by one and tracking status (finit automation)
