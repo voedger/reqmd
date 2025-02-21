@@ -283,7 +283,7 @@ type MdActionType string
 
 // MdAction describes a single transformation (add/update/delete) to be applied in a file.
 type MdAction struct {
-	Type            MdActionType  // e.g., Add, Update, Delete
+	Type            MdActionType  // e.g., "Footnote", "Site"
 	Path            string        // file path
 	Line            int           // the line number where the change is applied
 	Data            string        // new data (if any)

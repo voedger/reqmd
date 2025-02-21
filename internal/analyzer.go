@@ -110,20 +110,6 @@ Principles:
 - If a folder has any requirement with changed footnotes, the whole folder's reqmd.json needs updating
 - FileUrl() helper function is used to strip line numbers from CoverageURLs
 
-Flow:
-
-- allJsons is created, map[requirementFolder]*Reqmdjson
-  - requirementFolder is determined as filepath.Dir(coverage.FileStructure.Path)
-
-- changedJsons is created, map[requirementFolder]bool
-- First allJsons is populated from coverages with non-changed footnotes
-  - All FileURL(coverer.CoverageUrl) and FileHashes from CurrentCoverers
-
-- Then allJsons and changedJsons are populated from coverages with changed footnotes
-  - All FileUrL(coverer.CoverageUrl) and FileHashes from NewCoverers
-  - changedJsons for a given folder is set to true
-
-- Reqmdjson from allJsons which are mentioned in changedJsons are added to result
 */
 func (a *analyzer) buildReqmdjsons(result *AnalyzerResult) {
 	// Map to track json files per folder
