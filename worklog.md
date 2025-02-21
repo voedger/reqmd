@@ -273,6 +273,10 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
 - CopilotAgent.Claude: Generate tests to cover semantic errors in analyzer_test.go. Do not use table tests, use separate Run for each error👍
 - CopilotAgent.Claude: analyzer_test.go: Construct tests to cover ActionFootnote and ActionUpdateStatus.  Do not use table tests, use separate Runs. Construct new helper functions to create FileStructures and other structs, if needed.
 
+### Dry run option
+
+- Copilot.Claude: Add dry-run option, similar to git,  to requirements.md. Implement it in main.go, applier.go. Applier shall just output all actions, like in verbode mode
+
 --------------------
 
 ## Intermediate results
