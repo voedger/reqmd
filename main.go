@@ -64,7 +64,7 @@ func newTraceCmd() *cobra.Command {
 
 			scanner := internal.NewScanner(extensions)
 			analyzer := internal.NewAnalyzer()
-			applier := internal.NewDummyApplier()
+			applier := internal.NewApplier()
 
 			internal.Verbose("Starting processing", "reqPath", reqPath, "srcPaths", fmt.Sprintf("%v", srcPaths))
 

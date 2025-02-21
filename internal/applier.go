@@ -1,12 +1,12 @@
 package internal
 
-type dummyApplier struct{}
+type applier struct{}
 
-func NewDummyApplier() IApplier {
-	return &dummyApplier{}
+func NewApplier() IApplier {
+	return &applier{}
 }
 
-func (a *dummyApplier) Apply(ar *AnalyzerResult) error {
+func (a *applier) Apply(ar *AnalyzerResult) error {
 
 	if IsVerbose {
 		for _, actions := range ar.MdActions {
