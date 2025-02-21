@@ -9,7 +9,7 @@ func NewDummyApplier() IApplier {
 func (a *dummyApplier) Apply(ar *AnalyzerResult) error {
 	for _, actions := range ar.MdActions {
 		for _, action := range actions {
-			Verbose(action.String())
+			Verbose("Action\n\t" + action.String())
 		}
 	}
 	return nil
