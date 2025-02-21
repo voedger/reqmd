@@ -281,24 +281,29 @@ type ScannerResult struct {
 // MdActionType represents the type of markdown transformation needed.
 type MdActionType string
 
+const (
+	ActionFootnote MdActionType = "Footnote" // Create/Update a CoverageFootnote
+	ActionSite     MdActionType = "Site"     // Update RequirementSite
+)
+
 // MdAction describes a single transformation (add/update/delete) to be applied in a file.
 type MdAction struct {
-	Type            MdActionType  // e.g., "Footnote", "Site"
-	Path            string        // file path
-	Line            int           // the line number where the change is applied
-	Data            string        // new data (if any)
-	RequirementName RequirementID // Line is expected to contain this RequirementID
+	Type MdActionType // e.g., "Footnote", "Site"
+	Path string       // file path
+	Line int          // the line number where the change is applied. 0 means the
+	Data string       // new data (if any)
+
+	// If Line != 0
+	//   The file line shall match the RequirementSiteRegex/CoverageFootnoteRegex, depending on the action type
+	//   If the line does not match, error is reported and processing stops
+	//   Only part of the string that matches RequirementSiteRegex/CoverageFootnoteRegex is replaced with Data
+	RequirementName RequirementID
 }
 
 // String returns a human-readable representation of the Action
 func (a *MdAction) String() string {
 	return fmt.Sprintf("%s\n\t%s:%d\n\tRequirement: %s\n\tData: %s", a.Type, a.Path, a.Line, a.RequirementName, a.Data)
 }
-
-const (
-	ActionFootnote MdActionType = "Footnote" // Create/Update a CoverageFootnote
-	ActionSite     MdActionType = "Site"     // Update RequirementSite
-)
 
 // AnalyzerResult contains results from the analysis phase
 type AnalyzerResult struct {

@@ -281,8 +281,10 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
 
 ### `func applyMdActions(_ FilePath, _ []MdAction) error`
 
-- Copilot.Claude: Implement `func applyMdActions`
+- Copilot.Claude: Implement `func applyMdActions`. Do not create tests yet.🤔
   - Context: applier.go, models.go
+  - Better function descirption is needed.
+- Copilot.Claude: Implement `func applyMdActions`. Do not create tests yet.🤔  
 
 --------------------
 

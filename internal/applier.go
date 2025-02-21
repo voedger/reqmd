@@ -40,6 +40,8 @@ func (a *applier) Apply(ar *AnalyzerResult) error {
 Principles:
 
 - RequirementSiteRegex and CoverageFootnoteRegex from models.go are used to match lines with RequirementID
+- 
+
 */
 func applyMdActions(_ FilePath, _ []MdAction) error {
 	return nil

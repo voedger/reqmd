@@ -151,28 +151,6 @@ The following files may have to be changed:
 
 ### Applying
 
-**Grouping per file**:
-
-- Actions are grouped and applied per file to minimize I/O - so each file is loaded, processed, and saved once
-
-**Order of processing for reqmd.json file**:
-
-- ActionAddFileURL
-- ActionUpdateHash
-
-**Order of processing for markdown file**:
-
-- ActionAnnotate
-- ActionAddCoverer
-- ActionRemoveCoverer
-- ActionUpdateStatus
-
-**Grouping per line of markdown file**:
-
-- All actions for a single line are grouped, new resulting line structure is created and then the apporopriate line is replaced
-  - Resulting line structure can be: RequirementSite, CoverageFootnote
-- There is not specific order of processing for actions on a single line
-
 **Loading**:
 
 - Each file (if it exists) is loaded entirely into memory
