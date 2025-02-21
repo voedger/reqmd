@@ -27,7 +27,7 @@ func (a *applier) Apply(ar *AnalyzerResult) error {
 	}
 
 	for path, actions := range ar.MdActions {
-		err := applyActions(path, actions)
+		err := applyMdActions(path, actions)
 		if err != nil {
 			return err
 		}
@@ -36,6 +36,11 @@ func (a *applier) Apply(ar *AnalyzerResult) error {
 	return nil
 }
 
-func applyActions(_ FilePath, _ []MdAction) error {
+/*
+Principles:
+
+- RequirementSiteRegex and CoverageFootnoteRegex from models.go are used to match lines with RequirementID
+*/
+func applyMdActions(_ FilePath, _ []MdAction) error {
 	return nil
 }
