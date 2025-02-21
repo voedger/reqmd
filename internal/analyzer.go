@@ -109,7 +109,6 @@ Principles:
 
 - If a folder has any requirement with changed footnotes, the whole folder's reqmd.json needs updating
 - FileUrl() helper function is used to strip line numbers from CoverageURLs
-
 */
 func (a *analyzer) buildReqmdjsons(result *AnalyzerResult) {
 	// Map to track json files per folder
@@ -234,23 +233,12 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 	return nil
 }
 
-// Helper function to sort coverers by FileURL
 func sortCoverersByFileHash(coverers []*Coverer) {
 	sort.Slice(coverers, func(i, j int) bool {
 		return coverers[i].FileHash < coverers[j].FileHash
 	})
 }
 
-// areCoverersEqualByHashes compares two slices of Coverer pointers for equality
-// based on their FileHash values. Returns true if both slices contain the same
-// FileHash values regardless of order, false otherwise.
-//
-// Preconditions:
-// - Slices must be non-nil
-// - All elements must be non-nil
-// - Empty slices are considered equal
-//
-// Time complexity: O(n log n) where n is the length of the longer slice
 func areCoverersEqualByHashes(a []*Coverer, b []*Coverer) bool {
 	comparator := func(c1, c2 *Coverer) int {
 		switch {
