@@ -276,7 +276,8 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
 ### Dry run option
 
 - Copilot.Claude: Add dry-run option, similar to git,  to requirements.md. Implement it in main.go, applier.go. Applier shall just output all actions, like in verbode mode🤔
-  - Need to pass an argument to the applier factory
+  - Oops: I want to  pass an argument to the Applier factory, not add new method to the Applier interface
+- Copilot.Claude: Add `--dry-run` option, similar to git,  to requirements.md. Implement it in main.go, applier.go. Applier shall just output all actions, like in verbode mode. Pass dry run option to the Applier factory.
 
 --------------------
 

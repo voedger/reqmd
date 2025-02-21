@@ -14,6 +14,7 @@ var version string
 
 var (
 	extensions string
+	dryRun     bool
 )
 
 func main() {
@@ -45,6 +46,7 @@ func prepareRootCmd(use, short string, args []string, ver string, cmds ...*cobra
 		Short:   short,
 	}
 	rootCmd.PersistentFlags().BoolVarP(&internal.IsVerbose, "verbose", "v", false, "Enable verbose output showing detailed processing information")
+	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Show what would be done, but make no changes to files")
 	rootCmd.SetArgs(args[1:])
 	rootCmd.AddCommand(cmds...)
 	return rootCmd
@@ -64,7 +66,7 @@ func newTraceCmd() *cobra.Command {
 
 			scanner := internal.NewScanner(extensions)
 			analyzer := internal.NewAnalyzer()
-			applier := internal.NewApplier()
+			applier := internal.NewApplier(dryRun)
 
 			internal.Verbose("Starting processing", "reqPath", reqPath, "srcPaths", fmt.Sprintf("%v", srcPaths))
 
