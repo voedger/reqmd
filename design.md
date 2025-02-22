@@ -13,7 +13,7 @@ The tool follows a three-stage pipeline architecture:
    - Extracts requirement references from Markdown files
    - Identifies coverage tags in source code
    - Builds file structures with Git metadata
-   - Collects any syntax errors during parsing
+   - Collects syntax errors during parsing
 
 2. **Analyze** – Validate and Plan Changes
    - Performs semantic validation checks
@@ -27,7 +27,7 @@ The tool follows a three-stage pipeline architecture:
    - Updates or creates coverage footnotes
    - Appends coverage annotations to requirements
    - Maintains reqmd.json for file tracking
-   - Ensures changes are made only when no errors exist
+   - Makes changes only when no errors exist
 
 The system is designed using SOLID principles:
 
@@ -78,7 +78,7 @@ Summary of responsibilities
 - **scanner.go**: Implement `IScanner`, discover and parse files into structured data.  
 - **mdparser.go / srccoverparser.go**: Specialized parsing logic for Markdown / source coverage tags.  
 - **analyzer.go**: Implement `IAnalyzer`, checks for semantic errors, determine required transformations.  
-- **applier.go**: Implement `IApplier`, applly transformations to markdown and `reqmd.json`.  
+- **applier.go**: Implement `IApplier`, apply transformations to markdown and `reqmd.json`.  
 - **utils.go**: Common helper functions.
 - **gogit.go**: Implement IGit interface using `go-git` library.
 
@@ -86,7 +86,7 @@ Summary of responsibilities
 
 ## File URL construction
 
-The system needs to construct a `FileURL` for any given `FileStructure`. A `FileURL` consists of two main components:
+The system constructs a `FileURL` for any given `FileStructure`. A `FileURL` consists of two main components:
 
 - Repository root folder URL (`RepoRootFolderURL`)
 - Relative path (`RelativePath`)
@@ -102,17 +102,16 @@ URL structure examples:
 
 ### (g *git).RepoRootFolderURL() string
 
-- `git.RepoRootFolderURL()` returns data from the field `repoRootFolderURL`.
-- The system obtains data for `RepoRootFolderURL()` once during `NewIGit()` initialization
-  - This is implemented as a separate `git.constructRepoRootFolderURL()` function.
+- `git.RepoRootFolderURL()` returns data from the `repoRootFolderURL` field
+- The system obtains data for `RepoRootFolderURL()` during `NewIGit()` initialization
+  - This is implemented as a separate `git.constructRepoRootFolderURL()` function
 - `git.constructRepoRootFolderURL()` uses:
-  - RepositoryURL which  is obtained from git remote named "origin", result is like `https://github.com/voedger/voedger`
-    - Command would be `git remote get-url origin` but go-git shall be used instead.
-  - Actual current branch name
+  - RepositoryURL obtained from git remote named "origin" (e.g., `https://github.com/voedger/voedger`)
+  - Current branch name
   - Git provider-specific path elements:
-    - GitHub: `blob/<actual-branch-name>`
-    - GitLab: `-/blob/<actual-branch-name>`
-- Git provider is detected based on the remote URL
+    - GitHub: `blob/<commit-hash>`
+    - GitLab: `-/blob/<commit-hash>`
+- Git provider is determined based on the remote URL
   - GitHub: `github.com`
   - GitLab: `gitlab.com`
 - If `git.constructRepoRootFolderURL()` fails, `NewIGit()` initialization fails
@@ -130,7 +129,7 @@ URL structure examples:
 
 ### FileURL assembly: FileStructure.FileURL()
 
-- Final `FileURL` is retured by FileStructure.FileURL() and constructed by combining:
+- Final `FileURL` is returned by FileStructure.FileURL() and constructed by combining:
   - `FileStructure.RepoRootFolderURL`
   - `FileStructure.RelativePath`
 
@@ -138,16 +137,16 @@ URL structure examples:
 
 ### Problem statement
 
-The following files may have to be changed:
+The following files may require changes:
 
-- reqmd.json is updated if, not exhaustively
+- reqmd.json is updated when:
   - FileUrl is added/removed
   - FileHash is updated
-- Markdown files updated if, not exhaustively
-  - Coverer with new FileURL is added
-  - Coverer with existing FileURL does not exist anymore
+- Markdown files are updated when:
+  - A Coverer with new FileURL is added
+  - A Coverer with existing FileURL no longer exists
   - Coverer.FileHash is updated  
-  - Some RequirementSite are BareRequirementSite and there are no new Coverers
+  - Some RequirementSites are BareRequirementSites and have no new Coverers
 
 ### Analyze Reqmdjson actions
 
@@ -162,7 +161,7 @@ Principles:
 #### Load file
 
 - Each file (if it exists) is loaded entirely into memory
-- OS-specific line endings are preserved and used for writing
+- OS-specific line endings are preserved when writing
 - No backup files are created
 
 #### Line Validation for markdown files
@@ -173,17 +172,17 @@ Principles:
 - Note that RequirementID is unique within all markdown files
 - If Action.Line > 0
   - It is expected that the line with the number exists and contains the RequirementSite or CoverageFootnote with the given RequirementID
-    - RequirementSiteRegex or CoverageFootnoteRegex is used to validate the line
+  - RequirementSiteRegex or CoverageFootnoteRegex is used to validate the line
   - If line number doesn't exist or RequirementID in this line doesn't match:
     - Return error
     - Stop all processing immediately
-  - Only the part of the line that matches the regex is replaced, the rest of the line is preserved
-- Else
-  - The action is CoverageFootnote and the line is appended to the end of the file, ref. Footnotes
+  - Only the regex-matched part of the line is replaced; the rest is preserved
+- Otherwise:
+  - The action is CoverageFootnote and the line is appended to the file end (see Footnotes)
 
 #### Footnotes
 
-Stripe trailing empty lines:
+Strip trailing empty lines:
 
 - All trailing empty lines are removed.
 
@@ -203,7 +202,7 @@ Process ActionFootnotes:
 
 - func applyReqmdjsons(reqmdjsons map[FilePath]*Reqmdjson) error
 - If Reqmdjson is empty and the file specified by FilePath exists then it is deleted
-- Else Reqmdjson is jsonized and written to the file specified by FilePath
+- Else Reqmdjson is jsonized with indentation and written to the file specified by FilePath
 
 ### Error Handling
 
@@ -233,6 +232,6 @@ type Action struct {
 
 ## Implementation details
 
-- SSH URLs (like git@github.com:org/repo.git) are not supported
-- It is not necessary to define specific error types for URL construction failures
-- Path are stored and processed using URL separation, on Windows initial conversion is needed.
+- SSH URLs (e.g., git@github.com:org/repo.git) are not supported
+- Specific error types for URL construction failures are not required
+- Paths are stored and processed using URL separators; Windows paths need initial conversion
