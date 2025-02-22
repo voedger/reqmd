@@ -306,6 +306,7 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
 
 ## TODOs
 
+- FileURL2FileHash
 - //TODO `~SendEMail.SendEmailToUser~`uncvrd[^~SendEMail.SendEmailToUser~]❓uncvrd[^111]❓
 - Path intersections: go run -C ../../reqmd . -v trace ${DRY_RUN} ../voedger-internals ../voedger-internals/reqman/.work/repos/voedger
 - Avoid .git, .* folders?
