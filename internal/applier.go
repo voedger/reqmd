@@ -104,7 +104,6 @@ func (a *applier) applyMdActions(path FilePath, actions []MdAction) error {
 	hasNewFootnotes := false
 	for _, action := range actions {
 		if action.Line == 0 && action.Type == ActionFootnote {
-			a.logOrVerbose("Action\n\t" + action.String())
 			hasNewFootnotes = true
 			break
 		}
@@ -120,6 +119,7 @@ func (a *applier) applyMdActions(path FilePath, actions []MdAction) error {
 	// Append new footnotes
 	for _, action := range actions {
 		if action.Line == 0 && action.Type == ActionFootnote {
+			a.logOrVerbose("Action\n\t" + action.String())
 			lines = append(lines, action.Data)
 		}
 	}
@@ -129,6 +129,7 @@ func (a *applier) applyMdActions(path FilePath, actions []MdAction) error {
 
 	// Write file if not in dry run mode
 	a.logOrVerbose("Update markdown file", "path", path)
+
 	if !a.dryRun {
 		if err := writeFilePreserveEndings(string(path), lines, hasCRLF); err != nil {
 			return fmt.Errorf("failed to write file %s: %w", path, err)
@@ -161,8 +162,8 @@ func (a *applier) applyReqmdjson(folder_ FolderPath, reqmdjson *Reqmdjson) error
 	if err != nil {
 		return fmt.Errorf("failed to marshal reqmdjson for %s: %w", folder_, err)
 	}
-	a.logOrVerbose("Write reqmd.json", "path", filePath, "data", string(data))
 
+	a.logOrVerbose("Write reqmd.json", "path", filePath, "data", string(data))
 	// Write to file
 	if !a.dryRun {
 		if err := os.WriteFile(string(filePath), data, 0644); err != nil {
@@ -202,6 +203,9 @@ func writeFilePreserveEndings(filePath string, lines []string, hasCRLF bool) err
 
 func (a *applier) logOrVerbose(msg string, kv ...any) {
 	if a.dryRun || IsVerbose {
+		if a.dryRun {
+			msg = "[DRY RUN] " + msg
+		}
 		Log(msg, kv...)
 	}
 }
