@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	gog "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -46,11 +47,14 @@ type git struct {
 	commit            *object.Commit
 	tree              *object.Tree
 	repoRootFolderURL string // Cached during initialization
+	mu                sync.RWMutex
 }
 
 // Returns the hash of a file in the git repository.
 // filePath is not necessary relative to the repository root.
 func (g *git) FileHash(filePath string) (string, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
 	file, err := g.tree.FindEntry(filePath)
 	if err != nil {
 		return "", err
@@ -63,10 +67,15 @@ func (g *git) PathToRoot() string {
 }
 
 func (g *git) CommitHash() string {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
 	return g.commit.Hash.String()
 }
 
 func (g *git) constructRepoRootFolderURL() error {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
 	// Get remote URL
 	remote, err := g.repo.Remote("origin")
 	if err != nil {

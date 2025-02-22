@@ -134,7 +134,7 @@ URL structure examples:
   - `FileStructure.RepoRootFolderURL`
   - `FileStructure.RelativePath`
 
-## Changes processing
+## Analyses and Applying
 
 ### Problem statement
 
@@ -148,6 +148,14 @@ The following files may have to be changed:
   - Coverer with existing FileURL does not exist anymore
   - Coverer.FileHash is updated  
   - Some RequirementSite are BareRequirementSite and there are no new Coverers
+
+### Analyze Reqmdjson actions
+
+Principles:
+
+- If a folder has any requirement with changed footnotes, the whole folder's reqmd.json needs updating
+- As a result reqmd.json can be empty, in this case applier shall make an attempt to delete it, if exists
+- FileUrl() helper function is used to strip line numbers from CoverageURLs
 
 ### Apply Markdown actions
 
@@ -183,6 +191,12 @@ The following files may have to be changed:
 - New footnotes (ActionFootnote.Line = 0) are added at end of file one after another with no extra blank lines in between
 - No specific ordering of new footnotes required
 - Existing footnote ordering shall be preserved
+
+### Apply Regmdjson actions
+
+- func applyReqmdjsons(reqmdjsons map[FilePath]*Reqmdjson) error
+- If Reqmdjson is empty and the file specified by FilePath exists then it is deleted
+- Else Reqmdjson is jsonized and written to the file specified by FilePath
 
 ### Error Handling
 

@@ -293,6 +293,13 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
   - Cool, but deprecated functions like ioutil.ReadAll were used
 - CopilotAgent.Claude: suggest a plan to test ITracer
 
+### Apply Reqmdjson actions
+
+- Me: loop
+  - Copilot.o1: Is `design.md/### Apply Regmdjson actions` clear to implement applyReqmdjsons()? Ask questions if needed.🤔
+    - Context: design.md, analyzer.go, applier.go, models.go
+  - Copilot.CLaude: Is `design.md/### Apply Regmdjson actions` clear to implement applyReqmdjsons()? Ask questions if needed.
+
 --------------------
 
 ## Intermediate results
@@ -582,8 +589,11 @@ Made changes.
 ### Cool prompts and other findings
 
 - Copilot.Claude: Is it clear how to implement ### Tracing section from the #file:requirements.md ? Ref. #interfaces.go  ,#models.go  #scanner.go  #applier.go  #tracer.go. Ask questions, if needed.👍
+- Copilot.CLaude: Is `design.md/### Apply Regmdjson actions` clear to implement applyReqmdjsons()? Ask questions if needed.
+  - ⚡Yes, the requirements in design.md are clear and the available code provides all needed functionality. Let me summarize the key requirements and implementation details:
+  - Create a new chat if requirements/design are changed
 - Copilot.Claude: Finalize the `design.md/##Changes processing` section. Ask questions, if needed.
 - Copilot.Claude: Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scanner.go #applier.go #tracer
 - Me: Oops, models.go does not match the design (created it manually)
 - It is cool to review each function using UI (it is way faster then Copilot) but it takes more time in total
-- Coversions is made reading lines one by one and tracking status (finit automation)
+- Provide implementation details: coversions is made reading lines one by one and tracking the status (finite-state machine)

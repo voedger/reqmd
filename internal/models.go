@@ -21,6 +21,7 @@ const (
 type RequirementID = string
 type RequirementName = string
 type FilePath = string
+type FolderPath = string
 
 // SyntaxError captures syntax and semantic errors.
 
@@ -109,7 +110,7 @@ var (
 	// "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L10), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#l15)"
 	CoverageFootnoteRegex = regexp.MustCompile(`^\s*\[\^~([^~]+)~\]:\s*` + //Footnote reference
 		"`\\[~([^~/]+)/([^~]+)~([^\\]]+)?\\]`" + // Hint with package and coverage type
-		`(?:\s*(.+))?$`) // Optional coverer list
+		`(?:\s*(.+))?\s*$`) // Optional coverer list
 	CovererRegex = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
 )
 
@@ -160,9 +161,11 @@ func FormatCoverageFootnote(cf *CoverageFootnote) string {
 	for _, coverer := range cf.Coverers {
 		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageUrL))
 	}
-	hint := fmt.Sprintf("`[~%s~impl]`", cf.RequirementName)
+	hint := fmt.Sprintf("`[~%s/%s~impl]`", cf.PackageID, cf.RequirementName)
 	if len(refs) > 0 {
-		return fmt.Sprintf("[^~%s~]: %s %s", cf.RequirementName, hint, strings.Join(refs, ", "))
+		coverersStr := strings.Join(refs, ", ")
+		res := fmt.Sprintf("[^~%s~]: %s %s", cf.RequirementName, hint, coverersStr)
+		return res
 	}
 	return fmt.Sprintf("[^~%s~]: %s", cf.RequirementName, hint)
 }
@@ -175,19 +178,14 @@ type Coverer struct {
 }
 
 func FileUrl(coverageURL string) string {
-	idx := strings.LastIndex(coverageURL, "#")
+	idx := strings.LastIndex(coverageURL, "#L")
 	if idx == -1 {
 		return coverageURL
 	}
-	return coverageURL[:strings.LastIndex(coverageURL, "#")]
+	return coverageURL[:idx]
 }
 
-type RequirementCoverage struct {
-	Site            *RequirementSite
-	FileStructure   *FileStructure
-	CurrentCoverers []*Coverer
-	NewCoverers     []*Coverer
-}
+const ReqmdjsonFileName = "reqmd.json"
 
 // Reqmdjson models the structure of the reqmd.json file.
 type Reqmdjson struct {
@@ -303,6 +301,6 @@ func (a *MdAction) String() string {
 // AnalyzerResult contains results from the analysis phase
 type AnalyzerResult struct {
 	MdActions        map[FilePath][]MdAction
-	Reqmdjsons       map[FilePath]*Reqmdjson
+	Reqmdjsons       map[FolderPath]*Reqmdjson
 	ProcessingErrors []ProcessingError
 }

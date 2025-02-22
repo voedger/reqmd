@@ -9,13 +9,20 @@ import (
 )
 
 type analyzer struct {
-	coverages        map[RequirementID]*RequirementCoverage // RequirementID -> RequirementCoverage
+	coverages        map[RequirementID]*requirementCoverage // RequirementID -> RequirementCoverage
 	changedFootnotes map[RequirementID]bool
+}
+
+type requirementCoverage struct {
+	Site            *RequirementSite
+	FileStructure   *FileStructure
+	CurrentCoverers []*Coverer
+	NewCoverers     []*Coverer
 }
 
 func NewAnalyzer() IAnalyzer {
 	return &analyzer{
-		coverages:        make(map[RequirementID]*RequirementCoverage),
+		coverages:        make(map[RequirementID]*requirementCoverage),
 		changedFootnotes: make(map[RequirementID]bool),
 	}
 }
@@ -31,13 +38,13 @@ func (a *analyzer) Analyze(files []FileStructure) (*AnalyzerResult, error) {
 		return result, err
 	}
 
-	a.buildMdActions(result)
-	a.buildReqmdjsons(result)
+	a.analyzeMdActions(result)
+	a.analyzeReqmdjsons(result)
 
 	return result, nil
 }
 
-func (a *analyzer) buildMdActions(result *AnalyzerResult) {
+func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 	// Process each coverage to generate actions
 	for requirementID, coverage := range a.coverages {
 		// Sort both lists by FileHash for comparison
@@ -73,6 +80,7 @@ func (a *analyzer) buildMdActions(result *AnalyzerResult) {
 
 			// Create footnote action
 			newCf := &CoverageFootnote{
+				PackageID:       coverage.FileStructure.PackageID,
 				RequirementName: coverage.Site.RequirementName,
 				Coverers:        make([]Coverer, len(coverage.NewCoverers)),
 			}
@@ -110,10 +118,10 @@ Principles:
 - If a folder has any requirement with changed footnotes, the whole folder's reqmd.json needs updating
 - FileUrl() helper function is used to strip line numbers from CoverageURLs
 */
-func (a *analyzer) buildReqmdjsons(result *AnalyzerResult) {
+func (a *analyzer) analyzeReqmdjsons(result *AnalyzerResult) {
 	// Map to track json files per folder
-	allJsons := make(map[string]*Reqmdjson) // folder -> Reqmdjson
-	changedJsons := make(map[string]bool)   // folder -> isChanged
+	allJsons := make(map[FolderPath]*Reqmdjson) // folder -> Reqmdjson
+	changedJsons := make(map[FolderPath]bool)   // folder -> isChanged
 
 	// Process coverages in two passes:
 	// 1. Non-changed footnotes
@@ -165,6 +173,7 @@ func (a *analyzer) buildReqmdjsons(result *AnalyzerResult) {
 	// Add changed jsons to result
 	for folder, json := range allJsons {
 		if changedJsons[folder] {
+			folder := filepath.ToSlash(folder)
 			result.Reqmdjsons[folder] = json
 		}
 	}
@@ -192,7 +201,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 				}
 
 				// Initialize RequirementCoverage
-				coverage := &RequirementCoverage{
+				coverage := &requirementCoverage{
 					Site:          &req,
 					FileStructure: &file,
 				}
@@ -221,7 +230,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 				if coverage, exists := a.coverages[tag.RequirementID]; exists {
 					coverer := &Coverer{
 						CoverageLabel: file.RelativePath + ":" + fmt.Sprint(tag.Line) + ":" + tag.CoverageType,
-						CoverageUrL:   file.FileURL() + "#" + strconv.Itoa(tag.Line),
+						CoverageUrL:   file.FileURL() + "#L" + strconv.Itoa(tag.Line),
 						FileHash:      file.FileHash,
 					}
 					coverage.NewCoverers = append(coverage.NewCoverers, coverer)

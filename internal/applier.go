@@ -2,8 +2,10 @@ package internal
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -19,28 +21,19 @@ func NewApplier(dryRun bool) IApplier {
 }
 
 func (a *applier) Apply(ar *AnalyzerResult) error {
-	if a.dryRun || IsVerbose {
-		Verbose("Actions that would be applied:")
-		for _, actions := range ar.MdActions {
-			for _, action := range actions {
-				Verbose("Action\n\t" + action.String())
-			}
-		}
-		if a.dryRun {
-			return nil
-		}
-	}
-	if a.dryRun {
-		return nil
-	}
 
 	for path, actions := range ar.MdActions {
-		err := applyMdActions(path, actions)
+		err := a.applyMdActions(path, actions)
 		if err != nil {
 			return err
 		}
 	}
-
+	for path, reqmdjson := range ar.Reqmdjsons {
+		err := a.applyReqmdjson(path, reqmdjson)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -52,13 +45,14 @@ Principles:
 
 */
 
-func applyMdActions(path FilePath, actions []MdAction) error {
+func (a *applier) applyMdActions(path FilePath, actions []MdAction) error {
 	lines, hasCRLF, err := readFilePreserveEndings(string(path))
 	if err != nil {
 		return err
 	}
-
+	newLinesAdded := false
 	for _, action := range actions {
+		a.logOrVerbose("Action\n\t" + action.String())
 		if action.Line > 0 {
 			lineIndex := action.Line - 1
 			if lineIndex < 0 || lineIndex >= len(lines) {
@@ -90,12 +84,53 @@ func applyMdActions(path FilePath, actions []MdAction) error {
 				lines = append(lines, "")
 			}
 			lines = append(lines, action.Data)
+			newLinesAdded = true
 		}
 	}
 
-	if err := writeFilePreserveEndings(string(path), lines, hasCRLF); err != nil {
-		return err
+	if !a.dryRun {
+		if newLinesAdded {
+			lines = append(lines, "")
+		}
+		if err := writeFilePreserveEndings(string(path), lines, hasCRLF); err != nil {
+			return err
+		}
 	}
+	return nil
+}
+
+func (a *applier) applyReqmdjson(folder_ FolderPath, reqmdjson *Reqmdjson) error {
+	filePath := filepath.Join(string(folder_), ReqmdjsonFileName)
+	filePath = filepath.ToSlash(filePath)
+	if len(reqmdjson.FileURL2FileHash) == 0 {
+		// If reqmdjson is empty and file exists, delete it
+		if _, err := os.Stat(string(filePath)); err == nil {
+			a.logOrVerbose("Delete reqmd.json ", "path", filePath)
+			if !a.dryRun {
+				if err := os.Remove(string(filePath)); err != nil {
+					return fmt.Errorf("failed to delete reqmd.json at %s: %w", filePath, err)
+				}
+			}
+		} else {
+			a.logOrVerbose(ReqmdjsonFileName+" needs to be emptied, but it does not exist yet", "path", filePath)
+		}
+		return nil
+	}
+
+	// Marshal using custom MarshalJSON that ensures ordered FileURLs
+	data, err := json.MarshalIndent(reqmdjson, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal reqmdjson for %s: %w", folder_, err)
+	}
+	a.logOrVerbose("Write reqmd.json", "path", filePath, "data", string(data))
+
+	// Write to file
+	if !a.dryRun {
+		if err := os.WriteFile(string(filePath), data, 0644); err != nil {
+			return fmt.Errorf("failed to write reqmd.json to %s: %w", filePath, err)
+		}
+	}
+
 	return nil
 }
 
@@ -143,4 +178,10 @@ func needFootnoteSeparator(lines []string) bool {
 		}
 	}
 	return true
+}
+
+func (a *applier) logOrVerbose(msg string, kv ...any) {
+	if a.dryRun || IsVerbose {
+		Log(msg, kv...)
+	}
 }

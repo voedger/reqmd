@@ -7,13 +7,13 @@ import (
 	"path/filepath"
 	"strings"
 	"sync/atomic"
+	"time"
 )
 
 const (
 	// File extensions and patterns
 	markdownExtension = ".md"
 	gitFolderName     = ".git"
-	reqmdjsonFileName = "reqmd.json"
 
 	// Scanner configuration
 	defaultMaxWorkers      = 32
@@ -65,6 +65,7 @@ type scanner struct {
 
 func (s *scanner) scan(reqPath string, srcPaths []string) (*ScannerResult, error) {
 	// Reset statistics
+	start := time.Now()
 	s.stats.processedFiles.Store(0)
 	s.stats.processedBytes.Store(0)
 	s.stats.skippedFiles.Store(0)
@@ -92,10 +93,11 @@ func (s *scanner) scan(reqPath string, srcPaths []string) (*ScannerResult, error
 
 	// Report statistics after scanning is complete
 	Verbose("Scan complete",
-		"processed_files", s.stats.processedFiles.Load(),
-		"processed_size", ByteCountSI(s.stats.processedBytes.Load()),
-		"skipped_files", s.stats.skippedFiles.Load(),
-		"skipped_size", ByteCountSI(s.stats.skippedBytes.Load()),
+		"processed files", s.stats.processedFiles.Load(),
+		"processed size", ByteCountSI(s.stats.processedBytes.Load()),
+		"skipped files", s.stats.skippedFiles.Load(),
+		"skipped size", ByteCountSI(s.stats.skippedBytes.Load()),
+		"duration", time.Since(start),
 	)
 
 	return result, nil
@@ -112,10 +114,10 @@ func scanMarkdowns(reqPath string) ([]FileStructure, []ProcessingError, error) {
 			},
 		}
 
-		reqmdPath := filepath.Join(folder, reqmdjsonFileName)
+		reqmdPath := filepath.Join(folder, ReqmdjsonFileName)
 		if content, err := os.ReadFile(reqmdPath); err == nil {
 			if err := json.Unmarshal(content, &mctx.rfiles); err != nil {
-				return nil, fmt.Errorf("failed to parse %s: %w", reqmdjsonFileName, err)
+				return nil, fmt.Errorf("failed to parse %s: %w", ReqmdjsonFileName, err)
 			}
 		}
 
@@ -195,10 +197,6 @@ func (s *scanner) processSourceFile(filePath string, git IGit, files *[]FileStru
 
 	filePath = filepath.ToSlash(filePath)
 
-	if strings.Contains(filePath, gitFolderName) {
-		return nil
-	}
-
 	// Check if file extension is supported
 	ext := strings.ToLower(filepath.Ext(filePath))
 	if !s.sourceExtensions[ext] {
@@ -228,6 +226,7 @@ func (s *scanner) processSourceFile(filePath string, git IGit, files *[]FileStru
 	if err != nil {
 		return fmt.Errorf("failed to get relative path: %w", err)
 	}
+	relPath = filepath.ToSlash(relPath)
 
 	// Try to get file hash - this will fail for untracked files
 	hash, err := git.FileHash(relPath)

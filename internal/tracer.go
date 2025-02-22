@@ -1,5 +1,11 @@
 package internal
 
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+)
+
 /*
 
 An exerpt from design.md
@@ -35,6 +41,32 @@ func NewTracer(scanner IScanner, analyzer IAnalyzer, applier IApplier, reqPath s
 }
 
 func (t *tracer) Trace() error {
+	// Make paths absolute
+	{
+
+		// Get current dir
+		wd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get current directory: %w", err)
+		}
+
+		Verbose("Starting processing", "wd", wd, "reqPath", t.reqPath, "srcPaths", fmt.Sprintf("%v", t.srcPaths))
+
+		t.reqPath, err = filepath.Abs(t.reqPath)
+		if err != nil {
+			return fmt.Errorf("failed to get absolute path for requirement path: %w", err)
+		}
+		Verbose("Absolute requirement path: " + t.reqPath)
+
+		for i, srcPath := range t.srcPaths {
+			t.srcPaths[i], err = filepath.Abs(srcPath)
+			if err != nil {
+				return fmt.Errorf("failed to get absolute path for source path: %w", err)
+			}
+			Verbose("Absolute source path: " + t.srcPaths[i])
+		}
+	}
+
 	// Scanning phase
 	scanResult, err := t.scanner.Scan(t.reqPath, t.srcPaths)
 	if err != nil {
