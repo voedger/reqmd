@@ -221,20 +221,22 @@ func TestFormatCoverageFootnote(t *testing.T) {
 		{
 			name: "no coverers",
 			footnote: &CoverageFootnote{
+				PackageID:       "pkg1",
 				RequirementName: "REQ001",
 			},
-			want: "[^~REQ001~]: `[~REQ001~impl]`",
+			want: "[^~REQ001~]: `[~pkg1/REQ001~impl]`",
 		},
 		{
 			name: "with sorted coverers",
 			footnote: &CoverageFootnote{
 				RequirementName: "REQ001",
+				PackageID:       "pkg2",
 				Coverers: []Coverer{
 					{CoverageLabel: "b.go:1:test", CoverageUrL: "url2"},
 					{CoverageLabel: "a.go:1:impl", CoverageUrL: "url1"},
 				},
 			},
-			want: "[^~REQ001~]: `[~REQ001~impl]` [a.go:1:impl](url1), [b.go:1:test](url2)",
+			want: "[^~REQ001~]: `[~pkg2/REQ001~impl]` [a.go:1:impl](url1), [b.go:1:test](url2)",
 		},
 	}
 

@@ -108,7 +108,7 @@ func TestAnalyzer_ActionFootnote_Nan(t *testing.T) {
 	assert.Equal(t, ActionFootnote, actions[1].Type)
 	assert.Equal(t, "REQ001", actions[1].RequirementName)
 	assert.Contains(t, actions[1].Data, "[^~REQ001~]")
-	assert.Equal(t, actions[1].Data, "[^~REQ001~]: `[~REQ001~impl]`")
+	assert.Equal(t, "[^~REQ001~]: `[~pkg1/REQ001~impl]`", actions[1].Data)
 }
 
 // Non-annotated requirement with new coverer
@@ -145,8 +145,7 @@ func TestAnalyzer_ActionFootnote_Nan_NewCoverer(t *testing.T) {
 	// Verify footnote action
 	assert.Equal(t, ActionFootnote, actions[1].Type)
 	assert.Equal(t, "REQ001", actions[1].RequirementName)
-	assert.Contains(t, actions[1].Data, "[^~REQ001~]")
-	assert.Equal(t, actions[1].Data, "[^~REQ001~]: `[~REQ001~impl]` [src/impl.go:20:impl1](https://github.com/org/repo/blob/main/src/impl.go/src/impl.go#20)")
+	assert.Equal(t, "[^~REQ001~]: `[~pkg1/REQ001~impl]` [src/impl.go:20:impl1](https://github.com/org/repo/blob/main/src/impl.go/src/impl.go#L20)", actions[1].Data)
 
 }
 
@@ -209,7 +208,7 @@ func TestAnalyzer_ActionStatusUpdate_AnCov_NoCoverers(t *testing.T) {
 
 	// Verify footnote action
 	assert.Equal(t, ActionFootnote, actions[1].Type)
-	assert.Equal(t, "[^~REQ001~]: `[~REQ001~impl]`", actions[1].Data)
+	assert.Equal(t, actions[1].Data, "[^~REQ001~]: `[~pkg1/REQ001~impl]`")
 	assert.Equal(t, 11+10, actions[1].Line)
 }
 
