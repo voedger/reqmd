@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 )
 
@@ -41,61 +40,101 @@ func (a *applier) Apply(ar *AnalyzerResult) error {
 Principles:
 
 - RequirementSiteRegex and CoverageFootnoteRegex from models.go are used to match lines with RequirementID
--
 
 */
 
 func (a *applier) applyMdActions(path FilePath, actions []MdAction) error {
+	// Read file with preserved line endings
 	lines, hasCRLF, err := readFilePreserveEndings(string(path))
 	if err != nil {
-		return err
+		if os.IsNotExist(err) {
+			lines = []string{}
+		} else {
+			return fmt.Errorf("failed to read file %s: %w", path, err)
+		}
 	}
-	newLinesAdded := false
+
+	// First validate all actions
 	for _, action := range actions {
-		a.logOrVerbose("Action\n\t" + action.String())
 		if action.Line > 0 {
-			lineIndex := action.Line - 1
-			if lineIndex < 0 || lineIndex >= len(lines) {
-				return fmt.Errorf("line %d doesn't exist in file %s", action.Line, path)
+			if action.Line > len(lines) {
+				return fmt.Errorf("line %d does not exist in file %s", action.Line, path)
 			}
-			line := lines[lineIndex]
-			var re *regexp.Regexp
+
+			line := lines[action.Line-1]
 			switch action.Type {
 			case ActionSite:
-				re = RequirementSiteRegex
+				if !RequirementSiteRegex.MatchString(line) ||
+					!strings.Contains(line, action.RequirementName) {
+					return fmt.Errorf("line %d in file %s does not contain valid requirement site for %s",
+						action.Line, path, action.RequirementName)
+				}
 			case ActionFootnote:
-				re = CoverageFootnoteRegex
-			default:
-				return fmt.Errorf("unknown action type: %s", action.Type)
+				if !CoverageFootnoteRegex.MatchString(line) ||
+					!strings.Contains(line, action.RequirementName) {
+					return fmt.Errorf("line %d in file %s does not contain valid footnote for %s",
+						action.Line, path, action.RequirementName)
+				}
 			}
-			if !re.MatchString(line) {
-				return fmt.Errorf("line %d does not match requirement ID in file %s", action.Line, path)
-			}
-			newLine := re.ReplaceAllStringFunc(line, func(_ string) string {
-				return action.Data
-			})
-			lines[lineIndex] = newLine
-
-		} else {
-			if action.Type != ActionFootnote {
-				return fmt.Errorf("invalid action type for line=0 in file %s", path)
-			}
-			if needFootnoteSeparator(lines) {
-				lines = append(lines, "")
-			}
-			lines = append(lines, action.Data)
-			newLinesAdded = true
 		}
 	}
 
-	if !a.dryRun {
-		if newLinesAdded {
+	// Apply actions
+	for _, action := range actions {
+		if action.Line > 0 {
+			a.logOrVerbose("Action\n\t" + action.String())
+			// Update existing line
+			line := lines[action.Line-1]
+			switch action.Type {
+			case ActionSite:
+				lines[action.Line-1] = RequirementSiteRegex.ReplaceAllString(line, action.Data)
+			case ActionFootnote:
+				lines[action.Line-1] = CoverageFootnoteRegex.ReplaceAllString(line, action.Data)
+			}
+		}
+	}
+
+	// Process trailing empty lines and footnotes
+	// First trim trailing empty lines
+	for len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) == "" {
+		lines = lines[:len(lines)-1]
+	}
+
+	// Add empty line before footnotes if needed
+	hasNewFootnotes := false
+	for _, action := range actions {
+		if action.Line == 0 && action.Type == ActionFootnote {
+			a.logOrVerbose("Action\n\t" + action.String())
+			hasNewFootnotes = true
+			break
+		}
+	}
+
+	if hasNewFootnotes && len(lines) > 0 {
+		lastLine := lines[len(lines)-1]
+		if !CoverageFootnoteRegex.MatchString(lastLine) {
 			lines = append(lines, "")
 		}
-		if err := writeFilePreserveEndings(string(path), lines, hasCRLF); err != nil {
-			return err
+	}
+
+	// Append new footnotes
+	for _, action := range actions {
+		if action.Line == 0 && action.Type == ActionFootnote {
+			lines = append(lines, action.Data)
 		}
 	}
+
+	// Markdown files should end with a newline
+	lines = append(lines, "")
+
+	// Write file if not in dry run mode
+	a.logOrVerbose("Update markdown file", "path", path)
+	if !a.dryRun {
+		if err := writeFilePreserveEndings(string(path), lines, hasCRLF); err != nil {
+			return fmt.Errorf("failed to write file %s: %w", path, err)
+		}
+	}
+
 	return nil
 }
 
@@ -159,25 +198,6 @@ func writeFilePreserveEndings(filePath string, lines []string, hasCRLF bool) err
 	}
 	out := strings.Join(lines, delim)
 	return os.WriteFile(filePath, []byte(out), 0644)
-}
-
-// needFootnoteSeparator checks if we must insert an empty line before the first appended footnote.
-func needFootnoteSeparator(lines []string) bool {
-	if len(lines) == 0 {
-		return false
-	}
-	// If the file already ends with an empty line, no need to add another.
-	lastLine := lines[len(lines)-1]
-	if strings.TrimSpace(lastLine) == "" {
-		return false
-	}
-	// Check for existing footnotes.
-	for _, ln := range lines {
-		if CoverageFootnoteRegex.MatchString(ln) {
-			return false
-		}
-	}
-	return true
 }
 
 func (a *applier) logOrVerbose(msg string, kv ...any) {

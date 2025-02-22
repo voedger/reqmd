@@ -159,20 +159,17 @@ Principles:
 
 ### Apply Markdown actions
 
-#### Loading
+#### Load file
 
 - Each file (if it exists) is loaded entirely into memory
 - OS-specific line endings are preserved and used for writing
 - No backup files are created
 
-#### Order of processing
-
-- Actions are processed in the order they are received
-
 #### Line Validation for markdown files
 
 - There are two Actions: ActionFootnote and ActionSite
 - Each Action contains Line and RequirementID
+- RequirementSiteRegex and CoverageFootnoteRegex from models.go are used to match lines with RequirementID
 - Note that RequirementID is unique within all markdown files
 - If Action.Line > 0
   - It is expected that the line with the number exists and contains the RequirementSite or CoverageFootnote with the given RequirementID
@@ -186,11 +183,21 @@ Principles:
 
 #### Footnotes
 
-- If the file does not end with an empty line and the original FileStructure does not have CoverageFootnotes then a new empty line is added (to separate footnotes from the rest of the file)
-  - This is done when we're about to add the first footnote
-- New footnotes (ActionFootnote.Line = 0) are added at end of file one after another with no extra blank lines in between
+Stripe trailing empty lines:
+
+- All trailing empty lines are removed.
+
+Add an empty line:
+
+- If there are new footnotes (ActionFootnote.Line = 0) and the last line of the file is not a footnote then an empty line is added to separate footnotes from the rest of the file
+
+Process ActionFootnotes:
+
+- Existing footnotes are updated with new content
+- New footnotes (ActionFootnote.Line = 0) are added at end of the list with no extra blank lines in between
 - No specific ordering of new footnotes required
 - Existing footnote ordering shall be preserved
+- If there new footnotes then an empty line is added at the end of the file
 
 ### Apply Regmdjson actions
 

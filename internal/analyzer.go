@@ -16,7 +16,7 @@ type analyzer struct {
 type requirementCoverage struct {
 	Site            *RequirementSite
 	FileStructure   *FileStructure
-	CurrentCoverers []*Coverer
+	CurrentCoverers []*Coverer // Is not nil if there are existing footnotes
 	NewCoverers     []*Coverer
 }
 
@@ -58,7 +58,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 		}
 
 		// Check if site action is needed
-		if !coverage.Site.IsAnnotated || coverage.Site.CoverageStatusWord != coverageStatus {
+		if !coverage.Site.HasAnnotationRef || coverage.Site.CoverageStatusWord != coverageStatus {
 			siteAction := MdAction{
 				Type:            ActionSite,
 				Path:            coverage.FileStructure.Path,
@@ -74,7 +74,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 		}
 
 		// Footnote action is needed if coverers are different or site is not annotated
-		if !areCoverersEqualByHashes(coverage.CurrentCoverers, coverage.NewCoverers) || !coverage.Site.IsAnnotated {
+		if !areCoverersEqualByHashes(coverage.CurrentCoverers, coverage.NewCoverers) || coverage.CurrentCoverers == nil {
 
 			a.changedFootnotes[requirementID] = true
 

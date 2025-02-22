@@ -300,7 +300,13 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
     - Context: design.md, analyzer.go, applier.go, models.go
   - Copilot.CLaude: Is `design.md/### Apply Regmdjson actions` clear to implement applyReqmdjsons()? Ask questions if needed.
 
+### Run against a real project and fix issues (3h)
+
 --------------------
+
+## TODOs
+
+- //TODO `~SendEMail.SendEmailToUser~`uncvrd[^~SendEMail.SendEmailToUser~]❓uncvrd[^111]❓
 
 ## Intermediate results
 

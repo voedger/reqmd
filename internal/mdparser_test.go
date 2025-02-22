@@ -25,7 +25,7 @@ func TestMdParser_ParseMarkdownFile(t *testing.T) {
 	req001 := findRequirement(basicFile.Requirements, "REQ001")
 	assert.NotNil(t, req001, "REQ001 not found")
 	if req001 != nil {
-		assert.False(t, req001.IsAnnotated, "REQ001 should not be annotated")
+		assert.False(t, req001.HasAnnotationRef, "REQ001 should not be annotated")
 		assert.Equal(t, 7, req001.Line, "REQ001 is on wrong line")
 	}
 
@@ -33,7 +33,7 @@ func TestMdParser_ParseMarkdownFile(t *testing.T) {
 	req002 := findRequirement(basicFile.Requirements, "REQ002")
 	assert.NotNil(t, req002, "REQ002 not found")
 	if req002 != nil {
-		assert.True(t, req002.IsAnnotated, "REQ002 should be annotated")
+		assert.True(t, req002.HasAnnotationRef, "REQ002 should be annotated")
 	}
 
 	// Test coverage footnote
@@ -124,9 +124,9 @@ func TestParseRequirements_table(t *testing.T) {
 			name:  "Bare requirement site",
 			input: "`~Post.handler~`",
 			expected: []RequirementSite{{
-				RequirementName: "Post.handler",
-				Line:            1,
-				IsAnnotated:     false,
+				RequirementName:  "Post.handler",
+				Line:             1,
+				HasAnnotationRef: false,
 			}},
 		},
 		{
@@ -138,7 +138,7 @@ func TestParseRequirements_table(t *testing.T) {
 				CoverageStatusWord:  "covered",
 				CoverageStatusEmoji: "✅",
 				Line:                1,
-				IsAnnotated:         true,
+				HasAnnotationRef:    true,
 			}},
 		},
 		{
@@ -150,7 +150,7 @@ func TestParseRequirements_table(t *testing.T) {
 				CoverageStatusWord:  "covered",
 				CoverageStatusEmoji: "",
 				Line:                1,
-				IsAnnotated:         true,
+				HasAnnotationRef:    true,
 			}},
 		},
 		{
@@ -162,7 +162,7 @@ func TestParseRequirements_table(t *testing.T) {
 				CoverageStatusWord:  "uncvrd",
 				CoverageStatusEmoji: "❓",
 				Line:                1,
-				IsAnnotated:         true,
+				HasAnnotationRef:    true,
 			}},
 		},
 	}

@@ -88,7 +88,7 @@ func TestAnalyzer_ActionFootnote_Nan(t *testing.T) {
 
 	// Create a markdown file with one requirement
 	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordUncvrd)
-	mdFile.Requirements[0].IsAnnotated = false
+	mdFile.Requirements[0].HasAnnotationRef = false
 
 	result, err := analyzer.Analyze([]FileStructure{mdFile})
 	require.NoError(t, err)
@@ -117,7 +117,7 @@ func TestAnalyzer_ActionFootnote_Nan_NewCoverer(t *testing.T) {
 
 	// Create a markdown file with one requirement
 	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordUncvrd)
-	mdFile.Requirements[0].IsAnnotated = false
+	mdFile.Requirements[0].HasAnnotationRef = false
 
 	// Create a source file with coverage for that requirement
 	srcFile := createSourceFileStructure(
@@ -515,7 +515,7 @@ func createMdStructureA(path, pkgID string, line int, reqName string, cw Coverag
 				FilePath:            path,
 				RequirementName:     reqName,
 				Line:                line,
-				IsAnnotated:         true,
+				HasAnnotationRef:    true,
 				CoverageStatusWord:  cw,
 				CoverageStatusEmoji: emoji,
 			},

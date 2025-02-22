@@ -88,12 +88,7 @@ func (g *git) constructRepoRootFolderURL() error {
 	}
 	remoteURL := urls[0]
 
-	// Get current branch
-	head, err := g.repo.Head()
-	if err != nil {
-		return fmt.Errorf("failed to get HEAD: %w", err)
-	}
-	branchName := head.Name().Short()
+	branchName := g.commit.Hash.String()
 
 	// Detect provider and construct URL
 	switch {

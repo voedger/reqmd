@@ -66,7 +66,7 @@ type RequirementSite struct {
 	ReferenceName       string             // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
 	CoverageStatusWord  CoverageStatusWord // "covered", "uncvrd", or empty
 	CoverageStatusEmoji CoverageStatusEmoji
-	IsAnnotated         bool // true if it already has coverage annotation reference, false if it’s bare
+	HasAnnotationRef    bool // true if it already has coverage annotation reference, false if it’s bare
 }
 
 var RequirementSiteRegex = regexp.MustCompile(

@@ -145,17 +145,17 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 			ReferenceName:       match[3],
 			CoverageStatusEmoji: CoverageStatusEmoji(match[4]),
 			Line:                lineNum,
-			IsAnnotated:         match[3] != "",
+			HasAnnotationRef:    match[3] != "",
 		}
 
 		// TODO syntax error to match CoverageStatusEmoji and CoverageStatusWord
 
-		if req.IsAnnotated && covStatus == "" {
+		if req.HasAnnotationRef && covStatus == "" {
 			*errors = append(*errors, NewErrCoverageStatusWord(filePath, lineNum, covStatus))
 			return requirements
 		}
 
-		if req.IsAnnotated && (req.RequirementName != req.ReferenceName) {
+		if req.HasAnnotationRef && (req.RequirementName != req.ReferenceName) {
 			*errors = append(*errors, NewErrRequirementSiteIDEqual(filePath, req.Line, req.RequirementName, req.ReferenceName))
 			return requirements
 		}

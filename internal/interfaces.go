@@ -23,8 +23,7 @@ type IApplier interface {
 
 type IGit interface {
 	PathToRoot() string
-	CommitHash() string
-	FileHash(filePath string) (string, error)
+	FileHash(relativeFilePath string) (string, error)
 	RepoRootFolderURL() string
 }
 
