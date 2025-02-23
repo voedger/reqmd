@@ -184,7 +184,7 @@ func TestParseRequirements_table(t *testing.T) {
 }
 
 func Test_ParseCoverageFootnote(t *testing.T) {
-	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L11), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#L22)"
+	line := "[^cf1]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L11), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#L22)"
 	ctx := &MarkdownContext{
 		rfiles: &Reqmdjson{
 			FileURL2FileHash: map[string]string{
@@ -198,6 +198,7 @@ func Test_ParseCoverageFootnote(t *testing.T) {
 
 	assert.Equal(t, "REQ002", note.RequirementName, "incorrect requirement ID in footnote")
 	assert.Equal(t, "com.example.basic", note.PackageID, "incorrect package ID in footnote")
+	assert.Equal(t, 1, note.ID, "incorrect footnote ID")
 
 	require.Len(t, note.Coverers, 2, "should have 2 coverage references")
 	assert.Equal(t, "folder1/filename1:line1:impl", note.Coverers[0].CoverageLabel)
@@ -209,7 +210,7 @@ func Test_ParseCoverageFootnote(t *testing.T) {
 }
 
 func Test_ParseCoverageFootnote2(t *testing.T) {
-	line := "[^~VVMLeader.def~]: `[~server.design.orch/VVMLeader.def~]` [apps/app.go:80:impl](https://example.com/pkg1/filename1#L80)"
+	line := "[^cf2]: `[~server.design.orch/VVMLeader.def~]` [apps/app.go:80:impl](https://example.com/pkg1/filename1#L80)"
 	ctx := &MarkdownContext{
 		rfiles: &Reqmdjson{
 			FileURL2FileHash: map[string]string{
@@ -222,6 +223,7 @@ func Test_ParseCoverageFootnote2(t *testing.T) {
 
 	assert.Equal(t, "VVMLeader.def", note.RequirementName, "incorrect requirement ID in footnote")
 	assert.Equal(t, "server.design.orch", note.PackageID, "incorrect package ID in footnote")
+	assert.Equal(t, 2, note.ID, "incorrect footnote ID")
 
 	require.Len(t, note.Coverers, 1, "should have 1 coverer")
 	assert.Equal(t, "apps/app.go:80:impl", note.Coverers[0].CoverageLabel)

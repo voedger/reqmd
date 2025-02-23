@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -148,17 +149,11 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 			HasAnnotationRef:    match[3] != "",
 		}
 
-		// TODO syntax error to match CoverageStatusEmoji and CoverageStatusWord
-
 		if req.HasAnnotationRef && covStatus == "" {
 			*errors = append(*errors, NewErrCoverageStatusWord(filePath, lineNum, covStatus))
 			return requirements
 		}
 
-		if req.HasAnnotationRef && (req.RequirementName != req.ReferenceName) {
-			*errors = append(*errors, NewErrRequirementSiteIDEqual(filePath, req.Line, req.RequirementName, req.ReferenceName))
-			return requirements
-		}
 		requirements = append(requirements, req)
 	}
 
@@ -166,13 +161,19 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 }
 
 func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, lineNum int, errs *[]ProcessingError) (footnote *CoverageFootnote) {
-
 	matches := CoverageFootnoteRegex.FindStringSubmatch(line)
 	if len(matches) > 0 {
+		id, err := strconv.Atoi(matches[1])
+		if err != nil {
+			// This shouldn't happen since regex ensures digits
+			return nil
+		}
+
 		footnote = &CoverageFootnote{
 			FilePath:        filePath,
-			RequirementName: matches[1],
-			PackageID:       matches[2],
+			RequirementName: matches[2],
+			PackageID:       matches[3],
+			ID:              id,
 			Line:            lineNum,
 		}
 

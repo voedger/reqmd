@@ -11,6 +11,7 @@ import (
 type analyzer struct {
 	coverages        map[RequirementID]*requirementCoverage // RequirementID -> RequirementCoverage
 	changedFootnotes map[RequirementID]bool
+	maxFootnoteIds   map[FilePath]CoverageFootnoteId // Track max footnote ID per file
 }
 
 type requirementCoverage struct {
@@ -24,6 +25,7 @@ func NewAnalyzer() IAnalyzer {
 	return &analyzer{
 		coverages:        make(map[RequirementID]*requirementCoverage),
 		changedFootnotes: make(map[RequirementID]bool),
+		maxFootnoteIds:   make(map[FilePath]CoverageFootnoteId),
 	}
 }
 
@@ -57,7 +59,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 			coverageStatus = CoverageStatusWordCovered
 		}
 
-		// Check if site action is needed
+		// Site action is needed if there's no annotation or coverage status changed
 		if !coverage.Site.HasAnnotationRef || coverage.Site.CoverageStatusWord != coverageStatus {
 			siteAction := MdAction{
 				Type:            ActionSite,
@@ -66,7 +68,6 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 				RequirementName: coverage.Site.RequirementName,
 				Data:            FormatRequirementSite(coverage.Site.RequirementName, coverageStatus),
 			}
-			// Add actions to result
 			result.MdActions[coverage.FileStructure.Path] = append(
 				result.MdActions[coverage.FileStructure.Path],
 				siteAction,
@@ -75,13 +76,13 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 
 		// Footnote action is needed if coverers are different or site is not annotated
 		if !areCoverersEqualByHashes(coverage.CurrentCoverers, coverage.NewCoverers) || coverage.CurrentCoverers == nil {
-
 			a.changedFootnotes[requirementID] = true
 
 			// Create footnote action
 			newCf := &CoverageFootnote{
 				PackageID:       coverage.FileStructure.PackageID,
 				RequirementName: coverage.Site.RequirementName,
+				ID:              footnoteid,
 				Coverers:        make([]Coverer, len(coverage.NewCoverers)),
 			}
 			for i, c := range coverage.NewCoverers {
@@ -110,6 +111,14 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 			)
 		}
 	}
+}
+
+// Helper function to get appropriate coverage status based on coverers
+func getCoverageStatus(coverage *requirementCoverage) CoverageStatusWord {
+	if len(coverage.NewCoverers) > 0 {
+		return CoverageStatusWordCovered
+	}
+	return CoverageStatusWordUncvrd
 }
 
 /*
@@ -188,6 +197,13 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 				continue
 			}
 
+			// Track max footnote ID in this file
+			for _, cf := range file.CoverageFootnotes {
+				if cf.ID > a.maxFootnoteIds[file.Path] {
+					a.maxFootnoteIds[file.Path] = cf.ID
+				}
+			}
+
 			for _, req := range file.Requirements {
 				reqID := file.PackageID + "/" + req.RequirementName
 
@@ -260,4 +276,15 @@ func areCoverersEqualByHashes(a []*Coverer, b []*Coverer) bool {
 		}
 	}
 	return 0 == slices.CompareFunc(a, b, comparator)
+}
+
+// Finds the next available footnote ID for a given file
+func (a *analyzer) nextFootnoteId(filePath FilePath) CoverageFootnoteId {
+	currentMax, ok := a.maxFootnoteIds[filePath]
+	if !ok {
+		currentMax = 0
+	}
+	nextId := currentMax + 1
+	a.maxFootnoteIds[filePath] = nextId
+	return nextId
 }

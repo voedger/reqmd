@@ -73,21 +73,21 @@ var RequirementSiteRegex = regexp.MustCompile(
 	"`~([^~]+)~`" + // RequirementSiteLabel = "`" "~" RequirementName "~" "`"
 		"(?:" + // Optional group for coverage status and footnote
 		"\\s*([a-zA-Z]+)?" + // Optional CoverageStatusWord
-		"\\s*\\[\\^~([^~]+)~\\]" + // CoverageFootnoteReference
+		"\\s*\\[\\^cf(\\d+)\\]" + // CoverageFootnoteReference with numeric ID
 		"\\s*(✅|❓)?" + // Optional CoverageStatusEmoji
 		")?")
 
 // Build a string representation of the RequirementSite according to the requirements
 // CoverageStatusEmoji is ✅ for "covered", and ❓ for "uncvrd"
-func FormatRequirementSite(requirementName string, coverageStatusWord CoverageStatusWord) string {
+func FormatRequirementSite(requirementName string, coverageStatusWord CoverageStatusWord, footnoteid CoverageFootnoteId) string {
 	result := fmt.Sprintf("`~%s~`", requirementName)
-
+	
 	emoji := CoverageStatusEmojiUncvrd
 	if coverageStatusWord == CoverageStatusWordCovered {
 		emoji = CoverageStatusEmojiCovered
 	}
 
-	return fmt.Sprintf("%s%s[^~%s~]%s", result, coverageStatusWord, requirementName, emoji)
+	return fmt.Sprintf("%s%s[^cf%d]%s", result, coverageStatusWord, footnoteid, emoji)
 }
 
 // CoverageTag represents a coverage marker found in source code.
@@ -97,20 +97,25 @@ type CoverageTag struct {
 	Line          int           // line number where the coverage tag was found
 }
 
+// CoverageFootnoteId represents a unique identifier for a coverage footnote within a file
+type CoverageFootnoteId = int
+
 // CoverageFootnote represents the footnote in Markdown that references coverage tags.
 type CoverageFootnote struct {
 	FilePath        string
 	Line            int
+	ID              CoverageFootnoteId // Unique within a file
 	PackageID       string
 	RequirementName RequirementName
 	Coverers        []Coverer
 }
 
 var (
-	// "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L10), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#l15)"
-	CoverageFootnoteRegex = regexp.MustCompile(`^\s*\[\^~([^~]+)~\]:\s*` + //Footnote reference
+	// Example: "[^cf1]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L10)"
+	CoverageFootnoteRegex = regexp.MustCompile(`^\s*\[\^cf(\d+)\]:\s*` + //Footnote reference with numeric ID
 		"`\\[~([^~/]+)/([^~]+)~([^\\]]+)?\\]`" + // Hint with package and coverage type
 		`(?:\s*(.+))?\s*$`) // Optional coverer list
+
 	CovererRegex = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
 )
 
@@ -164,10 +169,10 @@ func FormatCoverageFootnote(cf *CoverageFootnote) string {
 	hint := fmt.Sprintf("`[~%s/%s~impl]`", cf.PackageID, cf.RequirementName)
 	if len(refs) > 0 {
 		coverersStr := strings.Join(refs, ", ")
-		res := fmt.Sprintf("[^~%s~]: %s %s", cf.RequirementName, hint, coverersStr)
+		res := fmt.Sprintf("[^cf%d]: %s %s", cf.ID, hint, coverersStr)
 		return res
 	}
-	return fmt.Sprintf("[^~%s~]: %s", cf.RequirementName, hint)
+	return fmt.Sprintf("[^cf%d]: %s", cf.ID, hint)
 }
 
 // Coverer represents one coverage reference within a footnote, e.g., [folder/file:line:impl](URL)
