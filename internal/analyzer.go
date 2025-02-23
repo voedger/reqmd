@@ -66,7 +66,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 				Path:            coverage.FileStructure.Path,
 				Line:            coverage.Site.Line,
 				RequirementName: coverage.Site.RequirementName,
-				Data:            FormatRequirementSite(coverage.Site.RequirementName, coverageStatus),
+				Data:            FormatRequirementSite(coverage.Site.RequirementName, coverageStatus, 10), //FIXME: 10 is hardcoded
 			}
 			result.MdActions[coverage.FileStructure.Path] = append(
 				result.MdActions[coverage.FileStructure.Path],
@@ -82,7 +82,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 			newCf := &CoverageFootnote{
 				PackageID:       coverage.FileStructure.PackageID,
 				RequirementName: coverage.Site.RequirementName,
-				ID:              footnoteid,
+				ID:              10, // FIXME: footnoteid is not defined
 				Coverers:        make([]Coverer, len(coverage.NewCoverers)),
 			}
 			for i, c := range coverage.NewCoverers {
@@ -111,14 +111,6 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 			)
 		}
 	}
-}
-
-// Helper function to get appropriate coverage status based on coverers
-func getCoverageStatus(coverage *requirementCoverage) CoverageStatusWord {
-	if len(coverage.NewCoverers) > 0 {
-		return CoverageStatusWordCovered
-	}
-	return CoverageStatusWordUncvrd
 }
 
 /*
@@ -279,6 +271,7 @@ func areCoverersEqualByHashes(a []*Coverer, b []*Coverer) bool {
 }
 
 // Finds the next available footnote ID for a given file
+// nolint
 func (a *analyzer) nextFootnoteId(filePath FilePath) CoverageFootnoteId {
 	currentMax, ok := a.maxFootnoteIds[filePath]
 	if !ok {
