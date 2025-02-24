@@ -82,8 +82,8 @@ func TestAnalyzer_error_MissingPackageID(t *testing.T) {
 	}
 }
 
-// Non-annotated requirement
-func TestAnalyzer_ActionFootnote_Nan(t *testing.T) {
+// Bare requirement
+func TestAnalyzer_ActionFootnote_Bare(t *testing.T) {
 	analyzer := NewAnalyzer()
 
 	// Create a markdown file with one requirement
@@ -110,8 +110,8 @@ func TestAnalyzer_ActionFootnote_Nan(t *testing.T) {
 	assert.Equal(t, "[^1]: `[~pkg1/REQ001~impl]`", actions[1].Data)
 }
 
-// Non-annotated requirement, FootnoteId starts with 20
-func TestAnalyzer_ActionFootnote_Nan_20(t *testing.T) {
+// Bare requirement, there is a footnote with CoverageFootnoteID == "19"
+func TestAnalyzer_ActionFootnote_Bare_f19(t *testing.T) {
 	analyzer := NewAnalyzer()
 
 	// Create a markdown file with one requirement
@@ -145,8 +145,68 @@ func TestAnalyzer_ActionFootnote_Nan_20(t *testing.T) {
 	assert.Equal(t, "[^20]: `[~pkg1/REQ001~impl]`", actions[1].Data)
 }
 
-// Non-annotated requirement with new coverer
-func TestAnalyzer_ActionFootnote_Nan_NewCoverer(t *testing.T) {
+// Bare requirement, there is a footnote with CoverageFootnoteID == "19"
+// and a RequirementSite with CoverageFootnoteID == "21".
+func TestAnalyzer_ActionFootnote_Bare_f19_r21(t *testing.T) {
+	analyzer := NewAnalyzer()
+
+	// Create a markdown file with one requirement
+	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordUncvrd)
+	mdFile.Requirements[0].HasAnnotationRef = false
+
+	mdFile.CoverageFootnotes = []CoverageFootnote{
+		{
+			CoverageFootnoteId: CoverageFootnoteId("19"),
+			Line:               10 + 10,
+		},
+	}
+	// Add a RequirementSite with CoverageFootnoteID == "21"
+	{
+		req := RequirementSite{
+			FilePath:            "req.md",
+			RequirementName:     RequirementName("REQ002"),
+			CoverageFootnoteID:  CoverageFootnoteId("21"),
+			Line:                11,
+			HasAnnotationRef:    true,
+			CoverageStatusWord:  CoverageStatusWordUncvrd,
+			CoverageStatusEmoji: CoverageStatusEmojiUncvrd,
+		}
+		mdFile.Requirements = append(mdFile.Requirements, req)
+	}
+
+	result, err := analyzer.Analyze([]FileStructure{mdFile})
+	require.NoError(t, err)
+	require.Empty(t, result.ProcessingErrors)
+
+	// Should generate both a footnote and status update action
+	actions := result.MdActions[mdFile.Path]
+	require.Len(t, actions, 3)
+
+	for _, action := range actions {
+		if action.Type == ActionSite {
+			// Verify status update action
+			assert.Equal(t, ActionSite, action.Type)
+			assert.Equal(t, RequirementName("REQ001"), action.RequirementName)
+			assert.Equal(t, 10, action.Line)
+			assert.Equal(t, FormatRequirementSite("REQ001", CoverageStatusWordUncvrd, "22"), action.Data)
+			continue
+		}
+		if action.Type == ActionFootnote && action.RequirementName == "REQ001" {
+			assert.Equal(t, ActionFootnote, action.Type)
+			assert.Equal(t, RequirementName("REQ001"), action.RequirementName)
+			assert.Equal(t, "[^22]: `[~pkg1/REQ001~impl]`", action.Data)
+		}
+		if action.Type == ActionFootnote && action.RequirementName == "REQ002" {
+			assert.Equal(t, ActionFootnote, action.Type)
+			assert.Equal(t, RequirementName("REQ002"), action.RequirementName)
+			assert.Equal(t, "[^21]: `[~pkg1/REQ002~impl]`", action.Data)
+		}
+	}
+
+}
+
+// Bare requirement with new coverer
+func TestAnalyzer_ActionFootnote_Bare_NewCoverer(t *testing.T) {
 	analyzer := NewAnalyzer()
 
 	// Create a markdown file with one requirement
