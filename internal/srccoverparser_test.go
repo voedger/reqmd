@@ -21,7 +21,7 @@ func TestSourceParser_ParseSourceFile(t *testing.T) {
 
 	{
 		tag := srcFile.CoverageTags[0]
-		assert.Equal(t, "server.api.v2/Post.handler", tag.RequirementID)
+		assert.Equal(t, RequirementId("server.api.v2/Post.handler"), tag.RequirementId)
 		assert.Equal(t, "impl", tag.CoverageType)
 		// Adjust expected line number according to your test file content
 		assert.Equal(t, 8, tag.Line)
@@ -29,7 +29,7 @@ func TestSourceParser_ParseSourceFile(t *testing.T) {
 
 	{
 		tag := srcFile.CoverageTags[1]
-		assert.Equal(t, "server.api.v2/Post.handler", tag.RequirementID)
+		assert.Equal(t, RequirementId("server.api.v2/Post.handler"), tag.RequirementId)
 		assert.Equal(t, "test", tag.CoverageType)
 		// Adjust expected line number according to your test file content
 		assert.Equal(t, 14, tag.Line)

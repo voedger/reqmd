@@ -39,7 +39,7 @@ func (a *applier) Apply(ar *AnalyzerResult) error {
 /*
 Principles:
 
-- RequirementSiteRegex and CoverageFootnoteRegex from models.go are used to match lines with RequirementID
+- RequirementSiteRegex and CoverageFootnoteRegex from models.go are used to match lines with RequirementId
 
 */
 
@@ -65,13 +65,13 @@ func (a *applier) applyMdActions(path FilePath, actions []MdAction) error {
 			switch action.Type {
 			case ActionSite:
 				if !RequirementSiteRegex.MatchString(line) ||
-					!strings.Contains(line, action.RequirementName) {
+					!strings.Contains(line, string(action.RequirementName)) {
 					return fmt.Errorf("line %d in file %s does not contain valid requirement site for %s",
 						action.Line, path, action.RequirementName)
 				}
 			case ActionFootnote:
 				if !CoverageFootnoteRegex.MatchString(line) ||
-					!strings.Contains(line, action.RequirementName) {
+					!strings.Contains(line, string(action.RequirementName)) {
 					return fmt.Errorf("line %d in file %s does not contain valid footnote for %s",
 						action.Line, path, action.RequirementName)
 				}
@@ -142,7 +142,7 @@ func (a *applier) applyMdActions(path FilePath, actions []MdAction) error {
 func (a *applier) applyReqmdjson(folder_ FolderPath, reqmdjson *Reqmdjson) error {
 	filePath := filepath.Join(string(folder_), ReqmdjsonFileName)
 	filePath = filepath.ToSlash(filePath)
-	if len(reqmdjson.FileURL2FileHash) == 0 {
+	if len(reqmdjson.FileUrl2FileHash) == 0 {
 		// If reqmdjson is empty and file exists, delete it
 		if _, err := os.Stat(string(filePath)); err == nil {
 			a.logOrVerbose("Delete reqmd.json ", "path", filePath)

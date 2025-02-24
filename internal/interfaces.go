@@ -11,7 +11,7 @@ type IScanner interface {
 	Scan(reqPath string, srcPaths []string) (*ScannerResult, error)
 }
 
-// IAnalyzer checks for semantic issues (e.g., unique RequirementIDs) and generates Actions.
+// IAnalyzer checks for semantic issues (e.g., unique RequirementIds) and generates Actions.
 type IAnalyzer interface {
 	Analyze(files []FileStructure) (*AnalyzerResult, error)
 }

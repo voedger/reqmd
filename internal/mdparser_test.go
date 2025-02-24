@@ -42,7 +42,7 @@ func TestMdParser_ParseMarkdownFile(t *testing.T) {
 		assert.Len(t, basicFile.CoverageFootnotes, 1, "should have 1 coverage footnote")
 		if len(basicFile.CoverageFootnotes) > 0 {
 			footnote := basicFile.CoverageFootnotes[0]
-			assert.Equal(t, "REQ002", footnote.RequirementName, "incorrect requirement ID in footnote")
+			assert.Equal(t, CoverageFootnoteId("~REQ002~"), footnote.CoverageFootnoteID, "incorrect CoverageFootnoteID in footnote")
 			assert.Equal(t, "com.example.basic", footnote.PackageID, "incorrect package ID in footnote")
 
 			require.Len(t, footnote.Coverers, 2, "should have 2 coverage references")
@@ -63,10 +63,9 @@ func TestMdParser_ParseMarkdownFile_Errors(t *testing.T) {
 	// We expect 4 errors in the test file:
 	// 1. Invalid package name (non-identifier)
 	// 2. Invalid requirement name (non-identifier)
-	// 3. Mismatched requirement site IDs
-	// 4. Invalid coverage status
-	// 5. Unmatched fence
-	require.Len(t, errors, 5, "expected exactly 5 syntax errors")
+	// 3. Invalid coverage status
+	// 4. Unmatched fence
+	require.Len(t, errors, 4, "expected exactly 4 syntax errors")
 
 	// Sort errors by line number for consistent testing
 	sort.Slice(errors, func(i, j int) bool {
@@ -81,21 +80,17 @@ func TestMdParser_ParseMarkdownFile_Errors(t *testing.T) {
 	assert.Equal(t, "reqident", errors[1].Code)
 	assert.Equal(t, 8, errors[1].Line)
 
-	// Check requirement site ID mismatch error
-	assert.Equal(t, "reqsiteid", errors[2].Code)
+	// Check coverage status error
+	assert.Equal(t, "covstatus", errors[2].Code)
 	assert.Equal(t, 10, errors[2].Line)
 
-	// Check coverage status error
-	assert.Equal(t, "covstatus", errors[3].Code)
-	assert.Equal(t, 12, errors[3].Line)
-
 	// Check unmatched fence error
-	assert.Equal(t, "unmatchedfence", errors[4].Code)
-	assert.Equal(t, 16, errors[4].Line)
+	assert.Equal(t, "unmatchedfence", errors[3].Code)
+	assert.Equal(t, 14, errors[3].Line)
 }
 
 // Helper function to find requirement by name
-func findRequirement(reqs []RequirementSite, name string) *RequirementSite {
+func findRequirement(reqs []RequirementSite, name RequirementName) *RequirementSite {
 	for _, req := range reqs {
 		if req.RequirementName == name {
 			return &req
@@ -134,7 +129,7 @@ func TestParseRequirements_table(t *testing.T) {
 			input: "`~Post.handler~`covered[^~Post.handler~]✅",
 			expected: []RequirementSite{{
 				RequirementName:     "Post.handler",
-				ReferenceName:       "Post.handler",
+				CoverageFootnoteID:  "~Post.handler~",
 				CoverageStatusWord:  "covered",
 				CoverageStatusEmoji: "✅",
 				Line:                1,
@@ -146,7 +141,7 @@ func TestParseRequirements_table(t *testing.T) {
 			input: "`~Post.handler~`covered[^~Post.handler~]",
 			expected: []RequirementSite{{
 				RequirementName:     "Post.handler",
-				ReferenceName:       "Post.handler",
+				CoverageFootnoteID:  "~Post.handler~",
 				CoverageStatusWord:  "covered",
 				CoverageStatusEmoji: "",
 				Line:                1,
@@ -158,7 +153,7 @@ func TestParseRequirements_table(t *testing.T) {
 			input: "`~Post.handler~`uncvrd[^~Post.handler~]❓",
 			expected: []RequirementSite{{
 				RequirementName:     "Post.handler",
-				ReferenceName:       "Post.handler",
+				CoverageFootnoteID:  "~Post.handler~",
 				CoverageStatusWord:  "uncvrd",
 				CoverageStatusEmoji: "❓",
 				Line:                1,
@@ -167,16 +162,16 @@ func TestParseRequirements_table(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for tidx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var errors []ProcessingError
 			got := ParseRequirements("test.md", tt.input, 1, &errors)
 
-			require.Equal(t, len(tt.expected), len(got), "number of requirements mismatch")
+			require.Equal(t, len(tt.expected), len(got), "number of requirements mismatch: %d: %s: %s", tidx, tt.name, tt.input)
 			for i, exp := range tt.expected {
 				// Set common fields that we don't need to specify in every test case
 				exp.FilePath = "test.md"
-				assert.Equal(t, exp, got[i], "requirement %d mismatch", i)
+				assert.Equal(t, exp, got[i], "requirement %d.%d mismatch, %s: %s", tidx, i, tt.name, tt.input)
 			}
 			assert.Empty(t, errors, "unexpected errors")
 		})
@@ -187,7 +182,7 @@ func Test_ParseCoverageFootnote(t *testing.T) {
 	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L11), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#L22)"
 	ctx := &MarkdownContext{
 		rfiles: &Reqmdjson{
-			FileURL2FileHash: map[string]string{
+			FileUrl2FileHash: map[string]string{
 				"https://example.com/pkg1/filename1": "hash1",
 				"https://example.com/pkg2/filename2": "hash2",
 			},
@@ -196,7 +191,7 @@ func Test_ParseCoverageFootnote(t *testing.T) {
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 
-	assert.Equal(t, "REQ002", note.RequirementName, "incorrect requirement ID in footnote")
+	assert.Equal(t, CoverageFootnoteId("~REQ002~"), note.CoverageFootnoteID, "incorrect CoverageFootnoteID in footnote")
 	assert.Equal(t, "com.example.basic", note.PackageID, "incorrect package ID in footnote")
 
 	require.Len(t, note.Coverers, 2, "should have 2 coverage references")
@@ -212,7 +207,7 @@ func Test_ParseCoverageFootnote2(t *testing.T) {
 	line := "[^~VVMLeader.def~]: `[~server.design.orch/VVMLeader.def~]` [apps/app.go:80:impl](https://example.com/pkg1/filename1#L80)"
 	ctx := &MarkdownContext{
 		rfiles: &Reqmdjson{
-			FileURL2FileHash: map[string]string{
+			FileUrl2FileHash: map[string]string{
 				"https://example.com/pkg1/filename1": "hash1",
 			},
 		},
@@ -220,11 +215,27 @@ func Test_ParseCoverageFootnote2(t *testing.T) {
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 
-	assert.Equal(t, "VVMLeader.def", note.RequirementName, "incorrect requirement ID in footnote")
+	assert.Equal(t, CoverageFootnoteId("~VVMLeader.def~"), note.CoverageFootnoteID, "incorrect CoverageFootnoteID in footnote")
 	assert.Equal(t, "server.design.orch", note.PackageID, "incorrect package ID in footnote")
 
 	require.Len(t, note.Coverers, 1, "should have 1 coverer")
 	assert.Equal(t, "apps/app.go:80:impl", note.Coverers[0].CoverageLabel)
+}
+
+func Test_ParseCoverageFootnote_JustFootnote(t *testing.T) {
+	line := "[^12]:"
+	ctx := &MarkdownContext{
+		rfiles: &Reqmdjson{
+			FileUrl2FileHash: map[string]string{
+				"https://example.com/pkg1/filename1": "hash1",
+			},
+		},
+	}
+	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
+	require.NotNil(t, note)
+	assert.Equal(t, CoverageFootnoteId("12"), note.CoverageFootnoteID)
+	assert.Equal(t, "", note.PackageID)
+
 }
 
 func Test_ParseCoverageFootnote_errors(t *testing.T) {
@@ -271,16 +282,6 @@ func TestParseRequirements_errors(t *testing.T) {
 			},
 		},
 		{
-			name: "mismatched requirement site IDs",
-			line: "`~REQ001~`covered[^~REQ002~]✅",
-			wantErr: ProcessingError{
-				Code:     "reqsiteid",
-				FilePath: "test.md",
-				Line:     2,
-				Message:  "RequirementSiteID from RequirementSiteLabel and CoverageFootnoteReference shall be equal: REQ001 != REQ002",
-			},
-		},
-		{
 			name: "invalid coverage status",
 			line: "`~REQ001~`covrd[^~REQ001~]✅",
 			wantErr: ProcessingError{
@@ -302,17 +303,17 @@ func TestParseRequirements_errors(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for tidx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var errors []ProcessingError
 			line := tt.line
 			requirements := ParseRequirements("test.md", line, tt.wantErr.Line, &errors)
 
 			// Check that no requirements were returned
-			assert.Nil(t, requirements, "should return nil requirements")
+			assert.Nil(t, requirements, "%d: should return nil requirements", tidx)
 
 			// Verify the error
-			if assert.Len(t, errors, 1, "should have exactly one error") {
+			if assert.Len(t, errors, 1, "%d: should have exactly one error", tidx) {
 				assert.Equal(t, tt.wantErr.Code, errors[0].Code)
 				assert.Equal(t, tt.wantErr.Message, errors[0].Message)
 				assert.Equal(t, tt.wantErr.FilePath, errors[0].FilePath)

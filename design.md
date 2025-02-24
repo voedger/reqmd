@@ -167,13 +167,13 @@ Principles:
 #### Line Validation for markdown files
 
 - There are two Actions: ActionFootnote and ActionSite
-- Each Action contains Line and RequirementID
-- RequirementSiteRegex and CoverageFootnoteRegex from models.go are used to match lines with RequirementID
-- Note that RequirementID is unique within all markdown files
+- Each Action contains Line and RequirementId
+- RequirementSiteRegex and CoverageFootnoteRegex from models.go are used to match lines with RequirementId
+- Note that RequirementId is unique within all markdown files
 - If Action.Line > 0
-  - It is expected that the line with the number exists and contains the RequirementSite or CoverageFootnote with the given RequirementID
+  - It is expected that the line with the number exists and contains the RequirementSite or CoverageFootnote with the given RequirementId
   - RequirementSiteRegex or CoverageFootnoteRegex is used to validate the line
-  - If line number doesn't exist or RequirementID in this line doesn't match:
+  - If line number doesn't exist or RequirementId in this line doesn't match:
     - Return error
     - Stop all processing immediately
   - Only the regex-matched part of the line is replaced; the rest is preserved
@@ -226,7 +226,7 @@ type Action struct {
     FileStruct      *FileStructure 
     Line            int           
     Data            string        // New content for the line
-    RequirementID   string        // Line is expected to contain this RequirementID
+    RequirementId   string        // Line is expected to contain this RequirementId
 }
 ```
 

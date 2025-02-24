@@ -73,7 +73,7 @@ This file contains a brief log of the project design and construction.
 
 ## Tasks
 
-### tracer.go
+### 001: tracer.go
 
 - Oops. Refactor func Scan(paths []string) => func Scan(reqPath string, srcPaths []string)👍
   - Let me help you refactor the Scan function to accept separate requirement and source paths
@@ -106,7 +106,7 @@ Suggest a design for the implementation of the IAnalyzer that meets the fillowin
     - Construct the list of Action items describing needed transformations.
 ```
 
-### oops, URL calculation is missing (+2h)
+### 003: oops, URL calculation is missing (+2h)
 
 - There should be a way to obtain FileURL for a given FileStructure
 - Me: Edit design.md, FileURL construction
@@ -130,14 +130,14 @@ Suggest a design for the implementation of the IAnalyzer that meets the fillowin
   - Me: Modify design
 - Copilot.Claude: Based on your answers, I'll propose the implementation. We need to modify several files🏆
 
-### cleanup
+### 004: cleanup
 
 - Copilot.Claude: Identify LLMs notes that should be removed👍
   - The following line appears twice in the document and should be removed: Let me help you rewrite this technical documentation with a more professional structure and better formatting.
   - They are clearly meta-comments from an AI assistant and not part of the actual technical documentation. The content before and after these lines is legitimate design documentation and should remain in place.
 - Copilot.Claude: Review the design:👍
 
-### Implement main(): instantiate all necessary components and run Tracer
+### 005: Implement main(): instantiate all necessary components and run Tracer
 
 Yes, so far IApplier is not implemented, so we should prepare a dummy implementation, but the rest can be tested already.
 
@@ -158,7 +158,7 @@ Prompt
 Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scanner.go #applier.go #tracer.go
 ```
 
-### Run tests and make sure that the scanner works properly
+### 006: Run tests and make sure that the scanner works properly
 
 - Me: it is necessary to process only specified file extensions in sources
 - Copilot.Claude: I want to pass a list of source file extensions as argument s for reqmd trace, what you recommend?👍
@@ -167,7 +167,7 @@ Implement dummy analyzer in analyzer.go. Ref. #interfaces.go , #models.go #scann
   - Cause: main.go is missed in context
 - Copilot.Claude: Fix design.md, main.go and scanner.go according to changes in requirements.md (source file extensions)👍
 
-### Large source files are avoided
+### 007: Large source files are avoided
 
 Input files that are larger than 128KB are not processed.
 
@@ -177,24 +177,24 @@ Input files that are larger than 128KB are not processed.
 
 - Copilot.Claude: scanner should Verbose number of encountered files and their total size, and number of skipped files and theit total size.👍
 
-### Only one RequirementSite is allowed per line
+### 008: Only one RequirementSite is allowed per line
 
 - Copilot.Claude: Only one RequirementSite is allowed per line.🏆
   - Context: requirements.md, errors.go, mdparser.go
   - See the response in the Intermediate results section
 - Copilot.Claude: Cover NewErrMultiSites by new TestParseRequirements_errors🏆
 
-### Error: Opening fence found without matching closing fence
+### 009: Error: Opening fence found without matching closing fence
 
 - Copilot.Claude: Implement "Opening fence found without matching closing fence"
   - Message includes line information about the opening fence🏆
   - See the response in the Intermediate results section
 
-### Test "unmatchedfence" in TestMdParser_ParseMarkdownFile_Errors
+### 010: Test "unmatchedfence" in TestMdParser_ParseMarkdownFile_Errors
 
 - Copilot.Claude: Test "unmatchedfence" in TestMdParser_ParseMarkdownFile_Errors
   
-### ActionAnnotate
+### 011: ActionAnnotate
 
 - Copilot.Claude: Generate Action.String() method: OK
 - Copilot.Claude: Is it clear how to process ActionAnnotate in applier.go. It is necessary to annotate RequirementSite and add a coverage footnote. Use RequirementSiteRegex to identify RequirementSite. Ask questions, if needed.🏆
@@ -207,7 +207,7 @@ Input files that are larger than 128KB are not processed.
     - Or do we need to construct it from some components?
     - Should we maintain any specific order of footnotes?
 
-### reqmdfiles => reqmd.json
+### 012: reqmdfiles => reqmd.json
 
 - CopilotAgent.Claude: Switch from reqmdfiles.json to reqmd.json🤔
   - Nothing on context
@@ -217,7 +217,7 @@ Input files that are larger than 128KB are not processed.
 - CopilotAgent.Claude: Fix Test_ParseCoverageFootnote.👍
 - Copilot.Claude: Implement custom JSON serialization for Reqmdjson to meet the requirements.👍
 
-### Design: Changes processing
+### 013: Design: Changes processing
 
 - Me: design.md/Changes processing
 - Me: loop
@@ -242,7 +242,7 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
    This logic appears correct - unlike my earlier concern. When there are coverers, the status changes to "covered", and when there are no coverers, it changes to "uncvrd".	 
 ```
 
-### Construction: Changes processing
+### 014: Construction: Changes processing
 
 - CopilotAgent.Claude: Implement the `design.md/##Changes processing` for the analyzer.🤔
   - In general it is ok, but the processing for ActionAddCoverer, ActionRemoveCoverer are missing.
@@ -273,13 +273,13 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
 - CopilotAgent.Claude: Generate tests to cover semantic errors in analyzer_test.go. Do not use table tests, use separate Run for each error👍
 - CopilotAgent.Claude: analyzer_test.go: Construct tests to cover ActionFootnote and ActionUpdateStatus.  Do not use table tests, use separate Runs. Construct new helper functions to create FileStructures and other structs, if needed.
 
-### Dry run option
+### 015: Dry run option
 
 - Copilot.Claude: Add dry-run option, similar to git,  to requirements.md. Implement it in main.go, applier.go. Applier shall just output all actions, like in verbode mode🤔
   - Oops: I want to  pass an argument to the Applier factory, not add new method to the Applier interface
 - Copilot.Claude: Add `--dry-run` option, similar to git,  to requirements.md. Implement it in main.go, applier.go. Applier shall just output all actions, like in verbode mode. Pass dry run option to the Applier factory.
 
-### `func applyMdActions(_ FilePath, _ []MdAction) error`
+### 016: `func applyMdActions(_ FilePath, _ []MdAction) error`
 
 - Copilot.Claude: Implement `func applyMdActions`. Do not create tests yet.🤔
   - Context: applier.go, models.go
@@ -293,14 +293,33 @@ Yes, I have reviewed the Changes Processing section in detail and I see a few po
   - Cool, but deprecated functions like ioutil.ReadAll were used
 - CopilotAgent.Claude: suggest a plan to test ITracer
 
-### Apply Reqmdjson actions
+### 017: Apply Reqmdjson actions
 
 - Me: loop
   - Copilot.o1: Is `design.md/### Apply Regmdjson actions` clear to implement applyReqmdjsons()? Ask questions if needed.🤔
     - Context: design.md, analyzer.go, applier.go, models.go
   - Copilot.CLaude: Is `design.md/### Apply Regmdjson actions` clear to implement applyReqmdjsons()? Ask questions if needed.
 
-### Run against a real project and fix issues (3h)
+### 018: Run against a real project and fix issues (3h)
+
+### 019: CoverageFootnoteReference shall not use RequirementSiteID
+
+Lexical element:
+
+```ebnf
+CoverageFootnoteID = "cf" Number
+```
+
+```ebnf
+CoverageFootnoteReference = "[^" CoverageFootnoteID "]
+CoverageFootnote = "[^" CoverageFootnoteID "]" ":" "`[" CoverageFootnoteHint "]`" [Coverers]
+```
+
+Implementation requirements:
+
+- CoverageFootnoteID shall be generated by the Analyzer
+  - CoverageFootnoteID shall be unique within a file
+  - For each RequiremntID, maximum CoverageFootnoteID shall be found and then incremented
 
 --------------------
 
@@ -334,7 +353,7 @@ line := "[^~REQ002~]: [~com.example.basic~impl][folder1/filename1:line1:impl](ht
 		assert.Len(t, basicFile.CoverageFootnotes, 1, "should have 1 coverage footnote")
 		if len(basicFile.CoverageFootnotes) > 0 {
 			footnote := basicFile.CoverageFootnotes[0]
-			assert.Equal(t, "REQ002", footnote.RequirementID, "incorrect requirement ID in footnote")
+			assert.Equal(t, "REQ002", footnote.RequirementId, "incorrect requirement ID in footnote")
 			assert.Equal(t, "com.example.basic", footnote.PackageID, "incorrect package ID in footnote")
 
 			require.Len(t, footnote.Coverers, 2, "should have 2 coverage references")

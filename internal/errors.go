@@ -22,15 +22,6 @@ func NewErrReqIdent(filePath string, line int) ProcessingError {
 	}
 }
 
-func NewErrRequirementSiteIDEqual(filePath string, line int, RequirementSiteID1, RequirementSiteID2 string) ProcessingError {
-	return ProcessingError{
-		Code:     "reqsiteid",
-		FilePath: filePath,
-		Line:     line,
-		Message:  "RequirementSiteID from RequirementSiteLabel and CoverageFootnoteReference shall be equal: " + RequirementSiteID1 + " != " + RequirementSiteID2,
-	}
-}
-
 // CoverageStatusWord shall be "covered" or "uncvrd"
 func NewErrCoverageStatusWord(filePath string, line int, CoverageStatusWord string) ProcessingError {
 	return ProcessingError{
@@ -73,12 +64,12 @@ func NewErrUnmatchedFence(filePath string, openFenceLine int) ProcessingError {
 
 // ********** Semantic errors
 
-func NewErrDuplicateRequirementID(filePath1 string, line1 int, filePath2 string, line2 int, reqID string) ProcessingError {
+func NewErrDuplicateRequirementId(filePath1 string, line1 int, filePath2 string, line2 int, reqID RequirementId) ProcessingError {
 	return ProcessingError{
 		Code:     "dupreqid",
 		FilePath: filePath1,
 		Line:     line1,
-		Message: fmt.Sprintf("Duplicate RequirementID detected:\n\t%s\n\t%s:%d",
+		Message: fmt.Sprintf("Duplicate RequirementId detected:\n\t%s\n\t%s:%d",
 			reqID, filePath2, line2),
 	}
 }

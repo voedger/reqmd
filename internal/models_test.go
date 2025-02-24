@@ -26,7 +26,7 @@ func TestReqmdjson_UnmarshalJSON(t *testing.T) {
 				}
 			}`,
 			want: Reqmdjson{
-				FileURL2FileHash: map[string]string{
+				FileUrl2FileHash: map[string]string{
 					"https://github.com/voedger/voedger/blob/main/pkg/api/handler.go":      "979d75b2c7da961f94396ce2b286e7389eb73d75",
 					"https://github.com/voedger/voedger/blob/main/pkg/api/handler_test.go": "845a23c8f9d6a8b7e9c2d4f5a6b7c8d9e0f1a2b3",
 				},
@@ -36,7 +36,7 @@ func TestReqmdjson_UnmarshalJSON(t *testing.T) {
 			name: "empty file hashes",
 			json: `{"FileURL2FileHash":{}}`,
 			want: Reqmdjson{
-				FileURL2FileHash: map[string]string{},
+				FileUrl2FileHash: map[string]string{},
 			},
 		},
 		{
@@ -57,14 +57,14 @@ func TestReqmdjson_UnmarshalJSON(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.want.FileURL2FileHash, got.FileURL2FileHash)
+			assert.Equal(t, tt.want.FileUrl2FileHash, got.FileUrl2FileHash)
 		})
 	}
 }
 
 func TestReqmdjson_MarshalJSON_sorted(t *testing.T) {
 	input := Reqmdjson{
-		FileURL2FileHash: map[string]string{
+		FileUrl2FileHash: map[string]string{
 			// Deliberately not in lexical order
 			"https://github.com/org/repo/blob/main/zzz/last.go":      "hash20",
 			"https://github.com/org/repo/blob/main/src/app.go":       "hash10",
@@ -93,7 +93,7 @@ func TestReqmdjson_MarshalJSON_sorted(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify exact number of entries
-	assert.Equal(t, 20, len(input.FileURL2FileHash), "should have exactly 20 entries")
+	assert.Equal(t, 20, len(input.FileUrl2FileHash), "should have exactly 20 entries")
 
 	// Unmarshal to verify structure
 	var output Reqmdjson
@@ -101,11 +101,11 @@ func TestReqmdjson_MarshalJSON_sorted(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify content equality
-	assert.Equal(t, input.FileURL2FileHash, output.FileURL2FileHash)
+	assert.Equal(t, input.FileUrl2FileHash, output.FileUrl2FileHash)
 
 	// Extract and sort all keys
-	keys := make([]string, 0, len(input.FileURL2FileHash))
-	for k := range input.FileURL2FileHash {
+	keys := make([]string, 0, len(input.FileUrl2FileHash))
+	for k := range input.FileUrl2FileHash {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -221,22 +221,24 @@ func TestFormatCoverageFootnote(t *testing.T) {
 		{
 			name: "no coverers",
 			footnote: &CoverageFootnote{
-				PackageID:       "pkg1",
-				RequirementName: "REQ001",
+				PackageID:          "pkg1",
+				CoverageFootnoteID: "001",
+				RequirementName:    "REQ001",
 			},
-			want: "[^~REQ001~]: `[~pkg1/REQ001~impl]`",
+			want: "[^001]: `[~pkg1/REQ001~impl]`",
 		},
 		{
 			name: "with sorted coverers",
 			footnote: &CoverageFootnote{
-				RequirementName: "REQ001",
-				PackageID:       "pkg2",
+				CoverageFootnoteID: "002",
+				PackageID:          "pkg2",
+				RequirementName:    "REQ001",
 				Coverers: []Coverer{
 					{CoverageLabel: "b.go:1:test", CoverageUrL: "url2"},
 					{CoverageLabel: "a.go:1:impl", CoverageUrL: "url1"},
 				},
 			},
-			want: "[^~REQ001~]: `[~pkg2/REQ001~impl]` [a.go:1:impl](url1), [b.go:1:test](url2)",
+			want: "[^002]: `[~pkg2/REQ001~impl]` [a.go:1:impl](url1), [b.go:1:test](url2)",
 		},
 	}
 

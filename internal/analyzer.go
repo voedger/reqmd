@@ -9,8 +9,9 @@ import (
 )
 
 type analyzer struct {
-	coverages        map[RequirementID]*requirementCoverage // RequirementID -> RequirementCoverage
-	changedFootnotes map[RequirementID]bool
+	coverages         map[RequirementId]*requirementCoverage // RequirementId -> RequirementCoverage
+	changedFootnotes  map[RequirementId]bool
+	maxFootnoteIntIds map[FilePath]int // Track max footnote int id per file
 }
 
 type requirementCoverage struct {
@@ -22,8 +23,9 @@ type requirementCoverage struct {
 
 func NewAnalyzer() IAnalyzer {
 	return &analyzer{
-		coverages:        make(map[RequirementID]*requirementCoverage),
-		changedFootnotes: make(map[RequirementID]bool),
+		coverages:         make(map[RequirementId]*requirementCoverage),
+		changedFootnotes:  make(map[RequirementId]bool),
+		maxFootnoteIntIds: make(map[FilePath]int),
 	}
 }
 
@@ -57,6 +59,13 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 			coverageStatus = CoverageStatusWordCovered
 		}
 
+		var footnoteId CoverageFootnoteId
+		if !coverage.Site.HasAnnotationRef {
+			footnoteId = a.nextFootnoteId(coverage.FileStructure.Path)
+		} else {
+			footnoteId = coverage.Site.CoverageFootnoteID
+		}
+
 		// Check if site action is needed
 		if !coverage.Site.HasAnnotationRef || coverage.Site.CoverageStatusWord != coverageStatus {
 			siteAction := MdAction{
@@ -64,7 +73,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 				Path:            coverage.FileStructure.Path,
 				Line:            coverage.Site.Line,
 				RequirementName: coverage.Site.RequirementName,
-				Data:            FormatRequirementSite(coverage.Site.RequirementName, coverageStatus),
+				Data:            FormatRequirementSite(coverage.Site.RequirementName, coverageStatus, footnoteId),
 			}
 			// Add actions to result
 			result.MdActions[coverage.FileStructure.Path] = append(
@@ -80,9 +89,10 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 
 			// Create footnote action
 			newCf := &CoverageFootnote{
-				PackageID:       coverage.FileStructure.PackageID,
-				RequirementName: coverage.Site.RequirementName,
-				Coverers:        make([]Coverer, len(coverage.NewCoverers)),
+				PackageID:          coverage.FileStructure.PackageID,
+				CoverageFootnoteID: footnoteId,
+				Coverers:           make([]Coverer, len(coverage.NewCoverers)),
+				RequirementName:    coverage.Site.RequirementName,
 			}
 			for i, c := range coverage.NewCoverers {
 				newCf.Coverers[i] = *c
@@ -97,7 +107,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 
 			// Find annotation line, keep 0 if not found
 			for _, cf := range coverage.FileStructure.CoverageFootnotes {
-				if cf.RequirementName == coverage.Site.RequirementName {
+				if cf.CoverageFootnoteID == coverage.Site.CoverageFootnoteID {
 					footnoteAction.Line = cf.Line
 					break
 				}
@@ -135,14 +145,14 @@ func (a *analyzer) analyzeReqmdjsons(result *AnalyzerResult) {
 			// Initialize Reqmdjson for this folder if not exists
 			if _, exists := allJsons[folder]; !exists {
 				allJsons[folder] = &Reqmdjson{
-					FileURL2FileHash: make(map[string]string),
+					FileUrl2FileHash: make(map[string]string),
 				}
 			}
 
 			// Add FileURLs and hashes from current coverers
 			for _, c := range coverage.CurrentCoverers {
 				fileURL := FileUrl(c.CoverageUrL)
-				allJsons[folder].FileURL2FileHash[fileURL] = c.FileHash
+				allJsons[folder].FileUrl2FileHash[fileURL] = c.FileHash
 			}
 		}
 	}
@@ -155,7 +165,7 @@ func (a *analyzer) analyzeReqmdjsons(result *AnalyzerResult) {
 			// Initialize Reqmdjson for this folder if not exists
 			if _, exists := allJsons[folder]; !exists {
 				allJsons[folder] = &Reqmdjson{
-					FileURL2FileHash: make(map[string]string),
+					FileUrl2FileHash: make(map[string]string),
 				}
 			}
 
@@ -165,7 +175,7 @@ func (a *analyzer) analyzeReqmdjsons(result *AnalyzerResult) {
 			// Add FileURLs and hashes from new coverers
 			for _, c := range coverage.NewCoverers {
 				fileURL := FileUrl(c.CoverageUrL)
-				allJsons[folder].FileURL2FileHash[fileURL] = c.FileHash
+				allJsons[folder].FileUrl2FileHash[fileURL] = c.FileHash
 			}
 		}
 	}
@@ -188,12 +198,23 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 				continue
 			}
 
+			// Track max footnote int Id in this file
+			for _, cf := range file.CoverageFootnotes {
+				intId, err := strconv.Atoi(string(cf.CoverageFootnoteID))
+				if err != nil {
+					continue
+				}
+				if intId > a.maxFootnoteIntIds[file.Path] {
+					a.maxFootnoteIntIds[file.Path] = intId
+				}
+			}
+
 			for _, req := range file.Requirements {
-				reqID := file.PackageID + "/" + req.RequirementName
+				var reqID RequirementId = RequirementId(file.PackageID + "/" + string(req.RequirementName)) // FIXME make NewRequirementId
 
 				// Check for duplicates using coverages map
 				if existing, exists := a.coverages[reqID]; exists {
-					*errors = append(*errors, NewErrDuplicateRequirementID(
+					*errors = append(*errors, NewErrDuplicateRequirementId(
 						existing.FileStructure.Path, existing.Site.Line,
 						file.Path, req.Line,
 						reqID))
@@ -209,7 +230,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 
 				// Process existing coverage footnotes
 				for _, footnote := range file.CoverageFootnotes {
-					if footnote.RequirementName == req.RequirementName {
+					if footnote.CoverageFootnoteID == req.CoverageFootnoteID {
 						// Convert []Coverer to []*Coverer
 						coverage.CurrentCoverers = make([]*Coverer, len(footnote.Coverers))
 						for i := range footnote.Coverers {
@@ -227,7 +248,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 	for _, file := range files {
 		if file.Type == FileTypeSource {
 			for _, tag := range file.CoverageTags {
-				if coverage, exists := a.coverages[tag.RequirementID]; exists {
+				if coverage, exists := a.coverages[tag.RequirementId]; exists {
 					coverer := &Coverer{
 						CoverageLabel: file.RelativePath + ":" + fmt.Sprint(tag.Line) + ":" + tag.CoverageType,
 						CoverageUrL:   file.FileURL() + "#L" + strconv.Itoa(tag.Line),
@@ -240,6 +261,18 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 	}
 
 	return nil
+}
+
+// Finds the next available footnote ID for a given file
+// nolint
+func (a *analyzer) nextFootnoteId(filePath FilePath) CoverageFootnoteId {
+	currentMax, ok := a.maxFootnoteIntIds[filePath]
+	if !ok {
+		currentMax = 0
+	}
+	nextId := currentMax + 1
+	a.maxFootnoteIntIds[filePath] = nextId
+	return CoverageFootnoteId(strconv.Itoa(nextId))
 }
 
 func sortCoverersByFileHash(coverers []*Coverer) {

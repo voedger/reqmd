@@ -140,9 +140,9 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 
 		req := RequirementSite{
 			FilePath:            filePath,
-			RequirementName:     match[1],
+			RequirementName:     RequirementName(match[1]),
 			CoverageStatusWord:  CoverageStatusWord(match[2]),
-			ReferenceName:       match[3],
+			CoverageFootnoteID:  CoverageFootnoteId(match[3]),
 			CoverageStatusEmoji: CoverageStatusEmoji(match[4]),
 			Line:                lineNum,
 			HasAnnotationRef:    match[3] != "",
@@ -155,10 +155,6 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 			return requirements
 		}
 
-		if req.HasAnnotationRef && (req.RequirementName != req.ReferenceName) {
-			*errors = append(*errors, NewErrRequirementSiteIDEqual(filePath, req.Line, req.RequirementName, req.ReferenceName))
-			return requirements
-		}
 		requirements = append(requirements, req)
 	}
 
@@ -170,10 +166,10 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 	matches := CoverageFootnoteRegex.FindStringSubmatch(line)
 	if len(matches) > 0 {
 		footnote = &CoverageFootnote{
-			FilePath:        filePath,
-			RequirementName: matches[1],
-			PackageID:       matches[2],
-			Line:            lineNum,
+			FilePath:           filePath,
+			CoverageFootnoteID: CoverageFootnoteId(matches[1]),
+			PackageID:          matches[2],
+			Line:               lineNum,
 		}
 
 		// Parse coverers if present
@@ -195,7 +191,7 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 					}
 					fileURL := parsedURL.Scheme + "://" + parsedURL.Host + parsedURL.Path
 					if mctx != nil && mctx.rfiles != nil {
-						coverer.FileHash = mctx.rfiles.FileURL2FileHash[fileURL]
+						coverer.FileHash = mctx.rfiles.FileUrl2FileHash[fileURL]
 					}
 					footnote.Coverers = append(footnote.Coverers, coverer)
 				}

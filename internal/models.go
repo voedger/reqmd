@@ -18,8 +18,9 @@ const (
 	CoverageStatusWordUncvrd  CoverageStatusWord = "uncvrd"
 )
 
-type RequirementID = string
-type RequirementName = string
+type RequirementName string
+type RequirementId string
+type CoverageFootnoteId string
 type FilePath = string
 type FolderPath = string
 
@@ -62,8 +63,8 @@ func (f *FileStructure) FileURL() string {
 type RequirementSite struct {
 	FilePath            string
 	Line                int                // line number where the requirement is defined/referenced
-	RequirementName     string             // e.g., "Post.handler"
-	ReferenceName       string             // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
+	RequirementName     RequirementName    // e.g., "Post.handler"
+	CoverageFootnoteID  CoverageFootnoteId // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
 	CoverageStatusWord  CoverageStatusWord // "covered", "uncvrd", or empty
 	CoverageStatusEmoji CoverageStatusEmoji
 	HasAnnotationRef    bool // true if it already has coverage annotation reference, false if it’s bare
@@ -73,43 +74,44 @@ var RequirementSiteRegex = regexp.MustCompile(
 	"`~([^~]+)~`" + // RequirementSiteLabel = "`" "~" RequirementName "~" "`"
 		"(?:" + // Optional group for coverage status and footnote
 		"\\s*([a-zA-Z]+)?" + // Optional CoverageStatusWord
-		"\\s*\\[\\^~([^~]+)~\\]" + // CoverageFootnoteReference
+		"\\s*\\[\\^([^\\]]+)\\]" + // CoverageFootnoteReference
 		"\\s*(✅|❓)?" + // Optional CoverageStatusEmoji
 		")?")
 
 // Build a string representation of the RequirementSite according to the requirements
 // CoverageStatusEmoji is ✅ for "covered", and ❓ for "uncvrd"
-func FormatRequirementSite(requirementName string, coverageStatusWord CoverageStatusWord) string {
-	result := fmt.Sprintf("`~%s~`", requirementName)
+func FormatRequirementSite(requirementName RequirementName, coverageStatusWord CoverageStatusWord, footnoteId CoverageFootnoteId) string {
+	lbl := fmt.Sprintf("`~%s~`", requirementName)
 
 	emoji := CoverageStatusEmojiUncvrd
 	if coverageStatusWord == CoverageStatusWordCovered {
 		emoji = CoverageStatusEmojiCovered
 	}
 
-	return fmt.Sprintf("%s%s[^~%s~]%s", result, coverageStatusWord, requirementName, emoji)
+	return fmt.Sprintf("%s%s[^%s]%s", lbl, coverageStatusWord, footnoteId, emoji)
 }
 
 // CoverageTag represents a coverage marker found in source code.
 type CoverageTag struct {
-	RequirementID RequirementID // e.g., "server.api.v2/Post.handler"
+	RequirementId RequirementId // e.g., "server.api.v2/Post.handler"
 	CoverageType  string        // e.g., "impl", "test"
 	Line          int           // line number where the coverage tag was found
 }
 
 // CoverageFootnote represents the footnote in Markdown that references coverage tags.
 type CoverageFootnote struct {
-	FilePath        string
-	Line            int
-	PackageID       string
-	RequirementName RequirementName
-	Coverers        []Coverer
+	FilePath           string
+	Line               int
+	PackageID          string
+	RequirementName    RequirementName
+	CoverageFootnoteID CoverageFootnoteId
+	Coverers           []Coverer
 }
 
 var (
-	// "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L10), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#l15)"
-	CoverageFootnoteRegex = regexp.MustCompile(`^\s*\[\^~([^~]+)~\]:\s*` + //Footnote reference
-		"`\\[~([^~/]+)/([^~]+)~([^\\]]+)?\\]`" + // Hint with package and coverage type
+	// "[^12]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L10), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#l15)"
+	CoverageFootnoteRegex = regexp.MustCompile(`^\s*\[\^([^\]]+)\]:\s*` + //Footnote reference
+		"(?:`\\[~([^~/]+)/([^~]+)~([^\\]]+)?\\]`)?" + // Hint with package and coverage type
 		`(?:\s*(.+))?\s*$`) // Optional coverer list
 	CovererRegex = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
 )
@@ -164,10 +166,10 @@ func FormatCoverageFootnote(cf *CoverageFootnote) string {
 	hint := fmt.Sprintf("`[~%s/%s~impl]`", cf.PackageID, cf.RequirementName)
 	if len(refs) > 0 {
 		coverersStr := strings.Join(refs, ", ")
-		res := fmt.Sprintf("[^~%s~]: %s %s", cf.RequirementName, hint, coverersStr)
+		res := fmt.Sprintf("[^%s]: %s %s", cf.CoverageFootnoteID, hint, coverersStr)
 		return res
 	}
-	return fmt.Sprintf("[^~%s~]: %s", cf.RequirementName, hint)
+	return fmt.Sprintf("[^%s]: %s", cf.CoverageFootnoteID, hint)
 }
 
 // Coverer represents one coverage reference within a footnote, e.g., [folder/file:line:impl](URL)
@@ -189,22 +191,22 @@ const ReqmdjsonFileName = "reqmd.json"
 
 // Reqmdjson models the structure of the reqmd.json file.
 type Reqmdjson struct {
-	FileURL2FileHash map[string]string //
+	FileUrl2FileHash map[string]string //
 }
 
 // MarshalJSON implements custom JSON serialization for Reqmdjson
 // to ensure FileURLs are ordered lexically
 func (r *Reqmdjson) MarshalJSON() ([]byte, error) {
 	// Get all keys and sort them
-	keys := make([]string, 0, len(r.FileURL2FileHash))
-	for k := range r.FileURL2FileHash {
+	keys := make([]string, 0, len(r.FileUrl2FileHash))
+	for k := range r.FileUrl2FileHash {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
 	// Build ordered map manually
 	var b strings.Builder
-	b.WriteString(`{"FileURL2FileHash":{`)
+	b.WriteString(`{"FileUrl2FileHash":{`)
 	for i, k := range keys {
 		if i > 0 {
 			b.WriteString(",")
@@ -214,7 +216,7 @@ func (r *Reqmdjson) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		valueJSON, err := json.Marshal(r.FileURL2FileHash[k])
+		valueJSON, err := json.Marshal(r.FileUrl2FileHash[k])
 		if err != nil {
 			return nil, err
 		}
@@ -241,7 +243,7 @@ func (r *Reqmdjson) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
 	}
-	r.FileURL2FileHash = temp.FileHashes
+	r.FileUrl2FileHash = temp.FileHashes
 	return nil
 }
 
@@ -290,7 +292,7 @@ type MdAction struct {
 	Path            string       // file path
 	Line            int          // the line number where the change is applied. 0 means the
 	Data            string       // new data (if any)
-	RequirementName RequirementID
+	RequirementName RequirementName
 }
 
 // String returns a human-readable representation of the Action

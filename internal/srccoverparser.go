@@ -61,7 +61,7 @@ func ParseCoverageTags(filePath, line string, lineNum int) []CoverageTag {
 	for _, match := range matches {
 		if len(match) == 4 {
 			tag := CoverageTag{
-				RequirementID: match[1] + "/" + match[2],
+				RequirementId: RequirementId(match[1] + "/" + match[2]),
 				CoverageType:  match[3],
 				Line:          lineNum,
 			}
