@@ -9,7 +9,12 @@ import (
 )
 
 type analyzer struct {
-	coverages         map[RequirementId]*requirementCoverage // RequirementId -> RequirementCoverage
+	coverages map[RequirementId]*requirementCoverage // RequirementId -> RequirementCoverage
+
+	// RequirementIds sorted by position in the file
+	// Position is coverages[RequirementId]Site.FilePath + coverages[RequirementId]Site.Line
+	idsSortedByPos []RequirementId
+
 	changedFootnotes  map[RequirementId]bool
 	maxFootnoteIntIds map[FilePath]int // Track max footnote int id per file
 }
@@ -40,15 +45,40 @@ func (a *analyzer) Analyze(files []FileStructure) (*AnalyzerResult, error) {
 		return result, err
 	}
 
+	a.buildIdsSortedByPos()
+
 	a.analyzeMdActions(result)
 	a.analyzeReqmdjsons(result)
 
 	return result, nil
 }
 
+func (a *analyzer) buildIdsSortedByPos() {
+	// Create slice with all requirement IDs
+	a.idsSortedByPos = make([]RequirementId, 0, len(a.coverages))
+	for reqId := range a.coverages {
+		a.idsSortedByPos = append(a.idsSortedByPos, reqId)
+	}
+
+	// Sort by file path + line number
+	sort.Slice(a.idsSortedByPos, func(i, j int) bool {
+		reqI := a.coverages[a.idsSortedByPos[i]]
+		reqJ := a.coverages[a.idsSortedByPos[j]]
+
+		// Compare file paths first
+		if reqI.Site.FilePath != reqJ.Site.FilePath {
+			return reqI.Site.FilePath < reqJ.Site.FilePath
+		}
+
+		// If same file, compare line numbers
+		return reqI.Site.Line < reqJ.Site.Line
+	})
+}
+
 func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 	// Process each coverage to generate actions
-	for requirementID, coverage := range a.coverages {
+	for _, requirementId := range a.idsSortedByPos {
+		coverage := a.coverages[requirementId]
 		// Sort both lists by FileHash for comparison
 		sortCoverersByFileHash(coverage.CurrentCoverers)
 		sortCoverersByFileHash(coverage.NewCoverers)
@@ -85,7 +115,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 		// Footnote action is needed if coverers are different or site is not annotated
 		if !areCoverersEqualByHashes(coverage.CurrentCoverers, coverage.NewCoverers) || coverage.CurrentCoverers == nil {
 
-			a.changedFootnotes[requirementID] = true
+			a.changedFootnotes[requirementId] = true
 
 			// Create footnote action
 			newCf := &CoverageFootnote{

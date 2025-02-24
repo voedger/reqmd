@@ -191,6 +191,7 @@ Requirements:
 - If the generated footnote is the first one in the file, an empty line shall be added before it
 - CoverageFootnoteId for new footnotes are calculated starting from maxFootnoteIntId
 - maxFootnoteIntId is the maximum integer value of all CoverageFootnoteIds mentioned in RequirementSites and CoverageFootnotes
+- New CoverageFootnotes shall be added in the order of the appearance of the appropriate RequirementSites
 
 ## Source Files
 
