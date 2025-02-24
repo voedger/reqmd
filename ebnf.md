@@ -130,8 +130,37 @@ Example of an UncoveredAnnotatedRequirementSite:
 
 ### CoverageFootnote
 
-CoverageFootnote contains a CoverageFootnoteHint and an optional list of Coverers. A Coverer contains "[" CoverageLabel "]" followed by "(" CoverageURL ")". An example:
+CoverageFootnote contains a CoverageFootnoteHint and an optional list of Coverers. A Coverer contains "[" CoverageLabel "]" followed by "(" CoverageURL ")".
 
+An example:
+```markdown
+[^~Post.handler~]: `[~server.api.v2/Post.handler~impl]`[folder1/filename1:line1:impl](CoverageURL1), [folder2/filename2:line2:test](CoverageURL2)...
+```
+
+Where:
+
+- "`[~server.api.v2/Post.handler~impl]`" - CoverageFootnoteHint
+- `[folder1/filename1:line1:impl](CoverageURL1)` - Coverer
+  - `folder1/filename1:line1:impl` - CoverageLabel
+  - `CoverageURL1` - CoverageURL
+- `[folder2/filename2:line2:test](CoverageURL2)` - Coverer
+  - `folder2/filename2:line2:test` - CoverageLabel
+  - `CoverageURL2` - CoverageURL
+
+An example of CoverageURL:
+
+```text
+https://github.com/voedger/voedger/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/pkg/sys/sys.vsql#L4
+```
+
+Where:
+
+- `https://github.com/voedger/voedger/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/pkg/sys/sys.vsql` - FileURL
+- `pkg/sys/sys.vsql` - FilePath
+- `979d75b2c7da961f94396ce2b286e7389eb73d75` - CommitHash
+- `L4` - CoverageArea  
+
+Syntax:
 ```ebnf
   CoverageFootnote = "[^" CoverageFootnoteID "]" ":" "`[" CoverageFootnoteHint "]`" [Coverers] .
   CoverageFootnoteHint = "~" PackageID "/" RequirementName "~" CoverageType .
@@ -156,59 +185,12 @@ CoverageFootnote contains a CoverageFootnoteHint and an optional list of Coverer
   CoverageArea   = "L" Number .
 ```
 
-Coverers requirements:
+Requirements:
 
-- Coverers shall be sorted by CoverageType, then by FilePath, then by Number, then by CoverageURL.
-
-An example:
-
-```markdown
-[^~Post.handler~]: `[~server.api.v2/Post.handler~impl]`[folder1/filename1:line1:impl](CoverageURL1), [folder2/filename2:line2:test](CoverageURL2)...
-```
-
-Where:
-
-- "`[~server.api.v2/Post.handler~impl]`" - CoverageFootnoteHint
-- `[folder1/filename1:line1:impl](CoverageURL1)` - Coverer
-  - `folder1/filename1:line1:impl` - CoverageLabel
-  - `CoverageURL1` - CoverageURL
-- `[folder2/filename2:line2:test](CoverageURL2)` - Coverer
-  - `folder2/filename2:line2:test` - CoverageLabel
-  - `CoverageURL2` - CoverageURL
-
-CoverageURL is defined as:
-
-```ebnf
-  CoverageURL  = FileURL [?plain=1] "#" CoverageArea .
-```
-
-FileURL:
-
-```ebnf
-
-  FileURL = GitHubURL | GitLabURL
-
-  /* GitHub URL Structure */
-  GitHubURL           = GitHubBaseURL "/blob/" CommitHash "/" FilePath
-  GitHubBaseURL       = "https://github.com/" Owner "/" Repository
-
-  /* GitLab URL Structure */
-  GitLabURL           = GitLabBaseURL "/-/blob/" CommitHash "/" FilePath
-  GitLabBaseURL       = "https://gitlab.com/" Owner "/" Repository
-```
-
-An example:
-
-```text
-https://github.com/voedger/voedger/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/pkg/sys/sys.vsql#L4
-```
-
-Where:
-
-- `https://github.com/voedger/voedger/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/pkg/sys/sys.vsql` - FileURL
-- `pkg/sys/sys.vsql` - FilePath
-- `979d75b2c7da961f94396ce2b286e7389eb73d75` - CommitHash
-- `L4` - CoverageArea
+- Coverers shall be sorted by CoverageType, then by FilePath, then by Number, then by CoverageURL
+- If the generated footnote is the first one in the file, an empty line shall be added before it
+- CoverageFootnoteId for new footnotes are calculated starting from maxFootnoteIntId
+- maxFootnoteIntId is the maximum integer value of all CoverageFootnoteIds mentioned in RequirementSites and CoverageFootnotes
 
 ## Source Files
 
@@ -234,6 +216,24 @@ Breakdown of the `[~server.api.v2/Post.handler~test]`:
 - `server.api.v2` is the PackageID.
 - `Post.handler` is the RequirementName.
 - `test` is the CoverageType that is Name.
+
+```ebnf
+  (* 
+    Source Files 
+    ------------ 
+    A source file is a text file that may contain one or more CoverageTags. 
+    A CoverageTag is written as a bracketed expression which links a requirement (by its package and name) 
+    to a coverage type. 
+    
+    For example: 
+        [~server.api.v2/Post.handler~test] 
+    Here, PackageID is "server.api.v2", RequirementName is "Post.handler", and CoverageType is "test". 
+  *)
+
+  SourceFile   = { SourceElement } ;
+  SourceElement = CoverageTag | PlainText ;
+  CoverageTag  = "[" "~" PackageID "/" RequirementName "~" CoverageType "]";
+```
 
 ## reqmd.json
 

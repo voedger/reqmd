@@ -42,7 +42,7 @@ func TestMdParser_ParseMarkdownFile(t *testing.T) {
 		assert.Len(t, basicFile.CoverageFootnotes, 1, "should have 1 coverage footnote")
 		if len(basicFile.CoverageFootnotes) > 0 {
 			footnote := basicFile.CoverageFootnotes[0]
-			assert.Equal(t, CoverageFootnoteId("~REQ002~"), footnote.CoverageFootnoteID, "incorrect CoverageFootnoteID in footnote")
+			assert.Equal(t, CoverageFootnoteId("~REQ002~"), footnote.CoverageFootnoteId, "incorrect CoverageFootnoteID in footnote")
 			assert.Equal(t, "com.example.basic", footnote.PackageID, "incorrect package ID in footnote")
 
 			require.Len(t, footnote.Coverers, 2, "should have 2 coverage references")
@@ -191,7 +191,7 @@ func Test_ParseCoverageFootnote(t *testing.T) {
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 
-	assert.Equal(t, CoverageFootnoteId("~REQ002~"), note.CoverageFootnoteID, "incorrect CoverageFootnoteID in footnote")
+	assert.Equal(t, CoverageFootnoteId("~REQ002~"), note.CoverageFootnoteId, "incorrect CoverageFootnoteID in footnote")
 	assert.Equal(t, "com.example.basic", note.PackageID, "incorrect package ID in footnote")
 
 	require.Len(t, note.Coverers, 2, "should have 2 coverage references")
@@ -215,7 +215,7 @@ func Test_ParseCoverageFootnote2(t *testing.T) {
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 
-	assert.Equal(t, CoverageFootnoteId("~VVMLeader.def~"), note.CoverageFootnoteID, "incorrect CoverageFootnoteID in footnote")
+	assert.Equal(t, CoverageFootnoteId("~VVMLeader.def~"), note.CoverageFootnoteId, "incorrect CoverageFootnoteID in footnote")
 	assert.Equal(t, "server.design.orch", note.PackageID, "incorrect package ID in footnote")
 
 	require.Len(t, note.Coverers, 1, "should have 1 coverer")
@@ -233,7 +233,7 @@ func Test_ParseCoverageFootnote_JustFootnote(t *testing.T) {
 	}
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
-	assert.Equal(t, CoverageFootnoteId("12"), note.CoverageFootnoteID)
+	assert.Equal(t, CoverageFootnoteId("12"), note.CoverageFootnoteId)
 	assert.Equal(t, "", note.PackageID)
 
 }

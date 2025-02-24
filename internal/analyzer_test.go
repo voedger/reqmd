@@ -120,7 +120,7 @@ func TestAnalyzer_ActionFootnote_Nan_20(t *testing.T) {
 
 	mdFile.CoverageFootnotes = []CoverageFootnote{
 		{
-			CoverageFootnoteID: CoverageFootnoteId("19"),
+			CoverageFootnoteId: CoverageFootnoteId("19"),
 			Line:               10 + 10,
 		},
 	}
@@ -258,7 +258,7 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordCovered)
 	mdFile.CoverageFootnotes = []CoverageFootnote{
 		{
-			CoverageFootnoteID: "REQ001",
+			CoverageFootnoteId: "REQ001",
 			Line:               20,
 			Coverers: []Coverer{
 				{
@@ -305,7 +305,7 @@ func TestAnalyzer_ActionFootnote_AnCov_SameHash(t *testing.T) {
 	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordCovered)
 	mdFile.CoverageFootnotes = []CoverageFootnote{
 		{
-			CoverageFootnoteID: "REQ001",
+			CoverageFootnoteId: "REQ001",
 			Line:               20,
 			Coverers: []Coverer{
 				{
@@ -366,7 +366,7 @@ func createMdStructureA(path, pkgID string, line int, reqName_ string, cw Covera
 	if cw == CoverageStatusWordCovered {
 		fs.CoverageFootnotes = []CoverageFootnote{
 			{
-				CoverageFootnoteID: footnoteID,
+				CoverageFootnoteId: footnoteID,
 				Line:               line + 10,
 				Coverers: []Coverer{
 					{

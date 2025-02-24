@@ -104,7 +104,7 @@ type CoverageFootnote struct {
 	Line               int
 	PackageID          string
 	RequirementName    RequirementName
-	CoverageFootnoteID CoverageFootnoteId
+	CoverageFootnoteId CoverageFootnoteId
 	Coverers           []Coverer
 }
 
@@ -166,10 +166,10 @@ func FormatCoverageFootnote(cf *CoverageFootnote) string {
 	hint := fmt.Sprintf("`[~%s/%s~impl]`", cf.PackageID, cf.RequirementName)
 	if len(refs) > 0 {
 		coverersStr := strings.Join(refs, ", ")
-		res := fmt.Sprintf("[^%s]: %s %s", cf.CoverageFootnoteID, hint, coverersStr)
+		res := fmt.Sprintf("[^%s]: %s %s", cf.CoverageFootnoteId, hint, coverersStr)
 		return res
 	}
-	return fmt.Sprintf("[^%s]: %s", cf.CoverageFootnoteID, hint)
+	return fmt.Sprintf("[^%s]: %s", cf.CoverageFootnoteId, hint)
 }
 
 // Coverer represents one coverage reference within a footnote, e.g., [folder/file:line:impl](URL)

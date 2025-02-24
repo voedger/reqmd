@@ -90,7 +90,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 			// Create footnote action
 			newCf := &CoverageFootnote{
 				PackageID:          coverage.FileStructure.PackageID,
-				CoverageFootnoteID: footnoteId,
+				CoverageFootnoteId: footnoteId,
 				Coverers:           make([]Coverer, len(coverage.NewCoverers)),
 				RequirementName:    coverage.Site.RequirementName,
 			}
@@ -107,7 +107,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 
 			// Find annotation line, keep 0 if not found
 			for _, cf := range coverage.FileStructure.CoverageFootnotes {
-				if cf.CoverageFootnoteID == coverage.Site.CoverageFootnoteID {
+				if cf.CoverageFootnoteId == coverage.Site.CoverageFootnoteID {
 					footnoteAction.Line = cf.Line
 					break
 				}
@@ -198,14 +198,28 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 				continue
 			}
 
-			// Track max footnote int Id in this file
-			for _, cf := range file.CoverageFootnotes {
-				intId, err := strconv.Atoi(string(cf.CoverageFootnoteID))
-				if err != nil {
-					continue
+			// Track max footnote int Id from both RequirementSites and CoverageFootnotes
+			{
+				updateMaxFootnoteId := func(id CoverageFootnoteId) {
+					intId, err := strconv.Atoi(string(id))
+					if err != nil {
+						return
+					}
+					if intId > a.maxFootnoteIntIds[file.Path] {
+						a.maxFootnoteIntIds[file.Path] = intId
+					}
 				}
-				if intId > a.maxFootnoteIntIds[file.Path] {
-					a.maxFootnoteIntIds[file.Path] = intId
+
+				// Check RequirementSites
+				for _, req := range file.Requirements {
+					if req.CoverageFootnoteID != "" {
+						updateMaxFootnoteId(req.CoverageFootnoteID)
+					}
+				}
+
+				// Check CoverageFootnotes
+				for _, cf := range file.CoverageFootnotes {
+					updateMaxFootnoteId(cf.CoverageFootnoteId)
 				}
 			}
 
@@ -230,7 +244,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 
 				// Process existing coverage footnotes
 				for _, footnote := range file.CoverageFootnotes {
-					if footnote.CoverageFootnoteID == req.CoverageFootnoteID {
+					if footnote.CoverageFootnoteId == req.CoverageFootnoteID {
 						// Convert []Coverer to []*Coverer
 						coverage.CurrentCoverers = make([]*Coverer, len(footnote.Coverers))
 						for i := range footnote.Coverers {
