@@ -329,6 +329,8 @@ Implementation requirements:
 - //TODO `~SendEMail.SendEmailToUser~`uncvrd[^~SendEMail.SendEmailToUser~]❓uncvrd[^111]❓
 - Path intersections: go run -C ../../reqmd . -v trace ${DRY_RUN} ../voedger-internals ../voedger-internals/reqman/.work/repos/voedger
 - Avoid .git, .* folders?
+- Handle changing package name
+- Support links like: https://github.com/voedger/voedger-internals/blob/3ccdc6074f12c800f092a55bf2b036d10a74443c/server/design/sequences.md?plain=1#L407
 
 ## Intermediate results
 
