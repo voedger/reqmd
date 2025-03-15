@@ -9,16 +9,17 @@ package systest
 
 // TestFixture represents a loaded test environment
 type TestFixture struct {
-	RootDir      string
-	MarkdownsDir string
-	SourcesDir   string
+	RootDir         string
+	RequirementsDir string
+	SourcesDir      string
+	GoldenDir       string
 }
 
 // TestFile represents a file to be created or modified in test fixtures
 type TestFile struct {
 	Path     string
 	Content  string
-	IsSource bool
+	IsSource bool // false means requirements file, true means source file
 }
 ```
 
@@ -57,23 +58,26 @@ func (l *FixtureLoader) LoadFixture(t *testing.T, fixtureName string) TestFixtur
 	rootDir := t.TempDir()
 	
 	// Create standard directory structure
-	mdDir := filepath.Join(rootDir, "markdowns")
+	reqDir := filepath.Join(rootDir, "requirements")
 	srcDir := filepath.Join(rootDir, "sources")
+	goldenDir := filepath.Join(rootDir, "golden")
 	
-	require.NoError(t, os.MkdirAll(mdDir, 0755))
+	require.NoError(t, os.MkdirAll(reqDir, 0755))
 	require.NoError(t, os.MkdirAll(srcDir, 0755))
+	require.NoError(t, os.MkdirAll(goldenDir, 0755))
 	
 	// Initialize git repositories
-	initGitRepo(t, mdDir)
+	initGitRepo(t, reqDir)
 	initGitRepo(t, srcDir)
 	
 	// Copy files from embedded filesystem to temp directory
-	copyFixtureFiles(t, l.fsys, fixtureName, mdDir, srcDir)
+	copyFixtureFiles(t, l.fsys, fixtureName, reqDir, srcDir, goldenDir)
 	
 	return TestFixture{
-		RootDir:      rootDir,
-		MarkdownsDir: mdDir,
-		SourcesDir:   srcDir,
+		RootDir:         rootDir,
+		RequirementsDir: reqDir,
+		SourcesDir:      srcDir,
+		GoldenDir:       goldenDir,
 	}
 }
 
@@ -83,7 +87,7 @@ func (l *FixtureLoader) ModifyFixture(t *testing.T, fixtureName string, modifica
 	
 	// Apply modifications
 	for _, mod := range modifications {
-		dir := fixture.MarkdownsDir
+		dir := fixture.RequirementsDir
 		if mod.IsSource {
 			dir = fixture.SourcesDir
 		}
@@ -104,8 +108,8 @@ func (l *FixtureLoader) ModifyFixture(t *testing.T, fixtureName string, modifica
 }
 
 // Helper functions
-func copyFixtureFiles(t *testing.T, fsys fs.FS, fixtureName string, mdDir, srcDir string) {
-	// Implementation for copying files from embedded filesystem
+func copyFixtureFiles(t *testing.T, fsys fs.FS, fixtureName string, reqDir, srcDir, goldenDir string) {
+	// Implementation for copying files from embedded filesystem to the appropriate directories
 }
 
 func initGitRepo(t *testing.T, dir string) {
@@ -122,54 +126,113 @@ func addToGit(t *testing.T, filePath string) {
 ```text
 c:\workspaces\work\reqmd\systest\fixtures\
 ├── basic\
-│   ├── markdowns\
+│   ├── requirements\
 │   │   └── requirements.md
-│   └── sources\
-│       └── src\
-│           └── impl.go
+│   ├── sources\
+│   │   └── src\
+│   │       └── impl.go
+│   └── golden\
+│       ├── requirements.md
+│       └── reqmdfiles.json
 ├── extensions\
-│   ├── markdowns\
+│   ├── requirements\
 │   │   └── requirements.md
-│   └── sources\
-│       └── src\
-│           ├── impl.go
-│           └── impl.js
+│   ├── sources\
+│   │   └── src\
+│   │       ├── impl.go
+│   │       └── impl.js
+│   └── golden\
+│       └── requirements.md
 ├── dry-run\
-│   ├── markdowns\
+│   ├── requirements\
 │   │   └── requirements.md
-│   └── sources\
-│       └── src\
-│           └── impl.go
+│   ├── sources\
+│   │   └── src\
+│   │       └── impl.go
+│   └── golden\
+│       └── output.txt
 ├── verbose\
-│   ├── markdowns\
+│   ├── requirements\
 │   │   └── requirements.md
-│   └── sources\
-│       └── src\
-│           └── impl.go
+│   ├── sources\
+│   │   └── src\
+│   │       └── impl.go
+│   └── golden\
+│       └── output.txt
 ├── errors\
 │   ├── duplicate\
-│   │   └── markdowns\
-│   │       ├── requirements.md
-│   │       └── other\
-│   │           └── requirements.md
+│   │   ├── requirements\
+│   │   │   ├── requirements.md
+│   │   │   └── other\
+│   │   │       └── requirements.md
+│   │   └── golden\
+│   │       └── error.txt
 │   ├── missing-package\
-│   │   └── markdowns\
-│   │       └── requirements.md
+│   │   ├── requirements\
+│   │   │   └── requirements.md
+│   │   └── golden\
+│   │       └── error.txt
 │   └── syntax\
-│       └── markdowns\
-│           └── requirements.md
+│       ├── requirements\
+│       │   └── requirements.md
+│       └── golden\
+│           └── error.txt
 └── multi-source\
-    ├── markdowns\
+    ├── requirements\
     │   └── requirements.md
-    ├── backend\
-    │   └── server.go
-    └── frontend\
-        └── client.ts
+    ├── sources\
+    │   ├── backend\
+    │   │   └── server.go
+    │   └── frontend\
+    │       └── client.ts
+    └── golden\
+        └── requirements.md
 ```
 
-## 3. Test Implementation Plan
+## 3. Reference File Comparison Helpers
 
-### 3.1 Basic Functionality Tests
+```go
+package systest
+
+import (
+	"flag"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+var updateReference = flag.Bool("update", false, "Update reference files instead of comparing")
+
+// CompareWithReference compares actual output with reference data
+func CompareWithReference(t *testing.T, actual []byte, fixture TestFixture, relativePath string) {
+	t.Helper()
+	
+	referencePath := filepath.Join(fixture.GoldenDir, relativePath)
+	
+	if *updateReference {
+		// Update reference data
+		err := os.MkdirAll(filepath.Dir(referencePath), 0755)
+		require.NoError(t, err, "Failed to create reference directory")
+		
+		err = os.WriteFile(referencePath, actual, 0644)
+		require.NoError(t, err, "Failed to write reference file")
+		return
+	}
+	
+	// Compare with reference data
+	expected, err := os.ReadFile(referencePath)
+	require.NoError(t, err, "Failed to read reference file: %s", referencePath)
+	
+	require.Equal(t, string(expected), string(actual), 
+		"Output didn't match reference data in %s", referencePath)
+}
+```
+
+## 4. Test Implementation Plan
+
+### 4.1 Basic Functionality Tests
 
 ```go
 package systest
@@ -191,29 +254,33 @@ func TestBasicTracing(t *testing.T) {
 	
 	// Run reqmd command
 	cmd := exec.Command("reqmd", "trace", 
-		fixture.MarkdownsDir,
+		fixture.RequirementsDir,
 		fixture.SourcesDir)
 	
 	output, err := cmd.CombinedOutput()
 	require.NoError(t, err, "reqmd trace command failed: %s", output)
 	
+	// Compare command output with reference data
+	CompareWithReference(t, output, fixture, "output.txt")
+	
 	// Verify markdown was updated correctly
-	updatedMd, err := os.ReadFile(filepath.Join(fixture.MarkdownsDir, "requirements.md"))
+	updatedMd, err := os.ReadFile(filepath.Join(fixture.RequirementsDir, "requirements.md"))
 	require.NoError(t, err)
 	
-	// Perform assertions on the updated content
-	mdContent := string(updatedMd)
-	assert.Contains(t, mdContent, "`~REQ001~`covered[^1]✅")
-	assert.Contains(t, mdContent, "`~REQ002~`covered[^2]✅")
-	assert.Contains(t, mdContent, "[^1]: `[~com.example.basic/REQ001~impl]`")
-	assert.Contains(t, mdContent, "[^2]: `[~com.example.basic/REQ002~test]`")
+	// Compare the updated markdown with reference file
+	CompareWithReference(t, updatedMd, fixture, "requirements.md")
 	
-	// Verify reqmdfiles.json exists
-	assert.FileExists(t, filepath.Join(fixture.MarkdownsDir, "reqmdfiles.json"))
+	// Verify reqmdfiles.json exists and matches reference
+	jsonData, err := os.ReadFile(filepath.Join(fixture.RequirementsDir, "reqmdfiles.json"))
+	require.NoError(t, err)
+	CompareWithReference(t, jsonData, fixture, "reqmdfiles.json")
+	
+	// Also perform basic file existence check for clarity
+	assert.FileExists(t, filepath.Join(fixture.RequirementsDir, "reqmdfiles.json"))
 }
 ```
 
-### 3.2 Command Line Options Tests
+### 4.2 Command Line Options Tests
 
 ```go
 package systest
@@ -234,19 +301,16 @@ func TestExtensionsOption(t *testing.T) {
 	
 	// Run with only .go extension
 	cmd := exec.Command("reqmd", "trace", "-e", ".go",
-		fixture.MarkdownsDir, 
+		fixture.RequirementsDir, 
 		fixture.SourcesDir)
 	
 	output, err := cmd.CombinedOutput()
 	require.NoError(t, err, "reqmd trace command failed: %s", output)
 	
-	// Verify only .go implementation was included
-	updatedMd, err := os.ReadFile(filepath.Join(fixture.MarkdownsDir, "requirements.md"))
+	// Verify results against reference file
+	updatedMd, err := os.ReadFile(filepath.Join(fixture.RequirementsDir, "requirements.md"))
 	require.NoError(t, err)
-	
-	mdContent := string(updatedMd)
-	assert.Contains(t, mdContent, "impl.go")
-	assert.NotContains(t, mdContent, "impl.js")
+	CompareWithReference(t, updatedMd, fixture, "requirements.md")
 }
 
 func TestDryRunOption(t *testing.T) {
@@ -254,23 +318,26 @@ func TestDryRunOption(t *testing.T) {
 	fixture := loader.LoadFixture(t, "dry-run")
 	
 	// Get original content
-	originalMd, err := os.ReadFile(filepath.Join(fixture.MarkdownsDir, "requirements.md"))
+	originalMd, err := os.ReadFile(filepath.Join(fixture.RequirementsDir, "requirements.md"))
 	require.NoError(t, err)
 	
 	// Run with dry-run flag
 	cmd := exec.Command("reqmd", "trace", "--dry-run",
-		fixture.MarkdownsDir,
+		fixture.RequirementsDir,
 		fixture.SourcesDir)
 	
 	output, err := cmd.CombinedOutput()
 	require.NoError(t, err, "reqmd trace command failed: %s", output)
 	
+	// Compare output with reference
+	CompareWithReference(t, output, fixture, "output.txt")
+	
 	// Verify file was not modified
-	afterMd, err := os.ReadFile(filepath.Join(fixture.MarkdownsDir, "requirements.md"))
+	afterMd, err := os.ReadFile(filepath.Join(fixture.RequirementsDir, "requirements.md"))
 	require.NoError(t, err)
 	
 	assert.Equal(t, string(originalMd), string(afterMd), "File should not be modified in dry run")
-	assert.NoFileExists(t, filepath.Join(fixture.MarkdownsDir, "reqmdfiles.json"))
+	assert.NoFileExists(t, filepath.Join(fixture.RequirementsDir, "reqmdfiles.json"))
 }
 
 func TestVerboseOption(t *testing.T) {
@@ -279,21 +346,18 @@ func TestVerboseOption(t *testing.T) {
 	
 	// Run with verbose flag
 	cmd := exec.Command("reqmd", "trace", "-v",
-		fixture.MarkdownsDir,
+		fixture.RequirementsDir,
 		fixture.SourcesDir)
 	
 	output, err := cmd.CombinedOutput()
 	require.NoError(t, err, "reqmd trace command failed: %s", output)
 	
-	// Check verbose output
-	outputStr := string(output)
-	assert.Contains(t, outputStr, "Scanning")
-	assert.Contains(t, outputStr, "Processing")
-	// Check for other expected verbose messages
+	// Compare verbose output with reference file
+	CompareWithReference(t, output, fixture, "output.txt")
 }
 ```
 
-### 3.3 Error Handling Tests
+### 4.3 Error Handling Tests
 
 ```go
 package systest
@@ -310,13 +374,14 @@ func TestDuplicateRequirementError(t *testing.T) {
 	fixture := loader.LoadFixture(t, "errors/duplicate")
 	
 	// Run command expecting error
-	cmd := exec.Command("reqmd", "trace", fixture.MarkdownsDir)
+	cmd := exec.Command("reqmd", "trace", fixture.RequirementsDir)
 	output, err := cmd.CombinedOutput()
 	
 	// Verify error behavior
 	assert.Error(t, err, "Command should fail with duplicate requirements")
-	assert.Contains(t, string(output), "duplicate")
-	assert.Contains(t, string(output), "REQ001")
+	
+	// Compare error output with reference
+	CompareWithReference(t, output, fixture, "error.txt")
 }
 
 func TestMissingPackageError(t *testing.T) {
@@ -324,26 +389,26 @@ func TestMissingPackageError(t *testing.T) {
 	fixture := loader.LoadFixture(t, "errors/missing-package")
 	
 	// Run command expecting error
-	cmd := exec.Command("reqmd", "trace", fixture.MarkdownsDir)
+	cmd := exec.Command("reqmd", "trace", fixture.RequirementsDir)
 	output, err := cmd.CombinedOutput()
 	
 	assert.Error(t, err)
-	assert.Contains(t, string(output), "shall define reqmd.package")
+	CompareWithReference(t, output, fixture, "error.txt")
 }
 
 func TestSyntaxError(t *testing.T) {
 	loader := NewFixtureLoader()
 	fixture := loader.LoadFixture(t, "errors/syntax")
 	
-	cmd := exec.Command("reqmd", "trace", fixture.MarkdownsDir)
+	cmd := exec.Command("reqmd", "trace", fixture.RequirementsDir)
 	output, err := cmd.CombinedOutput()
 	
 	assert.Error(t, err)
-	// Assert specific syntax error messages
+	CompareWithReference(t, output, fixture, "error.txt")
 }
 ```
 
-### 3.4 Complex Scenario Tests
+### 4.4 Complex Scenario Tests
 
 ```go
 package systest
@@ -354,7 +419,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -362,25 +426,22 @@ func TestMultipleSourceDirectories(t *testing.T) {
 	loader := NewFixtureLoader()
 	fixture := loader.LoadFixture(t, "multi-source")
 	
-	// Extract backend and frontend paths from the fixture
-	backendDir := filepath.Join(fixture.RootDir, "backend")
-	frontendDir := filepath.Join(fixture.RootDir, "frontend")
+	// Extract backend and frontend paths
+	backendDir := filepath.Join(fixture.SourcesDir, "backend")
+	frontendDir := filepath.Join(fixture.SourcesDir, "frontend")
 	
 	// Run reqmd with multiple source paths
 	cmd := exec.Command("reqmd", "trace",
-		fixture.MarkdownsDir,
+		fixture.RequirementsDir,
 		backendDir, frontendDir)
 	
 	output, err := cmd.CombinedOutput()
 	require.NoError(t, err, "reqmd trace command failed: %s", output)
 	
-	// Verify both implementations are referenced
-	updatedMd, err := os.ReadFile(filepath.Join(fixture.MarkdownsDir, "requirements.md"))
+	// Compare results with reference data
+	updatedMd, err := os.ReadFile(filepath.Join(fixture.RequirementsDir, "requirements.md"))
 	require.NoError(t, err)
-	
-	mdContent := string(updatedMd)
-	assert.Contains(t, mdContent, "server.go")
-	assert.Contains(t, mdContent, "client.ts")
+	CompareWithReference(t, updatedMd, fixture, "requirements.md")
 }
 
 func TestDynamicFixtureModification(t *testing.T) {
@@ -388,7 +449,7 @@ func TestDynamicFixtureModification(t *testing.T) {
 	loader := NewFixtureLoader()
 	fixture := loader.ModifyFixture(t, "basic", []TestFile{
 		{
-			Path: "requirements.md",
+			Path: "modified.md",
 			Content: `# Modified Requirements
 reqmd.package: com.example.modified
 
@@ -416,29 +477,29 @@ func TestFeatureTwo() {}
 	
 	// Run reqmd on the modified fixture
 	cmd := exec.Command("reqmd", "trace",
-		fixture.MarkdownsDir,
+		fixture.RequirementsDir,
 		fixture.SourcesDir)
 	
 	output, err := cmd.CombinedOutput()
 	require.NoError(t, err, "reqmd trace command failed: %s", output)
 	
-	// Verify results on the modified content
-	updatedMd, err := os.ReadFile(filepath.Join(fixture.MarkdownsDir, "requirements.md"))
+	// Verify results on the dynamically created file
+	updatedMd, err := os.ReadFile(filepath.Join(fixture.RequirementsDir, "modified.md"))
 	require.NoError(t, err)
 	
-	mdContent := string(updatedMd)
-	assert.Contains(t, mdContent, "`~MOD001~`covered")
-	assert.Contains(t, mdContent, "`~MOD002~`covered")
+	// For dynamic tests without a pre-defined reference file,
+	// we can still make specific assertions
+	assert.Contains(t, string(updatedMd), "`~MOD001~`covered")
+	assert.Contains(t, string(updatedMd), "`~MOD002~`covered")
 }
 ```
 
-### 3.5 Performance Tests
+### 4.5 Performance Tests
 
 ```go
 package systest
 
 import (
-	"fmt"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -455,17 +516,17 @@ func TestLargeScaleProcessing(t *testing.T) {
 	
 	// Create a large fixture programmatically
 	loader := NewFixtureLoader()
-	baseFixture := loader.LoadFixture(t, "basic")
+	fixture := loader.LoadFixture(t, "basic")
 	
 	// Generate many additional requirements and implementations
-	generateLargeTestData(t, baseFixture, 50, 200)
+	generateLargeTestData(t, fixture, 50, 200)
 	
 	startTime := time.Now()
 	
 	// Run reqmd on the large dataset
 	cmd := exec.Command("reqmd", "trace",
-		baseFixture.MarkdownsDir,
-		baseFixture.SourcesDir)
+		fixture.RequirementsDir,
+		fixture.SourcesDir)
 	
 	output, err := cmd.CombinedOutput()
 	require.NoError(t, err, "reqmd trace command failed: %s", output)
@@ -483,7 +544,7 @@ func generateLargeTestData(t *testing.T, fixture TestFixture, reqCount, fileCoun
 }
 ```
 
-## 4. Main Test Setup
+## 5. Main Test Setup
 
 ```go
 package systest
@@ -502,6 +563,7 @@ var reqmdBinary string
 
 func TestMain(m *testing.M) {
 	flag.StringVar(&reqmdBinary, "binary", "", "Path to reqmd binary to test")
+	flag.BoolVar(&updateReference, "update", false, "Update reference files instead of comparing")
 	flag.Parse()
 
 	// Build binary if not specified
@@ -549,16 +611,19 @@ func buildReqmdBinary() (string, error) {
 var execCommand = exec.Command
 ```
 
-## 5. Test Execution Strategy
+## 6. Test Execution Strategy
 
 1. **Development Process**:
-   - Create all fixture files first
+   - Create all fixture files first with proper directory structure
+   - Create reference output files (can be empty initially)
    - Implement fixture loading infrastructure
-   - Add one test category at a time, starting with basic functionality
+   - Run tests with `-update` flag to populate reference files
+   - Review reference files for correctness
    - Add more complex tests once basic functionality is verified
 
 2. **Running Tests**:
    - Standard tests: `go test ./systest`
+   - Update reference files: `go test ./systest -update`
    - Verbose mode: `go test -v ./systest`
    - Skip performance tests: `go test -short ./systest`
    - Test specific category: `go test ./systest -run TestBasic`
@@ -570,7 +635,8 @@ var execCommand = exec.Command
 
 This approach provides:
 
-- Clear separation between test data and test logic
+- Clear separation between test data, reference outputs, and test logic
 - Realistic test scenarios using real input files
-- Good maintainability with the ability to easily modify fixtures
+- Good maintainability with the ability to easily update reference files
 - Comprehensive coverage of the reqmd tool's functionality
+- Clear organization with three distinct directory types for each test case
