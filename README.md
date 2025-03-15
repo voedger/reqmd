@@ -1,7 +1,7 @@
 # reqmd
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/voedger/reqmd)](https://goreportcard.com/report/github.com/voedger/reqmd)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 **reqmd** is a command-line tool that traces requirements from Markdown documents to their coverage in source code. It automatically generates traceability links, ensuring seamless tracking between specifications and implementation.
 
