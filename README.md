@@ -1,7 +1,7 @@
 # reqmd
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/voedger/reqmd)](https://goreportcard.com/report/github.com/voedger/reqmd)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE.txt)
 
 **reqmd** is a command-line tool that traces requirements from Markdown documents to their coverage in source code. It automatically generates traceability links, ensuring seamless tracking between specifications and implementation.
 
@@ -73,7 +73,7 @@ Refer to [design.md](design.md) for detailed design decisions and architecture.
 
 ## Requirements & Dependencies
 
-- Go 1.18+
+- Go 1.23+
 
 ## Contributing
 
@@ -93,8 +93,8 @@ git checkout -b feature-new-enhancement
 
 ## License
 
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
+reqmd is released under the Apache 2.0 license. See [LICENSE.txt](LICENSE.txt)
 
 ## Acknowledgments
 
-Inspired by the need for better traceability between requirements and implementation in modern software projects.
+Notation is inspired by [OpenFastTrace](https://github.com/itsallcode/openfasttrace).
