@@ -321,6 +321,10 @@ Implementation requirements:
   - CoverageFootnoteID shall be unique within a file
   - For each RequiremntID, maximum CoverageFootnoteID shall be found and then incremented
 
+### 020: System tests
+
+- Chat.S37T: Create a plan how to build system tests.
+
 --------------------
 
 ## TODOs
