@@ -73,7 +73,7 @@ Refer to [design.md](design.md) for detailed design decisions and architecture.
 
 ## Requirements & Dependencies
 
-- Go 1.18+
+- Go 1.23+
 
 ## Contributing
 
@@ -93,8 +93,8 @@ git checkout -b feature-new-enhancement
 
 ## License
 
-reqmd is released under the Apache 2.0 license. See LICENSE.txt
+reqmd is released under the Apache 2.0 license. See [LICENSE.txt](LI)
 
 ## Acknowledgments
 
-Inspired by the need for better traceability between requirements and implementation in modern software projects.
+Notation is inspired by [OpenFastTrace](https://github.com/itsallcode/openfasttrace).
