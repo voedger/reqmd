@@ -93,7 +93,7 @@ git checkout -b feature-new-enhancement
 
 ## License
 
-reqmd is released under the Apache 2.0 license. See [LICENSE.txt](LI)
+reqmd is released under the Apache 2.0 license. See [LICENSE.txt](LICENSE.txt)
 
 ## Acknowledgments
 
