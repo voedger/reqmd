@@ -3,24 +3,6 @@ Copyright (c) 2025-present unTill Software Development Group B. V.
 This software is licensed under the Apache License, Version 2.0.
 See the LICENSE file for details.
 
----
-
-# Third-Party Notices and Acknowledgments
-
-This project includes third-party software components:
-
-1. **Library XYZ**  
-   - License: MIT License  
-   - Source: https://github.com/example/library  
-   - Copyright (c) 2020 John Doe  
-   - Original NOTICE: (if applicable, copy from upstream)
-
-2. **Library ABC**  
-   - License: BSD-3-Clause  
-   - Source: https://github.com/example/library2  
-   - Copyright (c) 2018 ACME Corp  
-   - Special Notice: (mention any required attributions)
-
----
-
-This NOTICE file is provided for informational purposes only and does not modify the Apache License 2.0 applied to this software.
+This NOTICE file is maintained in accordance with Apache License 2.0 Section 4(d).
+The presence of a third-party software notice here does not indicate an endorsement
+by the listed copyright holders.
