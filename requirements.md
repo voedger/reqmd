@@ -1,6 +1,6 @@
 # reqmd requirements
 
-## Overview
+## Introduction
 
 This document defines the requirements for a command-line tool that traces requirements from Markdown files to their corresponding coverage in source files. The tool establishes traceability links between requirement identifiers and coverage tags, automatically generating footnotes that link requirement identifiers to coverage tags.
 
