@@ -133,7 +133,7 @@ URL structure examples:
   - `FileStructure.RepoRootFolderURL`
   - `FileStructure.RelativePath`
 
-## Analyses and Applying
+## Analyse and Apply
 
 ### Problem statement
 
@@ -229,6 +229,16 @@ type Action struct {
     RequirementId   string        // Line is expected to contain this RequirementId
 }
 ```
+
+## System tests
+
+- System tests (SysTests) are located in the `internal/systest` package
+- Each SysTest has a symbolic TestID
+- Each SysTest has SysTestData located in `testdata/<TestID>` folder
+  - reqs: requirements
+  - src: source code
+  - golden: expected output
+- SysTest errors
 
 ## Implementation details
 
