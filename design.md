@@ -230,6 +230,8 @@ type Action struct {
 }
 ```
 
+---
+
 ## System tests
 
 ### Core principles
@@ -267,6 +269,8 @@ Elements specification:
 Requirements:
 
 - treqs are copied and processed in a temporary directory
+
+---
 
 ## Implementation details
 
