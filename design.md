@@ -232,13 +232,33 @@ type Action struct {
 
 ## System tests
 
+### Core principles:
+
 - System tests (SysTests) are located in the `internal/systest` package
 - Each SysTest has a symbolic TestID
-- Each SysTest has SysTestData located in `testdata/<TestID>` folder
-  - reqs: requirements
+- Each SysTest is associated with a  SysTestData folder located in `testdata/<TestID>` folder
+  - treqs: TestRequirements
   - src: source code
-  - golden: expected output
-- SysTest errors
+
+### TestRequirement
+
+File structure:
+
+```ebnf
+Body     = { GoldenOutputLine | NormalLine } .
+GoldenOutputLine = "// " (Error | GoldenLine) .
+Errors = "error " {"""" ErrRegex """"} .
+GoldenLine = {AnyCharacter}
+```
+
+Elements specification:
+
+- GoldenLine represents the expected output for the previous line
+- Errors represent the expected errors for the previous line
+
+### SysTestFixture
+
+`SysTestFixture` represents a loaded test environment for system testing. It provides a structured way to set up and execute test scenarios with organized directories for TestRequirements and source code.
 
 ## Implementation details
 
