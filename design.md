@@ -232,13 +232,16 @@ type Action struct {
 
 ## System tests
 
-### Core principles:
+### Core principles
 
 - System tests (SysTests) are located in the `internal/systest` package
 - Each SysTest has a symbolic TestID
 - Each SysTest is associated with a  SysTestData folder located in `testdata/<TestID>` folder
-  - treqs: TestRequirements
+  - treqs: TestRequirements and TestReqmdJsons
   - src: source code
+- TestRequirements contains source requirements and Golden Data
+- Golden Data are the expected outputs for the source requirements
+- Golden Data are represented as lined started with `//`
 
 ### TestRequirement
 
@@ -264,7 +267,6 @@ Elements specification:
 Requirements:
 
 - treqs are copied and processed in a temporary directory
-
 
 ## Implementation details
 
