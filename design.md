@@ -246,9 +246,10 @@ File structure:
 
 ```ebnf
 Body     = { GoldenOutputLine | NormalLine } .
-GoldenOutputLine = "// " (Error | GoldenLine) .
-Errors = "error " {"""" ErrRegex """"} .
-GoldenLine = {AnyCharacter}
+GoldenOutputLine = "// " (Error | GoldenReqSiteLine | GoldenFootnoteLine) .
+Errors = "error: " {"""" ErrRegex """"} .
+GoldenReqSiteLine = "reqsite: " {AnyCharacter}.
+GoldenFootnoteLine = "footnote: " {AnyCharacter}.
 ```
 
 Elements specification:
@@ -258,7 +259,12 @@ Elements specification:
 
 ### SysTestFixture
 
-`SysTestFixture` represents a loaded test environment for system testing. It provides a structured way to set up and execute test scenarios with organized directories for TestRequirements and source code.
+`SysTestFixture` represents a loaded test environment for SysTests. It provides a structured way to set up and execute test scenarios with organized directories for TestRequirements and source code.
+
+Requirements:
+
+- treqs are copied and processed in a temporary directory
+
 
 ## Implementation details
 

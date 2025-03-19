@@ -324,6 +324,45 @@ Implementation requirements:
 ### 020: System tests
 
 - Chat.S37T: Create a plan how to build system tests.
+- Insiders.Chat.S37.Is it clear how to implement SysTestFixture? Ask questions
+
+```markdown
+Based on the provided documents, I still need significant clarification about the `SysTestFixture` implementation. Here are more specific questions to guide our discussion:
+
+1. **Creation and Setup**:
+   - Should `SysTestFixture` create a temporary directory for test execution or work directly with files in `testdata/<TestID>`?
+   - Does it need to initialize actual Git repositories for testing, or should it mock Git functionality?
+
+2. **Components and Dependencies**:
+   - Should `SysTestFixture` create real instances of `Scanner`, `Analyzer`, and `Applier`, or use mock implementations?
+   - Is there a need for custom implementations of these components specific to system testing?
+
+3. **TestRequirement Processing**:
+   - How exactly should the fixture process the "GoldenOutputLine" and "Errors" annotations in test requirements?
+   - Is there a specific format for the actual output that needs to be compared with golden output?
+
+4. **Test Execution Flow**:
+   - Should `SysTestFixture` provide methods to run individual stages (Scan, Analyze, Apply) or execute the entire pipeline?
+   - Do we need to capture stdout/stderr for comparison with golden output?
+
+5. **Validation Mechanism**:
+   - How should the fixture handle validation of actual vs. expected outputs?
+   - Should it compare file contents after operations, check specific actions generated, or both?
+
+6. **Error Handling in Tests**:
+   - How should the fixture handle expected errors vs. unexpected ones?
+   - Should it collect errors or fail fast?
+
+7. **Mocking External Dependencies**:
+   - For components like Git that interact with external systems, should they be mocked or real?
+   - If mocked, what level of fidelity is required?
+
+8. **Integration with Go Testing Framework**:
+   - How should `SysTestFixture` integrate with Go's testing package? 
+   - Should it provide helper methods that accept `*testing.T` for assertions?
+
+The design document provides a high-level overview but lacks implementation details for `SysTestFixture`. More clarity on these aspects would help create an effective implementation.
+```
 
 --------------------
 
