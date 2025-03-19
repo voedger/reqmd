@@ -239,36 +239,57 @@ type Action struct {
 - System tests (SysTests) are located in the `internal/systest` package
 - Each SysTest has a symbolic TestID
 - Each SysTest is associated with a  SysTestData folder located in `testdata/<TestID>` folder
-  - treqs: TestRequirements and TestReqmdJsons
-  - src: source code
-- TestRequirements contains source requirements and Golden Data
+  - reqs: TestMarkdown-s, Reqmd-s, GoldenReqmd-s
+  - src: Source files
+- TestMarkdown file contains requirements and Golden Data
 - Golden Data are the expected outputs for the source requirements
-- Golden Data are represented as lined started with `//`
+- Golden Data are represented as lines started with `//`
+- SysTestData are loaded and processed by `SysTestFixture` structure
 
-### TestRequirement
+### TestMarkdown
 
 File structure:
 
 ```ebnf
-Body     = { GoldenOutputLine | NormalLine } .
-GoldenOutputLine = "// " (Error | GoldenReqSiteLine | GoldenFootnoteLine) .
-Errors = "error: " {"""" ErrRegex """"} .
-GoldenReqSiteLine = "reqsite: " {AnyCharacter}.
-GoldenFootnoteLine = "footnote: " {AnyCharacter}.
+Body     = { NormalLine | GoldenLine} .
+GoldenLine = "// " (GoldenErrors | GoldenData ) .
+GoldenData = ( GoldenReqSiteData | GoldenFootnoteData ) .
+GoldenErrors = "error: " {"""" ErrRegex """"} .
+GoldenReqSiteData = "reqsite: " {AnyCharacter} .
+GoldenFootnoteData = "footnote: " {AnyCharacter} .
 ```
 
-Elements specification:
+Specification:
 
-- GoldenLine represents the expected output for the previous line
-- Errors represent the expected errors for the previous line
+- GoldenReqSiteData and GoldenFootnoteData represents the expected output for the previous line
+- GoldenErrors represent the expected errors for the previous line
+- ErrRegex is a regular expression that matches the error message
+  - If line is related to multiple errors then multiple ErrRegexes are used
+
+### GoldenReqmds
+
+GoldenReqmds is a reqmd.json file that may have multiple placeholders for the actual commit hash: {{.CommitHash}}.
 
 ### SysTestFixture
 
 `SysTestFixture` represents a loaded test environment for SysTests. It provides a structured way to set up and execute test scenarios with organized directories for TestRequirements and source code.
 
-Requirements:
+SysTestFixture:
 
-- treqs are copied and processed in a temporary directory
+- Handles only one test scenario per instance
+- Creates temporary directories for each SysTest (treqs: TempReqs, src: TempSrc)
+- Creates git repos for TempReqs and TempSrc
+- Copies SysTestData.reqs to TempReqs and SysTestData.src to TempSrc
+- Run `main.execRootCmd` againts TempReqs and TempSrc
+- Validates errors against GoldenErrors
+- Validates the resulting requirements text against GoldenData
+- Validates the resulting reqmd.json against GoldenReqmds
+
+Implementation requirements:
+
+- testify package is used for assertions/requires
+- text/template package is used for replacing placeholders
+- Temporary directories are created using `testing.TempDir()`
 
 ---
 

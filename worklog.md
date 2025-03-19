@@ -326,6 +326,7 @@ Implementation requirements:
 - Chat.S37T: Create a plan how to build system tests.
 - Insiders.Chat.S37.Is it clear how to implement SysTestFixture? Ask questions
 
+First attempt:
 ```markdown
 Based on the provided documents, I still need significant clarification about the `SysTestFixture` implementation. Here are more specific questions to guide our discussion:
 
@@ -362,6 +363,40 @@ Based on the provided documents, I still need significant clarification about th
    - Should it provide helper methods that accept `*testing.T` for assertions?
 
 The design document provides a high-level overview but lacks implementation details for `SysTestFixture`. More clarity on these aspects would help create an effective implementation.
+```
+
+Second attempt:
+```markdown
+Based on your attachments, I have a better understanding of the SysTestFixture, but there are still some implementation details that need clarification:
+
+1. What should the specific signature of the SysTestFixture struct and constructor look like? For example:
+
+   type SysTestFixture struct {
+       // What fields should be included?
+   }
+   
+   func NewSysTestFixture(t *testing.T, testID string) *SysTestFixture {
+       // Implementation details?
+   }
+
+
+2. What's the exact signature of `main.execRootCmd` that will be called against TempReqs and TempSrc?
+
+3. How should the git initialization be handled in the temporary directories? The design mentions creating git repos but doesn't specify details like:
+   - Should they have an initial commit?
+   - Should they have a remote origin pointing to a specific URL?
+   - What branch should they use?
+
+4. For validating against GoldenErrors, should regex matching be exact or partial? The design defines ErrRegex but doesn't specify how to apply it.
+
+5. When validating resulting requirements text, should the comparison be line-by-line or full file comparison?
+
+6. Are there any specific error handling requirements for the SysTestFixture itself?
+
+7. Should SysTestFixture provide any cleanup functionality, or is that handled by `testing.TempDir()`?
+
+8. Is there an existing `TestMarkdown` parser to use, or should that be implemented as part of the SysTestFixture?
+
 ```
 
 --------------------
