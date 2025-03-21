@@ -365,6 +365,8 @@ Based on the provided documents, I still need significant clarification about th
 The design document provides a high-level overview but lacks implementation details for `SysTestFixture`. More clarity on these aspects would help create an effective implementation.
 ```
 
+#### current
+
 Second attempt:
 ```markdown
 Based on your attachments, I have a better understanding of the SysTestFixture, but there are still some implementation details that need clarification:
@@ -409,6 +411,7 @@ Based on your attachments, I have a better understanding of the SysTestFixture, 
 - Avoid .git, .* folders?
 - Handle changing package name
 - Support links like: https://github.com/voedger/voedger-internals/blob/3ccdc6074f12c800f092a55bf2b036d10a74443c/server/design/sequences.md?plain=1#L407
+- Duplication of footnote ids `~test.isequencer.LongRecovery~`uncvrd[^11]❓
 
 ## Intermediate results
 
