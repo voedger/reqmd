@@ -242,9 +242,9 @@ type Action struct {
   - reqs: TestMarkdown-s, Reqmd-s, GoldenReqmd-s
   - src: Source files
 - TestMarkdown file contains requirements and Golden Data
-- Golden Data are the expected outputs for the source requirements
+- Golden Data are the expected outputs
 - Golden Data are represented as lines started with `//`
-- SysTestData are loaded and processed by `SysTestFixture` structure
+- SysTestData are loaded and processed by the `SysTestFixture` structure
 
 ### TestMarkdown
 
@@ -255,20 +255,68 @@ Body     = { NormalLine | GoldenLine} .
 GoldenLine = "// " (GoldenErrors | GoldenData ) .
 GoldenData = ( GoldenReqSiteData | GoldenFootnoteData ) .
 GoldenErrors = "error: " {"""" ErrRegex """"} .
-GoldenReqSiteData = "reqsite: " {AnyCharacter} .
-GoldenFootnoteData = "footnote: " {AnyCharacter} .
+GoldenReqSiteData = "reqsite" {AnyCharacter} .
+GoldenFootnoteData = "footnote" {AnyCharacter} .
 ```
 
 Specification:
 
 - GoldenReqSiteData and GoldenFootnoteData represents the expected output for the previous line
+- GoldenData
+  - backticks are replaced with double quotes
+  - MAY have multiple placeholders for the actual commit hash: {{.CommitHash}}
 - GoldenErrors represent the expected errors for the previous line
 - ErrRegex is a regular expression that matches the error message
   - If line is related to multiple errors then multiple ErrRegexes are used
+  - errors and ErrRegexes are related one-to-one
 
 ### GoldenReqmds
 
-GoldenReqmds is a reqmd.json file that may have multiple placeholders for the actual commit hash: {{.CommitHash}}.
+GoldenReqmd is a reqmd.json file:
+
+- Named "redmd-golden.json"
+- MAY have multiple placeholders for the actual commit hash: {{.CommitHash}}
+
+### RunSysTest
+
+`RunSysTest` provides a way to run system tests.
+
+- Parameters
+  - t testing.T
+  - fs embed.FS
+  - testID string
+  - args []string
+  - version string
+- Flow
+  - Find sysTestData folder using fs and testID
+  - Validate sysTestData folder (MUST contain reqs and src folders)
+  - Create temporary directories for reqs (tempReqs) and src (tempSrc)
+  - Create git repos for tempReqs and tempSrc
+  - Copy sysTestData.reqs to tempReqs and sysTestData.src to tempSrc
+  - Commit all files in tempSrc
+  - Find tempSrcCommitHash
+  - Replace placeholders `{{.CommitHash}}` in tempReqs with tempSrcCommitHash
+  - args = append(args, tempReqs, tempSrc)
+  - Run `main.execRootCmd` using args and version
+    - Stdout and Stderr are captured (sout, serr)
+  - If serr is not empty then:
+    - Validate serr against GoldenErrors
+      - Lines are formatted as : `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
+  - Validate the tempReqs against GoldenData
+
+- Handles only one test scenario per instance
+- Run `main.execRootCmd` againts TempReqs and TempSrc
+- Validates errors against GoldenErrors
+- Validates the resulting requirements text against GoldenData
+- Validates the resulting reqmd.json against GoldenReqmds
+
+Implementation requirements:
+
+- testify package is used for assertions/requires
+- text/template package is used for replacing placeholders
+- Temporary directories are created using `testing.TempDir()`
+
+---
 
 ### SysTestFixture
 
@@ -276,10 +324,22 @@ GoldenReqmds is a reqmd.json file that may have multiple placeholders for the ac
 
 SysTestFixture:
 
+- Has `NewSysTestFixture` factory
+- `NewSysTestFixture` parameters
+  - fs embed.FS
+  - testID string
+- SysTestFixture fields
+  - TestID
+  - TempReqs
+  - TempSrc
+- `NewSysTestFixture`
+  - Creates temporary directories (reqs: TempReqs, src: TempSrc)
+  - Creates git repos for TempReqs and TempSrc
+  - Copies SysTestData.reqs to TempReqs and SysTestData.src to TempSrc
+  - Commits all files to TempReqs and TempSrc
+  - Replaces placeholders in TestMarkdown-s and GoldenReqmd-s with actual commit hash from TempSrc
+
 - Handles only one test scenario per instance
-- Creates temporary directories for each SysTest (treqs: TempReqs, src: TempSrc)
-- Creates git repos for TempReqs and TempSrc
-- Copies SysTestData.reqs to TempReqs and SysTestData.src to TempSrc
 - Run `main.execRootCmd` againts TempReqs and TempSrc
 - Validates errors against GoldenErrors
 - Validates the resulting requirements text against GoldenData
