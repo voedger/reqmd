@@ -38,7 +38,7 @@ type SysTestFixture struct {
 type ExecRootCmdFunc func(args []string, version string) error
 
 // RunSysTest executes a system test with the given parameters
-func RunSysTest(t *testing.T, fs embed.FS, testID string, args []string, version string) {
+func RunSysTest(t testing.TB, fs embed.FS, testID string, args []string, version string) {
 	// Find sysTestData folder using fs and testID
 	sysTestDataFolder, err := findSysTestDataFolder(fs, testID)
 	require.NoError(t, err, "Failed to find sysTestData folder for testID: %s", testID)
@@ -94,7 +94,7 @@ func findSysTestDataFolder(_ embed.FS, testID string) (string, error) {
 }
 
 // validateSysTestDataFolder ensures the test data folder has the required structure
-func validateSysTestDataFolder(t *testing.T, fs embed.FS, folder string) {
+func validateSysTestDataFolder(t testing.TB, fs embed.FS, folder string) {
 	reqsDir := filepath.ToSlash(filepathJoin(folder, "reqs"))
 	_, err := fs.ReadDir(reqsDir)
 	require.NoError(t, err, "Failed to read reqs folder")
@@ -105,7 +105,7 @@ func validateSysTestDataFolder(t *testing.T, fs embed.FS, folder string) {
 }
 
 // createGitRepo initializes a git repository in the given directory
-func createGitRepo(t *testing.T, dir string) {
+func createGitRepo(t testing.TB, dir string) {
 	// Initialize repository
 	repo, err := git.PlainInit(dir, false)
 	require.NoError(t, err, "Failed to initialize git repo in %s", dir)
@@ -129,7 +129,7 @@ func createGitRepo(t *testing.T, dir string) {
 }
 
 // copyEmbeddedFolder copies files from embedded FS to target directory
-func copyEmbeddedFolder(t *testing.T, fs embed.FS, sourceDir, targetDir string) {
+func copyEmbeddedFolder(t testing.TB, fs embed.FS, sourceDir, targetDir string) {
 	// Read the source directory
 	entries, err := fs.ReadDir(sourceDir)
 	if err != nil {
@@ -165,7 +165,7 @@ func copyEmbeddedFolder(t *testing.T, fs embed.FS, sourceDir, targetDir string) 
 }
 
 // commitAllFiles adds and commits all files in the given directory
-func commitAllFiles(t *testing.T, dir string) {
+func commitAllFiles(t testing.TB, dir string) {
 	repo, err := git.PlainOpen(dir)
 	require.NoError(t, err, "Failed to open git repository in %s", dir)
 
@@ -182,14 +182,13 @@ func commitAllFiles(t *testing.T, dir string) {
 		Author: &object.Signature{
 			Name:  "Test User",
 			Email: "test@example.com",
-			// When:  object.TimeNow(),
 		},
 	})
 	require.NoError(t, err, "Failed to commit files in %s", dir)
 }
 
 // getCommitHash returns the current commit hash for the repository
-func getCommitHash(t *testing.T, dir string) string {
+func getCommitHash(t testing.TB, dir string) string {
 	repo, err := git.PlainOpen(dir)
 	require.NoError(t, err, "Failed to open git repository in %s", dir)
 
@@ -201,7 +200,7 @@ func getCommitHash(t *testing.T, dir string) string {
 }
 
 // replacePlaceholders replaces {{.CommitHash}} in all files with the actual commitHash
-func replacePlaceholders(t *testing.T, dir string, commitHash string) {
+func replacePlaceholders(t testing.TB, dir string, commitHash string) {
 	// Walk through all files in the directory
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -294,7 +293,7 @@ func execRootCmd(args []string, version string, stdout, stderr io.Writer) error 
 // Lines are formatted as : `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
 // All lines in serr must match at least one GoldenErrors
 // All GoldenErrors must match at least one line in serr
-func validateErrors(t *testing.T, stderr *bytes.Buffer, tempReqs string) {
+func validateErrors(t testing.TB, stderr *bytes.Buffer, tempReqs string) {
 	// Split stderr into lines
 	stderrLines := strings.Split(strings.TrimSpace(stderr.String()), "\n")
 
@@ -392,7 +391,7 @@ func extractErrorRegexes(line string) []string {
 }
 
 // validateResults checks if the files in tempReqs match the expected GoldenData
-func validateResults(t *testing.T, fs embed.FS, sysTestDataFolder, tempReqs string) {
+func validateResults(t testing.TB, fs embed.FS, sysTestDataFolder, tempReqs string) {
 	// Walk through all markdown files in tempReqs
 	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -441,7 +440,7 @@ func validateResults(t *testing.T, fs embed.FS, sysTestDataFolder, tempReqs stri
 }
 
 // validateGoldenReqmd checks if reqmd.json files match their golden counterparts
-func validateGoldenReqmd(t *testing.T, fs embed.FS, sysTestDataFolder, tempReqs string) {
+func validateGoldenReqmd(t testing.TB, fs embed.FS, sysTestDataFolder, tempReqs string) {
 	// Find all reqmd.json files in tempReqs
 	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
