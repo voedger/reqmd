@@ -1,3 +1,3 @@
 # Undetected error
 
-//errors: "undetected"
+// errors: "undetected"

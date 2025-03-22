@@ -76,10 +76,8 @@ func RunSysTest(t *testing.T, fs embed.FS, testID string, args []string, version
 	var stdout, stderr bytes.Buffer
 	err = execRootCmd(testArgs, version, &stdout, &stderr)
 
-	// Check errors if stderr is not empty
-	if stderr.Len() > 0 {
-		validateErrors(t, &stderr, tempReqs)
-	}
+	// Check errors
+	validateErrors(t, &stderr, tempReqs)
 
 	// Validate the tempReqs against GoldenData
 	validateResults(t, fs, sysTestDataFolder, tempReqs)
@@ -329,12 +327,12 @@ func validateErrors(t *testing.T, stderr *bytes.Buffer, tempReqs string) {
 		lines := strings.Split(string(content), "\n")
 		for i, line := range lines {
 			// Skip if not a line with expected errors
-			if !strings.HasPrefix(line, "// error: ") {
+			if !strings.HasPrefix(line, "// errors: ") {
 				continue
 			}
 
 			// Extract error regexes from the line
-			errLine := strings.TrimPrefix(line, "// error: ")
+			errLine := strings.TrimPrefix(line, "// errors: ")
 			errRegexes := extractErrorRegexes(errLine)
 
 			// The line number to check is i (0-based) for previous line
@@ -367,6 +365,9 @@ func validateErrors(t *testing.T, stderr *bytes.Buffer, tempReqs string) {
 
 	// Check that all stderr lines were matched
 	for line, matched := range stderrMatched {
+		if len(line) == 0 {
+			continue
+		}
 		assert.True(t, matched, "Unexpected error in stderr: %s", line)
 	}
 

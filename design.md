@@ -254,7 +254,7 @@ File structure:
 Body     = { NormalLine | GoldenLine} .
 GoldenLine = "// " (GoldenErrors | GoldenData ) .
 GoldenData = ( GoldenReqSiteData | GoldenFootnoteData ) .
-GoldenErrors = "error: " {"""" ErrRegex """"} .
+GoldenErrors = "errors: " {"""" ErrRegex """"} .
 GoldenReqSiteData = "reqsite" {AnyCharacter} .
 GoldenFootnoteData = "footnote" {AnyCharacter} .
 ```
@@ -299,11 +299,10 @@ The `RunSysTest` function provides a way to run system tests.
   - args = append(args, tempReqs, tempSrc)
   - Run `main.execRootCmd` using args and version
     - Stdout and Stderr are captured (sout, serr)
-  - If serr is not empty then:
-    - Validate serr against GoldenErrors
-      - Lines are formatted as : `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
-      - All lines in serr must match at least one GoldenErrors
-      - All GoldenErrors must match at least one line in serr
+  - Validate serr against GoldenErrors
+    - Lines are formatted as : `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
+    - All lines in serr must match at least one GoldenErrors
+    - All GoldenErrors must match at least one line in serr
   - Validate the tempReqs against GoldenData (ref. TestMarkdown section)
 
 Implementation requirements:
