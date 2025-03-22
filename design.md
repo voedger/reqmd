@@ -239,8 +239,8 @@ type Action struct {
 - System tests (SysTests) are located in the `internal/systest` package
 - Each SysTest has a symbolic TestID
 - Each SysTest is associated with a  SysTestData folder located in `testdata/<TestID>` folder
-  - reqs: TestMarkdown-s, Reqmd-s, GoldenReqmd-s
-  - src: Source files
+  - `reqs`: TestMarkdown-s, Reqmd-s, GoldenReqmd-s
+  - `src`: Source files
 - TestMarkdown file contains requirements and Golden Data
 - Golden Data are the expected outputs
 - Golden Data are represented as lines started with `//`
@@ -302,48 +302,9 @@ The `RunSysTest` function provides a way to run system tests.
   - If serr is not empty then:
     - Validate serr against GoldenErrors
       - Lines are formatted as : `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
+      - All lines in serr must match at least one GoldenErrors
+      - All GoldenErrors must match at least one line in serr
   - Validate the tempReqs against GoldenData (ref. TestMarkdown section)
-
-- Handles only one test scenario per instance
-- Run `main.execRootCmd` againts TempReqs and TempSrc
-- Validates errors against GoldenErrors
-- Validates the resulting requirements text against GoldenData
-- Validates the resulting reqmd.json against GoldenReqmds
-
-Implementation requirements:
-
-- testify package is used for assertions/requires
-- text/template package is used for replacing placeholders
-- Temporary directories are created using `testing.TempDir()`
-
----
-
-### SysTestFixture
-
-`SysTestFixture` represents a loaded test environment for SysTests. It provides a structured way to set up and execute test scenarios with organized directories for TestRequirements and source code.
-
-SysTestFixture:
-
-- Has `NewSysTestFixture` factory
-- `NewSysTestFixture` parameters
-  - fs embed.FS
-  - testID string
-- SysTestFixture fields
-  - TestID
-  - TempReqs
-  - TempSrc
-- `NewSysTestFixture`
-  - Creates temporary directories (reqs: TempReqs, src: TempSrc)
-  - Creates git repos for TempReqs and TempSrc
-  - Copies SysTestData.reqs to TempReqs and SysTestData.src to TempSrc
-  - Commits all files to TempReqs and TempSrc
-  - Replaces placeholders in TestMarkdown-s and GoldenReqmd-s with actual commit hash from TempSrc
-
-- Handles only one test scenario per instance
-- Run `main.execRootCmd` againts TempReqs and TempSrc
-- Validates errors against GoldenErrors
-- Validates the resulting requirements text against GoldenData
-- Validates the resulting reqmd.json against GoldenReqmds
 
 Implementation requirements:
 

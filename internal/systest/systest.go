@@ -9,15 +9,17 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
 	"text/template"
 
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/voedger/reqmd/internal"
 )
 
 // SysTestFixture represents a loaded test environment for SysTests
@@ -29,10 +31,6 @@ type SysTestFixture struct {
 
 // ExecRootCmdFunc defines the signature for the main execRootCmd function
 type ExecRootCmdFunc func(args []string, version string) error
-
-// ExecRootCmd is a variable that holds the actual implementation of the main execRootCmd function
-// It must be set by the main package before running tests
-var ExecRootCmd ExecRootCmdFunc
 
 // RunSysTest executes a system test with the given parameters
 func RunSysTest(t *testing.T, fs embed.FS, testID string, args []string, version string) {
@@ -52,8 +50,8 @@ func RunSysTest(t *testing.T, fs embed.FS, testID string, args []string, version
 	createGitRepo(t, tempSrc)
 
 	// Copy sysTestData.reqs to tempReqs and sysTestData.src to tempSrc
-	copyEmbeddedFolder(t, fs, filepath.Join(sysTestDataFolder, "reqs"), tempReqs)
-	copyEmbeddedFolder(t, fs, filepath.Join(sysTestDataFolder, "src"), tempSrc)
+	copyEmbeddedFolder(t, fs, filepathJoin(sysTestDataFolder, "reqs"), tempReqs)
+	copyEmbeddedFolder(t, fs, filepathJoin(sysTestDataFolder, "src"), tempSrc)
 
 	// Commit all files in tempSrc
 	commitAllFiles(t, tempSrc)
@@ -65,7 +63,7 @@ func RunSysTest(t *testing.T, fs embed.FS, testID string, args []string, version
 	replacePlaceholders(t, tempReqs, commitHash)
 
 	// Prepare args to include tempReqs and tempSrc
-	testArgs := append([]string{}, args...)
+	testArgs := append([]string{"reqmd"}, args...)
 	testArgs = append(testArgs, tempReqs, tempSrc)
 
 	// Run main.execRootCmd using args and version
@@ -89,37 +87,35 @@ func RunSysTest(t *testing.T, fs embed.FS, testID string, args []string, version
 
 // findSysTestDataFolder locates the test data folder for the given testID
 func findSysTestDataFolder(_ embed.FS, testID string) (string, error) {
-	return fmt.Sprintf("testdata/%s", testID), nil
+	return filepathJoin("testdata", testID), nil
 }
 
 // validateSysTestDataFolder ensures the test data folder has the required structure
 func validateSysTestDataFolder(t *testing.T, fs embed.FS, folder string) {
-	reqs, err := fs.ReadDir(filepath.Join(folder, "reqs"))
+	reqsDir := filepath.ToSlash(filepathJoin(folder, "reqs"))
+	_, err := fs.ReadDir(reqsDir)
 	require.NoError(t, err, "Failed to read reqs folder")
-	require.NotEmpty(t, reqs, "reqs folder is empty")
 
-	src, err := fs.ReadDir(filepath.Join(folder, "src"))
+	srcDir := filepath.ToSlash(filepathJoin(folder, "src"))
+	_, err = fs.ReadDir(srcDir)
 	require.NoError(t, err, "Failed to read src folder")
-	require.NotEmpty(t, src, "src folder is empty")
 }
 
 // createGitRepo initializes a git repository in the given directory
 func createGitRepo(t *testing.T, dir string) {
-	cmd := exec.Command("git", "init")
-	cmd.Dir = dir
-	err := cmd.Run()
+	// Initialize repository
+	repo, err := git.PlainInit(dir, false)
 	require.NoError(t, err, "Failed to initialize git repo in %s", dir)
 
 	// Configure git user for commit
-	cmd = exec.Command("git", "config", "user.name", "Test User")
-	cmd.Dir = dir
-	err = cmd.Run()
-	require.NoError(t, err, "Failed to configure git user.name")
+	config, err := repo.Config()
+	require.NoError(t, err, "Failed to get git config")
 
-	cmd = exec.Command("git", "config", "user.email", "test@example.com")
-	cmd.Dir = dir
-	err = cmd.Run()
-	require.NoError(t, err, "Failed to configure git user.email")
+	config.User.Name = "Test User"
+	config.User.Email = "test@example.com"
+
+	err = repo.SetConfig(config)
+	require.NoError(t, err, "Failed to set git config")
 }
 
 // copyEmbeddedFolder copies files from embedded FS to target directory
@@ -136,8 +132,8 @@ func copyEmbeddedFolder(t *testing.T, fs embed.FS, sourceDir, targetDir string) 
 
 	// Copy each entry
 	for _, entry := range entries {
-		sourcePath := filepath.Join(sourceDir, entry.Name())
-		targetPath := filepath.Join(targetDir, entry.Name())
+		sourcePath := filepathJoin(sourceDir, entry.Name())
+		targetPath := filepathJoin(targetDir, entry.Name())
 
 		if entry.IsDir() {
 			// Create the target directory
@@ -160,27 +156,38 @@ func copyEmbeddedFolder(t *testing.T, fs embed.FS, sourceDir, targetDir string) 
 
 // commitAllFiles adds and commits all files in the given directory
 func commitAllFiles(t *testing.T, dir string) {
+	repo, err := git.PlainOpen(dir)
+	require.NoError(t, err, "Failed to open git repository in %s", dir)
+
+	// Get the worktree
+	wt, err := repo.Worktree()
+	require.NoError(t, err, "Failed to get worktree in %s", dir)
+
 	// Add all files
-	cmd := exec.Command("git", "add", ".")
-	cmd.Dir = dir
-	err := cmd.Run()
+	_, err = wt.Add(".")
 	require.NoError(t, err, "Failed to add files in %s", dir)
 
 	// Commit files
-	cmd = exec.Command("git", "commit", "-m", "Initial commit")
-	cmd.Dir = dir
-	err = cmd.Run()
+	_, err = wt.Commit("Initial commit", &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "Test User",
+			Email: "test@example.com",
+			// When:  object.TimeNow(),
+		},
+	})
 	require.NoError(t, err, "Failed to commit files in %s", dir)
 }
 
 // getCommitHash returns the current commit hash for the repository
 func getCommitHash(t *testing.T, dir string) string {
-	cmd := exec.Command("git", "rev-parse", "HEAD")
-	cmd.Dir = dir
-	output, err := cmd.Output()
-	require.NoError(t, err, "Failed to get commit hash in %s", dir)
+	repo, err := git.PlainOpen(dir)
+	require.NoError(t, err, "Failed to open git repository in %s", dir)
 
-	return strings.TrimSpace(string(output))
+	// Get HEAD reference
+	ref, err := repo.Head()
+	require.NoError(t, err, "Failed to get HEAD reference in %s", dir)
+
+	return ref.Hash().String()
 }
 
 // replacePlaceholders replaces {{.CommitHash}} in all files with the actual commitHash
@@ -228,11 +235,6 @@ func replacePlaceholders(t *testing.T, dir string, commitHash string) {
 
 // execRootCmd redirects stdout and stderr to capture output and call the main package's execRootCmd
 func execRootCmd(args []string, version string, stdout, stderr io.Writer) error {
-	// Ensure ExecRootCmd is set
-	if ExecRootCmd == nil {
-		return fmt.Errorf("ExecRootCmd function is not set - make sure to set systest.ExecRootCmd to main.execRootCmd before running tests")
-	}
-
 	// Save the original stdout and stderr
 	oldStdout, oldStderr := os.Stdout, os.Stderr
 
@@ -264,7 +266,7 @@ func execRootCmd(args []string, version string, stdout, stderr io.Writer) error 
 	}()
 
 	// Call the main function
-	err = ExecRootCmd(args, version)
+	err = internal.ExecRootCmd(args, version)
 
 	// Close the writers and wait for copying to complete
 	wOut.Close()
@@ -411,8 +413,8 @@ func validateGoldenReqmd(t *testing.T, fs embed.FS, sysTestDataFolder, tempReqs 
 		}
 
 		// Check if there's a corresponding reqmd-golden.json
-		goldenPath := filepath.Join(filepath.Dir(relPath), "reqmd-golden.json")
-		goldenFullPath := filepath.Join(sysTestDataFolder, "reqs", goldenPath)
+		goldenPath := filepathJoin(filepath.Dir(relPath), "reqmd-golden.json")
+		goldenFullPath := filepathJoin(sysTestDataFolder, "reqs", goldenPath)
 
 		// Try to read the golden file
 		goldenContent, err := fs.ReadFile(goldenFullPath)
@@ -438,4 +440,8 @@ func validateGoldenReqmd(t *testing.T, fs embed.FS, sysTestDataFolder, tempReqs 
 	})
 
 	require.NoError(t, err, "Failed to validate reqmd.json files")
+}
+
+func filepathJoin(elem ...string) string {
+	return filepath.ToSlash(filepath.Join(elem...))
 }

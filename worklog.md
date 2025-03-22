@@ -367,6 +367,7 @@ The design document provides a high-level overview but lacks implementation deta
 
 - Insiders.Agent.S37: Implement RunSysTest
   - internal\systest\systest.go, 440 lines
+- Insiders.Edit.S37:Use github.com/go-git/go-git/v5 instead of running git  
 
 #### current
 
