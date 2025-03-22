@@ -365,6 +365,9 @@ Based on the provided documents, I still need significant clarification about th
 The design document provides a high-level overview but lacks implementation details for `SysTestFixture`. More clarity on these aspects would help create an effective implementation.
 ```
 
+- Insiders.Agent.S37: Implement RunSysTest
+  - internal\systest\systest.go, 440 lines
+
 #### current
 
 Second attempt:

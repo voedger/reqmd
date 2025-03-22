@@ -277,9 +277,9 @@ GoldenReqmd is a reqmd.json file:
 - Named "redmd-golden.json"
 - MAY have multiple placeholders for the actual commit hash: {{.CommitHash}}
 
-### RunSysTest
+### internal/systest/RunSysTest
 
-`RunSysTest` provides a way to run system tests.
+The `RunSysTest` function provides a way to run system tests.
 
 - Parameters
   - t testing.T
@@ -294,15 +294,15 @@ GoldenReqmd is a reqmd.json file:
   - Create git repos for tempReqs and tempSrc
   - Copy sysTestData.reqs to tempReqs and sysTestData.src to tempSrc
   - Commit all files in tempSrc
-  - Find tempSrcCommitHash
-  - Replace placeholders `{{.CommitHash}}` in tempReqs with tempSrcCommitHash
+  - Find commitHash for tempSrc
+  - Replace placeholders `{{.CommitHash}}` in all files in the tempReqs folder with commitHash
   - args = append(args, tempReqs, tempSrc)
   - Run `main.execRootCmd` using args and version
     - Stdout and Stderr are captured (sout, serr)
   - If serr is not empty then:
     - Validate serr against GoldenErrors
       - Lines are formatted as : `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
-  - Validate the tempReqs against GoldenData
+  - Validate the tempReqs against GoldenData (ref. TestMarkdown section)
 
 - Handles only one test scenario per instance
 - Run `main.execRootCmd` againts TempReqs and TempSrc
