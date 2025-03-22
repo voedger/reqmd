@@ -281,7 +281,22 @@ func execRootCmd(args []string, version string, stdout, stderr io.Writer) error 
 }
 
 // validateErrors checks if the stderr output matches expected error patterns
+// Lines are formatted as : `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
+// All lines in serr must match at least one GoldenErrors
+// All GoldenErrors must match at least one line in serr
 func validateErrors(t *testing.T, stderr *bytes.Buffer, tempReqs string) {
+	// Split stderr into lines
+	stderrLines := strings.Split(strings.TrimSpace(stderr.String()), "\n")
+
+	// Create a map to track which stderr lines have been matched
+	stderrMatched := make(map[string]bool)
+	for _, line := range stderrLines {
+		stderrMatched[line] = false
+	}
+
+	// Map to collect all golden error patterns
+	goldenErrors := make(map[string]bool)
+
 	// Read all markdown files in tempReqs to find GoldenErrors
 	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -316,12 +331,20 @@ func validateErrors(t *testing.T, stderr *bytes.Buffer, tempReqs string) {
 				lineNum-- // Reference the line before the error comment
 			}
 
-			// Check if the stderr contains the expected error with the right line number
+			// Create patterns for matching stderr lines
 			for _, regex := range errRegexes {
 				pattern := fmt.Sprintf(`%s:%d: .*%s`, regexp.QuoteMeta(filepath.Base(path)), lineNum+1, regex)
-				matched, err := regexp.MatchString(pattern, stderr.String())
-				require.NoError(t, err, "Invalid error regex pattern: %s", pattern)
-				assert.True(t, matched, "Expected error not found in stderr: %s", pattern)
+				goldenErrors[pattern] = false
+
+				// Try to match this pattern against stderr lines
+				for stderrLine := range stderrMatched {
+					matched, err := regexp.MatchString(pattern, stderrLine)
+					require.NoError(t, err, "Invalid error regex pattern: %s", pattern)
+					if matched {
+						stderrMatched[stderrLine] = true
+						goldenErrors[pattern] = true
+					}
+				}
 			}
 		}
 
@@ -329,6 +352,16 @@ func validateErrors(t *testing.T, stderr *bytes.Buffer, tempReqs string) {
 	})
 
 	require.NoError(t, err, "Failed to validate errors")
+
+	// Check that all stderr lines were matched
+	for line, matched := range stderrMatched {
+		assert.True(t, matched, "Unexpected error in stderr: %s", line)
+	}
+
+	// Check that all golden errors were matched
+	for pattern, matched := range goldenErrors {
+		assert.True(t, matched, "Expected error not found in stderr: %s", pattern)
+	}
 }
 
 // extractErrorRegexes extracts error regexes from a line like 'error: "regex1" "regex2"'
