@@ -16,10 +16,15 @@ import (
 	"text/template"
 
 	"github.com/go-git/go-git/v5"
+	cfg "github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/voedger/reqmd/internal"
+)
+
+const (
+	RemoteOrigin = "https://github.com/voedger/example"
 )
 
 // SysTestFixture represents a loaded test environment for SysTests
@@ -116,6 +121,13 @@ func createGitRepo(t *testing.T, dir string) {
 
 	err = repo.SetConfig(config)
 	require.NoError(t, err, "Failed to set git config")
+
+	// Add a remote origin for test purposes
+	_, err = repo.CreateRemote(&cfg.RemoteConfig{
+		Name: "origin",
+		URLs: []string{RemoteOrigin},
+	})
+	require.NoError(t, err, "Failed to create origin remote")
 }
 
 // copyEmbeddedFolder copies files from embedded FS to target directory

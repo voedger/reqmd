@@ -244,7 +244,7 @@ type Action struct {
 - TestMarkdown file contains requirements and Golden Data
 - Golden Data are the expected outputs
 - Golden Data are represented as lines started with `//`
-- SysTestData are loaded and processed by the `SysTestFixture` structure
+- SysTestData are loaded and processed by the `internal/systest/RunSysTest` function
 
 ### TestMarkdown
 
