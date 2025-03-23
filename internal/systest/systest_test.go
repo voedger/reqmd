@@ -6,18 +6,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/voedger/reqmd/internal"
 )
 
-var sysTestsDir = filepath.Join("testdata", "systest")
 var runSysTestsDir = filepath.Join("testdata", "runsystest")
 
-func Test_systest_NoReqs(t *testing.T) {
-	RunSysTest(t, sysTestsDir, "noreqs", []string{"trace"}, "0.0.1")
-}
-
-func Test_runsystest_err_NotOccurring(t *testing.T) {
+func Test_err_NotOccurring(t *testing.T) {
 	mockT := &MockT{t: t}
-	RunSysTest(mockT, runSysTestsDir, "err_undetected", []string{"trace"}, "0.0.1")
+	RunSysTest(mockT, runSysTestsDir, "err_undetected", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
 	require.True(t, mockT.failed, "expected test to fail")
 	require.Contains(t, mockT.failMsg, "Expected error not found in stderr")
 	require.Contains(t, mockT.failMsg, "this error is expected but not occurring")

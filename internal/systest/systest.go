@@ -18,7 +18,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/voedger/reqmd/internal"
 )
 
 const (
@@ -31,18 +30,11 @@ type T interface {
 	TempDir() string
 }
 
-// SysTestFixture represents a loaded test environment for SysTests
-type SysTestFixture struct {
-	TestID   string
-	TempReqs string
-	TempSrc  string
-}
-
 // ExecRootCmdFunc defines the signature for the main execRootCmd function
 type ExecRootCmdFunc func(args []string, version string) error
 
 // RunSysTest executes a system test with the given parameters
-func RunSysTest(t T, testsDir string, testID string, args []string, version string) {
+func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, args []string, version string) {
 	// Find sysTestData Dir using testID
 	sysTestDataDir, err := findSysTestDataDir(testsDir, testID)
 	require.NoError(t, err, "Failed to find sysTestData Dir for testID: %s", testID)
@@ -78,7 +70,7 @@ func RunSysTest(t T, testsDir string, testID string, args []string, version stri
 	// Run main.execRootCmd using args and version
 	// Using a buffer to capture stdout and stderr
 	var stdout, stderr bytes.Buffer
-	_ = execRootCmd(testArgs, version, &stdout, &stderr)
+	_ = execRootCmd(rootCmd, testArgs, version, &stdout, &stderr)
 
 	// Check errors
 	validateErrors(t, &stderr, tempReqs)
@@ -96,11 +88,11 @@ func findSysTestDataDir(testsDir string, testID string) (string, error) {
 func validateSysTestDataDir(t T, Dir string) {
 	reqsDir := filepath.ToSlash(filepathJoin(Dir, "reqs"))
 	_, err := os.Stat(reqsDir)
-	require.NoError(t, err, "Failed to read reqs Dir")
+	require.NoError(t, err, "Failed to read `reqs` dir")
 
 	srcDir := filepath.ToSlash(filepathJoin(Dir, "src"))
 	_, err = os.Stat(srcDir)
-	require.NoError(t, err, "Failed to read src Dir")
+	require.NoError(t, err, "Failed to read `src` dir")
 }
 
 // createGitRepo initializes a git repository in the given directory
@@ -242,7 +234,7 @@ func replacePlaceholders(t T, dir string, commitHash string) {
 }
 
 // execRootCmd redirects stdout and stderr to capture output and call the main package's execRootCmd
-func execRootCmd(args []string, version string, stdout, stderr io.Writer) error {
+func execRootCmd(rootCmd ExecRootCmdFunc, args []string, version string, stdout, stderr io.Writer) error {
 	// Save the original stdout and stderr
 	oldStdout, oldStderr := os.Stdout, os.Stderr
 
@@ -274,7 +266,7 @@ func execRootCmd(args []string, version string, stdout, stderr io.Writer) error 
 	}()
 
 	// Call the main function
-	err = internal.ExecRootCmd(args, version)
+	err = rootCmd(args, version)
 
 	// Close the writers and wait for copying to complete
 	wOut.Close()
