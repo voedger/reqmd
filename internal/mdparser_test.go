@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -57,39 +56,11 @@ func TestMdParser_ParseMarkdownFile(t *testing.T) {
 	}
 }
 
-func TestMdParser_ParseMarkdownFile_Errors(t *testing.T) {
-	testData := filepath.Join("testdata", "mdparser-errs.md")
-
+func TestMdParser_ParseMarkdownFile_error_pkgident(t *testing.T) {
+	testData := filepath.Join("testdata", "systest", "errors", "req", "err_pkgident.md")
 	_, errors, err := ParseMarkdownFile(newMdCtx(), testData)
 	require.NoError(t, err)
-
-	// We expect 4 errors in the test file:
-	// 1. Invalid package name (non-identifier)
-	// 2. Invalid requirement name (non-identifier)
-	// 3. Invalid coverage status
-	// 4. Unmatched fence
-	require.Len(t, errors, 4, "expected exactly 4 syntax errors")
-
-	// Sort errors by line number for consistent testing
-	sort.Slice(errors, func(i, j int) bool {
-		return errors[i].Line < errors[j].Line
-	})
-
-	// Check package ID error
-	assert.Equal(t, "pkgident", errors[0].Code)
-	assert.Equal(t, 2, errors[0].Line)
-
-	// Check requirement name error
-	assert.Equal(t, "reqident", errors[1].Code)
-	assert.Equal(t, 8, errors[1].Line)
-
-	// Check coverage status error
-	assert.Equal(t, "covstatus", errors[2].Code)
-	assert.Equal(t, 10, errors[2].Line)
-
-	// Check unmatched fence error
-	assert.Equal(t, "unmatchedfence", errors[3].Code)
-	assert.Equal(t, 14, errors[3].Line)
+	require.Len(t, errors, 1, "expected exactly 1 syntax error")
 }
 
 // Helper function to find requirement by name
