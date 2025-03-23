@@ -2,30 +2,34 @@ package systest
 
 import (
 	"fmt"
-	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-const testsDir = "testdata"
+var sysTestsDir = filepath.Join("testdata", "systest")
+var runSysTestsDir = filepath.Join("testdata", "runsystest")
 
-func Test_noreqs(t *testing.T) {
-	RunSysTest(t, testsDir, "noreqs", []string{"trace"}, "0.0.1")
+func Test_systest_NoReqs(t *testing.T) {
+	RunSysTest(t, sysTestsDir, "noreqs", []string{"trace"}, "0.0.1")
 }
 
-func Test_err_undetected(t *testing.T) {
-	// https://claude.ai/chat/bfbb2bec-ab1f-42b2-bb87-2447989fe68f
+func Test_runsystest_err_Undetected(t *testing.T) {
 
-	mockT := &MockT{}
-	defer mockT.Cleanup()
+	mockT := &MockT{t: t}
 
-	RunSysTest(t, testsDir, "err_undetected", []string{"trace"}, "0.0.1")
+	RunSysTest(mockT, runSysTestsDir, "err_undetected", []string{"trace"}, "0.0.1")
+	require.True(t, mockT.failed, "expected test to fail")
+	require.Contains(t, mockT.failMsg, "Expected error not found in stderr")
+	require.Contains(t, mockT.failMsg, "this error is expected but not occurring")
 }
 
 // MockT implements a subset of testing.T for controlled failure testing
 type MockT struct {
-	failed   bool
-	failMsg  string
-	tempDirs []string
+	t       *testing.T
+	failed  bool
+	failMsg string
 }
 
 func (m *MockT) Errorf(format string, args ...interface{}) {
@@ -36,24 +40,13 @@ func (m *MockT) Errorf(format string, args ...interface{}) {
 func (m *MockT) Fatalf(format string, args ...interface{}) {
 	m.failed = true
 	m.failMsg = fmt.Sprintf(format, args...)
+	panic("Fatalf called: " + m.failMsg)
 }
 
 func (m *MockT) FailNow() {
-	m.failed = true
+	panic("FailNow called")
 }
 
 func (m *MockT) TempDir() string {
-	dir, err := os.MkdirTemp("", "systest-")
-	if err != nil {
-		m.Fatalf("Failed to create temp dir: %v", err)
-		return ""
-	}
-	m.tempDirs = append(m.tempDirs, dir)
-	return dir
-}
-
-func (m *MockT) Cleanup() {
-	for _, dir := range m.tempDirs {
-		os.RemoveAll(dir)
-	}
+	return m.t.TempDir()
 }

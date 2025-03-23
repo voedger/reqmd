@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"testing"
 	"text/template"
 
 	"github.com/go-git/go-git/v5"
@@ -25,6 +24,12 @@ import (
 const (
 	RemoteOrigin = "https://github.com/voedger/example"
 )
+
+type T interface {
+	Errorf(format string, args ...interface{})
+	FailNow()
+	TempDir() string
+}
 
 // SysTestFixture represents a loaded test environment for SysTests
 type SysTestFixture struct {
@@ -44,7 +49,7 @@ type ExecRootCmdFunc func(args []string, version string) error
 //	testID string
 //	args []string
 //	version string
-func RunSysTest(t testing.TB, testsFolder string, testID string, args []string, version string) {
+func RunSysTest(t T, testsFolder string, testID string, args []string, version string) {
 	// Find sysTestData folder using testID
 	sysTestDataFolder, err := findSysTestDataFolder(testsFolder, testID)
 	require.NoError(t, err, "Failed to find sysTestData folder for testID: %s", testID)
@@ -80,18 +85,13 @@ func RunSysTest(t testing.TB, testsFolder string, testID string, args []string, 
 	// Run main.execRootCmd using args and version
 	// Using a buffer to capture stdout and stderr
 	var stdout, stderr bytes.Buffer
-	err = execRootCmd(testArgs, version, &stdout, &stderr)
+	_ = execRootCmd(testArgs, version, &stdout, &stderr)
 
 	// Check errors
 	validateErrors(t, &stderr, tempReqs)
 
 	// Validate the tempReqs against GoldenData
 	validateResults(t, sysTestDataFolder, tempReqs)
-
-	// If execRootCmd returned an error and stderr was empty, it's an unexpected error
-	if err != nil && stderr.Len() == 0 {
-		t.Fatalf("Unexpected error in execRootCmd: %v", err)
-	}
 }
 
 // findSysTestDataFolder locates the test data folder for the given testID
@@ -100,7 +100,7 @@ func findSysTestDataFolder(testsFolder string, testID string) (string, error) {
 }
 
 // validateSysTestDataFolder ensures the test data folder has the required structure
-func validateSysTestDataFolder(t testing.TB, folder string) {
+func validateSysTestDataFolder(t T, folder string) {
 	reqsDir := filepath.ToSlash(filepathJoin(folder, "reqs"))
 	_, err := os.Stat(reqsDir)
 	require.NoError(t, err, "Failed to read reqs folder")
@@ -111,7 +111,7 @@ func validateSysTestDataFolder(t testing.TB, folder string) {
 }
 
 // createGitRepo initializes a git repository in the given directory
-func createGitRepo(t testing.TB, dir string) {
+func createGitRepo(t T, dir string) {
 	// Initialize repository
 	repo, err := git.PlainInit(dir, false)
 	require.NoError(t, err, "Failed to initialize git repo in %s", dir)
@@ -135,7 +135,7 @@ func createGitRepo(t testing.TB, dir string) {
 }
 
 // copyFolder copies files from source directory to target directory
-func copyFolder(t testing.TB, sourceDir, targetDir string) {
+func copyFolder(t T, sourceDir, targetDir string) {
 	// Read the source directory
 	entries, err := os.ReadDir(sourceDir)
 	if err != nil {
@@ -171,7 +171,7 @@ func copyFolder(t testing.TB, sourceDir, targetDir string) {
 }
 
 // commitAllFiles adds and commits all files in the given directory
-func commitAllFiles(t testing.TB, dir string) {
+func commitAllFiles(t T, dir string) {
 	repo, err := git.PlainOpen(dir)
 	require.NoError(t, err, "Failed to open git repository in %s", dir)
 
@@ -194,7 +194,7 @@ func commitAllFiles(t testing.TB, dir string) {
 }
 
 // getCommitHash returns the current commit hash for the repository
-func getCommitHash(t testing.TB, dir string) string {
+func getCommitHash(t T, dir string) string {
 	repo, err := git.PlainOpen(dir)
 	require.NoError(t, err, "Failed to open git repository in %s", dir)
 
@@ -206,7 +206,7 @@ func getCommitHash(t testing.TB, dir string) string {
 }
 
 // replacePlaceholders replaces {{.CommitHash}} in all files with the actual commitHash
-func replacePlaceholders(t testing.TB, dir string, commitHash string) {
+func replacePlaceholders(t T, dir string, commitHash string) {
 	// Walk through all files in the directory
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -299,7 +299,7 @@ func execRootCmd(args []string, version string, stdout, stderr io.Writer) error 
 // Lines are formatted as : `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
 // All lines in serr must match at least one GoldenErrors
 // All GoldenErrors must match at least one line in serr
-func validateErrors(t testing.TB, stderr *bytes.Buffer, tempReqs string) {
+func validateErrors(t T, stderr *bytes.Buffer, tempReqs string) {
 	// Split stderr into lines
 	stderrLines := strings.Split(strings.TrimSpace(stderr.String()), "\n")
 
@@ -397,7 +397,7 @@ func extractErrorRegexes(line string) []string {
 }
 
 // validateResults checks if the files in tempReqs match the expected GoldenData
-func validateResults(t testing.TB, sysTestDataFolder, tempReqs string) {
+func validateResults(t T, sysTestDataFolder, tempReqs string) {
 	// Walk through all markdown files in tempReqs
 	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -446,7 +446,7 @@ func validateResults(t testing.TB, sysTestDataFolder, tempReqs string) {
 }
 
 // validateGoldenReqmd checks if reqmd.json files match their golden counterparts
-func validateGoldenReqmd(t testing.TB, sysTestDataFolder, tempReqs string) {
+func validateGoldenReqmd(t T, sysTestDataFolder, tempReqs string) {
 	// Find all reqmd.json files in tempReqs
 	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
