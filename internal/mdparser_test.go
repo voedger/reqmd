@@ -58,9 +58,9 @@ func TestMdParser_ParseMarkdownFile(t *testing.T) {
 }
 
 func TestMdParser_ParseMarkdownFile_Errors(t *testing.T) {
-	testDataDir := filepath.Join("testdata", "mdparser-errs.md")
+	testData := filepath.Join("testdata", "mdparser-errs.md")
 
-	_, errors, err := ParseMarkdownFile(newMdCtx(), testDataDir)
+	_, errors, err := ParseMarkdownFile(newMdCtx(), testData)
 	require.NoError(t, err)
 
 	// We expect 4 errors in the test file:
@@ -281,7 +281,7 @@ func TestParseRequirements_errors(t *testing.T) {
 				Code:     "multisites",
 				FilePath: "test.md",
 				Line:     1,
-				Message:  "Only one RequirementSite is allowed per line: `~REQ001~`,  `~REQ002~`covered[^~REQ002~]✅",
+				Message:  "only one RequirementSite is allowed per line: `~REQ001~`,  `~REQ002~`covered[^~REQ002~]✅",
 			},
 		},
 		{

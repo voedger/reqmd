@@ -51,7 +51,7 @@ func NewErrMultiSites(filePath string, line int, site1, site2 string) Processing
 		Code:     "multisites",
 		FilePath: filePath,
 		Line:     line,
-		Message:  "Only one RequirementSite is allowed per line: " + site1 + ",  " + site2,
+		Message:  "only one RequirementSite is allowed per line: " + site1 + ",  " + site2,
 	}
 }
 
@@ -61,7 +61,7 @@ func NewErrUnmatchedFence(filePath string, openFenceLine int) ProcessingError {
 		Code:     "unmatchedfence",
 		FilePath: filePath,
 		Line:     openFenceLine,
-		Message:  fmt.Sprintf("Opening code block fence at line %d has no matching closing fence", openFenceLine),
+		Message:  fmt.Sprintf("opening code block fence at line %d has no matching closing fence", openFenceLine),
 	}
 }
 
@@ -72,7 +72,7 @@ func NewErrDuplicateRequirementId(filePath1 string, line1 int, filePath2 string,
 		Code:     "dupreqid",
 		FilePath: filePath1,
 		Line:     line1,
-		Message: fmt.Sprintf("Duplicate RequirementId detected:\n\t%s\n\t%s:%d",
+		Message: fmt.Sprintf("duplicate RequirementId detected:\n\t%s\n\t%s:%d",
 			reqID, filePath2, line2),
 	}
 }
@@ -82,6 +82,6 @@ func NewErrMissingPackageIDWithReqs(filePath string, lineOfTheFirstReqSite int) 
 		Code:     "nopkgidreqs",
 		FilePath: filePath,
 		Line:     lineOfTheFirstReqSite,
-		Message:  "Markdown file with RequirementSites shall define reqmd.package",
+		Message:  "markdown file with RequirementSites shall define reqmd.package",
 	}
 }

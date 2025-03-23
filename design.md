@@ -239,7 +239,7 @@ type Action struct {
 - System tests (SysTests) are located in the `internal/sys_test.go` file
 - Each SysTest has a symbolic TestID
 - Each SysTest is associated with a  SysTestData folder located in `testdata/systest/<TestID>` folder
-  - `reqs`: TestMarkdown-s, Reqmd-s, GoldenReqmd-s
+  - `req`: TestMarkdown-s, Reqmd-s, GoldenReqmd-s
   - `src`: Source files
 - TestMarkdown file contains requirements and Golden Data
 - Golden Data are the expected outputs
@@ -274,7 +274,7 @@ Specification:
 
 GoldenReqmd is a reqmd.json file:
 
-- Named "redmd-golden.json"
+- Named "reqmd-golden.json"
 - MAY have multiple placeholders for the actual commit hash: {{.CommitHash}}
 
 ---

@@ -39,10 +39,10 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	sysTestDataDir, err := findSysTestDataDir(testsDir, testID)
 	require.NoError(t, err, "Failed to find sysTestData Dir for testID: %s", testID)
 
-	// Validate sysTestData Dir (MUST contain reqs and src Dirs)
+	// Validate sysTestData Dir (MUST contain req and src Dirs)
 	validateSysTestDataDir(t, sysTestDataDir)
 
-	// Create temporary directories for reqs (tempReqs) and src (tempSrc)
+	// Create temporary directories for req (tempReqs) and src (tempSrc)
 	tempReqs := t.TempDir()
 	tempSrc := t.TempDir()
 
@@ -50,8 +50,8 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	createGitRepo(t, tempReqs)
 	createGitRepo(t, tempSrc)
 
-	// Copy sysTestData.reqs to tempReqs and sysTestData.src to tempSrc
-	copyDir(t, filepathJoin(sysTestDataDir, "reqs"), tempReqs)
+	// Copy sysTestData.req to tempReqs and sysTestData.src to tempSrc
+	copyDir(t, filepathJoin(sysTestDataDir, "req"), tempReqs)
 	copyDir(t, filepathJoin(sysTestDataDir, "src"), tempSrc)
 
 	// Commit all files in tempSrc
@@ -86,9 +86,9 @@ func findSysTestDataDir(testsDir string, testID string) (string, error) {
 
 // validateSysTestDataDir ensures the test data Dir has the required structure
 func validateSysTestDataDir(t T, Dir string) {
-	reqsDir := filepath.ToSlash(filepathJoin(Dir, "reqs"))
-	_, err := os.Stat(reqsDir)
-	require.NoError(t, err, "Failed to read `reqs` dir")
+	reqDir := filepath.ToSlash(filepathJoin(Dir, "req"))
+	_, err := os.Stat(reqDir)
+	require.NoError(t, err, "Failed to read `req` dir")
 
 	srcDir := filepath.ToSlash(filepathJoin(Dir, "src"))
 	_, err = os.Stat(srcDir)
@@ -450,7 +450,7 @@ func validateGoldenReqmd(t T, sysTestDataDir, tempReqs string) {
 
 		// Check if there's a corresponding reqmd-golden.json
 		goldenPath := filepathJoin(filepath.Dir(relPath), "reqmd-golden.json")
-		goldenFullPath := filepathJoin(sysTestDataDir, "reqs", goldenPath)
+		goldenFullPath := filepathJoin(sysTestDataDir, "req", goldenPath)
 
 		// Try to read the golden file
 		goldenContent, err := os.ReadFile(goldenFullPath)
