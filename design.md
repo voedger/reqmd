@@ -236,9 +236,9 @@ type Action struct {
 
 ### Core principles
 
-- System tests (SysTests) are located in the `internal/systest` package
+- System tests (SysTests) are located in the `internal/sys_test.go` file
 - Each SysTest has a symbolic TestID
-- Each SysTest is associated with a  SysTestData folder located in `testdata/<TestID>` folder
+- Each SysTest is associated with a  SysTestData folder located in `testdata/systest/<TestID>` folder
   - `reqs`: TestMarkdown-s, Reqmd-s, GoldenReqmd-s
   - `src`: Source files
 - TestMarkdown file contains requirements and Golden Data

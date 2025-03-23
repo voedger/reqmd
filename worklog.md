@@ -410,6 +410,18 @@ Based on your attachments, I have a better understanding of the SysTestFixture, 
 
 - *Insiders.Edit.S37: #file:systest.go #file:systest_test.go replace the `fs embed.FS parameter` of the RunSysTest to `testsFolder string`*.👍
 
+- *Check that the sources comply with the `## System tests` requirements `#file:sys_test.go #file:systest.go #file:systest_test.go`*👍
+
+```markdown
+## Compliance Analysis
+
+### Core Principles
+
+1. **Test Location** ❌
+   - Design requires tests in `internal/sys_test2.go`
+   - Actual implementation has them in sys_test.go (naming discrepancy)
+...   
+```
 --------------------
 
 ## TODOs
@@ -717,3 +729,14 @@ Made changes.
 - Me: Oops, models.go does not match the design (created it manually)
 - It is cool to review each function using UI (it is way faster then Copilot) but it takes more time in total
 - Provide implementation details: coversions is made reading lines one by one and tracking the status (finite-state machine)
+- Check that the sources comply with the `## System tests` requirements `#file:sys_test.go #file:systest.go #file:systest_test.go`👍
+
+```markdown
+## Compliance Analysis
+
+### Core Principles
+
+1. **Test Location** ❌
+   - Design requires tests in `internal/sys_test2.go`
+   - Actual implementation has them in sys_test.go (naming discrepancy)
+```
