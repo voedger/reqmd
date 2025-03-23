@@ -42,20 +42,13 @@ type SysTestFixture struct {
 type ExecRootCmdFunc func(args []string, version string) error
 
 // RunSysTest executes a system test with the given parameters
-// Parameters
-//
-//	t testing.T
-//	testsFolder string
-//	testID string
-//	args []string
-//	version string
-func RunSysTest(t T, testsFolder string, testID string, args []string, version string) {
-	// Find sysTestData folder using testID
-	sysTestDataFolder, err := findSysTestDataFolder(testsFolder, testID)
-	require.NoError(t, err, "Failed to find sysTestData folder for testID: %s", testID)
+func RunSysTest(t T, testsDir string, testID string, args []string, version string) {
+	// Find sysTestData Dir using testID
+	sysTestDataDir, err := findSysTestDataDir(testsDir, testID)
+	require.NoError(t, err, "Failed to find sysTestData Dir for testID: %s", testID)
 
-	// Validate sysTestData folder (MUST contain reqs and src folders)
-	validateSysTestDataFolder(t, sysTestDataFolder)
+	// Validate sysTestData Dir (MUST contain reqs and src Dirs)
+	validateSysTestDataDir(t, sysTestDataDir)
 
 	// Create temporary directories for reqs (tempReqs) and src (tempSrc)
 	tempReqs := t.TempDir()
@@ -66,8 +59,8 @@ func RunSysTest(t T, testsFolder string, testID string, args []string, version s
 	createGitRepo(t, tempSrc)
 
 	// Copy sysTestData.reqs to tempReqs and sysTestData.src to tempSrc
-	copyFolder(t, filepathJoin(sysTestDataFolder, "reqs"), tempReqs)
-	copyFolder(t, filepathJoin(sysTestDataFolder, "src"), tempSrc)
+	copyDir(t, filepathJoin(sysTestDataDir, "reqs"), tempReqs)
+	copyDir(t, filepathJoin(sysTestDataDir, "src"), tempSrc)
 
 	// Commit all files in tempSrc
 	commitAllFiles(t, tempSrc)
@@ -75,7 +68,7 @@ func RunSysTest(t T, testsFolder string, testID string, args []string, version s
 	// Find commitHash for tempSrc
 	commitHash := getCommitHash(t, tempSrc)
 
-	// Replace placeholders in all files in the tempReqs folder with commitHash
+	// Replace placeholders in all files in the tempReqs Dir with commitHash
 	replacePlaceholders(t, tempReqs, commitHash)
 
 	// Prepare args to include tempReqs and tempSrc
@@ -91,23 +84,23 @@ func RunSysTest(t T, testsFolder string, testID string, args []string, version s
 	validateErrors(t, &stderr, tempReqs)
 
 	// Validate the tempReqs against GoldenData
-	validateResults(t, sysTestDataFolder, tempReqs)
+	validateResults(t, sysTestDataDir, tempReqs)
 }
 
-// findSysTestDataFolder locates the test data folder for the given testID
-func findSysTestDataFolder(testsFolder string, testID string) (string, error) {
-	return filepathJoin(testsFolder, testID), nil
+// findSysTestDataDir locates the test data Dir for the given testID
+func findSysTestDataDir(testsDir string, testID string) (string, error) {
+	return filepathJoin(testsDir, testID), nil
 }
 
-// validateSysTestDataFolder ensures the test data folder has the required structure
-func validateSysTestDataFolder(t T, folder string) {
-	reqsDir := filepath.ToSlash(filepathJoin(folder, "reqs"))
+// validateSysTestDataDir ensures the test data Dir has the required structure
+func validateSysTestDataDir(t T, Dir string) {
+	reqsDir := filepath.ToSlash(filepathJoin(Dir, "reqs"))
 	_, err := os.Stat(reqsDir)
-	require.NoError(t, err, "Failed to read reqs folder")
+	require.NoError(t, err, "Failed to read reqs Dir")
 
-	srcDir := filepath.ToSlash(filepathJoin(folder, "src"))
+	srcDir := filepath.ToSlash(filepathJoin(Dir, "src"))
 	_, err = os.Stat(srcDir)
-	require.NoError(t, err, "Failed to read src folder")
+	require.NoError(t, err, "Failed to read src Dir")
 }
 
 // createGitRepo initializes a git repository in the given directory
@@ -134,8 +127,8 @@ func createGitRepo(t T, dir string) {
 	require.NoError(t, err, "Failed to create origin remote")
 }
 
-// copyFolder copies files from source directory to target directory
-func copyFolder(t T, sourceDir, targetDir string) {
+// copyDir copies files from source directory to target directory
+func copyDir(t T, sourceDir, targetDir string) {
 	// Read the source directory
 	entries, err := os.ReadDir(sourceDir)
 	if err != nil {
@@ -157,7 +150,7 @@ func copyFolder(t T, sourceDir, targetDir string) {
 			require.NoError(t, err, "Failed to create directory: %s", targetPath)
 
 			// Recursively copy the subdirectory
-			copyFolder(t, sourcePath, targetPath)
+			copyDir(t, sourcePath, targetPath)
 		} else {
 			// Read the file content
 			content, err := os.ReadFile(sourcePath)
@@ -397,7 +390,7 @@ func extractErrorRegexes(line string) []string {
 }
 
 // validateResults checks if the files in tempReqs match the expected GoldenData
-func validateResults(t T, sysTestDataFolder, tempReqs string) {
+func validateResults(t T, sysTestDataDir, tempReqs string) {
 	// Walk through all markdown files in tempReqs
 	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -442,11 +435,11 @@ func validateResults(t T, sysTestDataFolder, tempReqs string) {
 	require.NoError(t, err, "Failed to validate results")
 
 	// Check for GoldenReqmd
-	validateGoldenReqmd(t, sysTestDataFolder, tempReqs)
+	validateGoldenReqmd(t, sysTestDataDir, tempReqs)
 }
 
 // validateGoldenReqmd checks if reqmd.json files match their golden counterparts
-func validateGoldenReqmd(t T, sysTestDataFolder, tempReqs string) {
+func validateGoldenReqmd(t T, sysTestDataDir, tempReqs string) {
 	// Find all reqmd.json files in tempReqs
 	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -465,7 +458,7 @@ func validateGoldenReqmd(t T, sysTestDataFolder, tempReqs string) {
 
 		// Check if there's a corresponding reqmd-golden.json
 		goldenPath := filepathJoin(filepath.Dir(relPath), "reqmd-golden.json")
-		goldenFullPath := filepathJoin(sysTestDataFolder, "reqs", goldenPath)
+		goldenFullPath := filepathJoin(sysTestDataDir, "reqs", goldenPath)
 
 		// Try to read the golden file
 		goldenContent, err := os.ReadFile(goldenFullPath)
