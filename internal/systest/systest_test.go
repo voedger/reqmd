@@ -1,17 +1,15 @@
 package systest
 
 import (
-	"embed"
 	"fmt"
 	"os"
 	"testing"
 )
 
-//go:embed testdata/*
-var testdata embed.FS
+const testsDir = "testdata"
 
 func Test_noreqs(t *testing.T) {
-	RunSysTest(t, testdata, "noreqs", []string{"trace"}, "0.0.1")
+	RunSysTest(t, testsDir, "noreqs", []string{"trace"}, "0.0.1")
 }
 
 func Test_err_undetected(t *testing.T) {
@@ -20,7 +18,7 @@ func Test_err_undetected(t *testing.T) {
 	mockT := &MockT{}
 	defer mockT.Cleanup()
 
-	RunSysTest(t, testdata, "err_undetected", []string{"trace"}, "0.0.1")
+	RunSysTest(t, testsDir, "err_undetected", []string{"trace"}, "0.0.1")
 }
 
 // MockT implements a subset of testing.T for controlled failure testing

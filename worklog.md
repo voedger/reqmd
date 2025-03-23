@@ -323,10 +323,13 @@ Implementation requirements:
 
 ### 020: System tests
 
-- Chat.S37T: Create a plan how to build system tests.
-- Insiders.Chat.S37.Is it clear how to implement SysTestFixture? Ask questions
+- *Chat.S37T: Create a plan how to build system tests*👍
+  - SysTestFixture
+
+- *Insiders.Chat.S37.Is it clear how to implement SysTestFixture? Ask questions*
 
 First attempt:
+
 ```markdown
 Based on the provided documents, I still need significant clarification about the `SysTestFixture` implementation. Here are more specific questions to guide our discussion:
 
@@ -365,14 +368,8 @@ Based on the provided documents, I still need significant clarification about th
 The design document provides a high-level overview but lacks implementation details for `SysTestFixture`. More clarity on these aspects would help create an effective implementation.
 ```
 
-- Insiders.Agent.S37: Implement RunSysTest
-  - internal\systest\systest.go, 440 lines
-- Insiders.Edit.S37:Use github.com/go-git/go-git/v5 instead of running git
-- Me: 2 hours, it works but in a very rough way.
-
-#### current
-
 Second attempt:
+
 ```markdown
 Based on your attachments, I have a better understanding of the SysTestFixture, but there are still some implementation details that need clarification:
 
@@ -405,6 +402,13 @@ Based on your attachments, I have a better understanding of the SysTestFixture, 
 8. Is there an existing `TestMarkdown` parser to use, or should that be implemented as part of the SysTestFixture?
 
 ```
+
+- *Insiders.Agent.S37: Implement RunSysTest*
+  - internal\systest\systest.go, 440 lines
+- *Insiders.Edit.S37:Use github.com/go-git/go-git/v5 instead of running git*
+- *Me: 2 hours, it works but in a very rough way*
+
+- *Insiders.Edit.S37: #file:systest.go #file:systest_test.go replace the `fs embed.FS parameter` of the RunSysTest to `testsFolder string`*.👍
 
 --------------------
 

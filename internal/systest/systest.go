@@ -5,7 +5,6 @@ package systest
 
 import (
 	"bytes"
-	"embed"
 	"fmt"
 	"io"
 	"os"
@@ -38,13 +37,20 @@ type SysTestFixture struct {
 type ExecRootCmdFunc func(args []string, version string) error
 
 // RunSysTest executes a system test with the given parameters
-func RunSysTest(t testing.TB, fs embed.FS, testID string, args []string, version string) {
-	// Find sysTestData folder using fs and testID
-	sysTestDataFolder, err := findSysTestDataFolder(fs, testID)
+// Parameters
+//
+//	t testing.T
+//	testsFolder string
+//	testID string
+//	args []string
+//	version string
+func RunSysTest(t testing.TB, testsFolder string, testID string, args []string, version string) {
+	// Find sysTestData folder using testID
+	sysTestDataFolder, err := findSysTestDataFolder(testsFolder, testID)
 	require.NoError(t, err, "Failed to find sysTestData folder for testID: %s", testID)
 
 	// Validate sysTestData folder (MUST contain reqs and src folders)
-	validateSysTestDataFolder(t, fs, sysTestDataFolder)
+	validateSysTestDataFolder(t, sysTestDataFolder)
 
 	// Create temporary directories for reqs (tempReqs) and src (tempSrc)
 	tempReqs := t.TempDir()
@@ -55,8 +61,8 @@ func RunSysTest(t testing.TB, fs embed.FS, testID string, args []string, version
 	createGitRepo(t, tempSrc)
 
 	// Copy sysTestData.reqs to tempReqs and sysTestData.src to tempSrc
-	copyEmbeddedFolder(t, fs, filepathJoin(sysTestDataFolder, "reqs"), tempReqs)
-	copyEmbeddedFolder(t, fs, filepathJoin(sysTestDataFolder, "src"), tempSrc)
+	copyFolder(t, filepathJoin(sysTestDataFolder, "reqs"), tempReqs)
+	copyFolder(t, filepathJoin(sysTestDataFolder, "src"), tempSrc)
 
 	// Commit all files in tempSrc
 	commitAllFiles(t, tempSrc)
@@ -80,7 +86,7 @@ func RunSysTest(t testing.TB, fs embed.FS, testID string, args []string, version
 	validateErrors(t, &stderr, tempReqs)
 
 	// Validate the tempReqs against GoldenData
-	validateResults(t, fs, sysTestDataFolder, tempReqs)
+	validateResults(t, sysTestDataFolder, tempReqs)
 
 	// If execRootCmd returned an error and stderr was empty, it's an unexpected error
 	if err != nil && stderr.Len() == 0 {
@@ -89,18 +95,18 @@ func RunSysTest(t testing.TB, fs embed.FS, testID string, args []string, version
 }
 
 // findSysTestDataFolder locates the test data folder for the given testID
-func findSysTestDataFolder(_ embed.FS, testID string) (string, error) {
-	return filepathJoin("testdata", testID), nil
+func findSysTestDataFolder(testsFolder string, testID string) (string, error) {
+	return filepathJoin(testsFolder, testID), nil
 }
 
 // validateSysTestDataFolder ensures the test data folder has the required structure
-func validateSysTestDataFolder(t testing.TB, fs embed.FS, folder string) {
+func validateSysTestDataFolder(t testing.TB, folder string) {
 	reqsDir := filepath.ToSlash(filepathJoin(folder, "reqs"))
-	_, err := fs.ReadDir(reqsDir)
+	_, err := os.Stat(reqsDir)
 	require.NoError(t, err, "Failed to read reqs folder")
 
 	srcDir := filepath.ToSlash(filepathJoin(folder, "src"))
-	_, err = fs.ReadDir(srcDir)
+	_, err = os.Stat(srcDir)
 	require.NoError(t, err, "Failed to read src folder")
 }
 
@@ -128,13 +134,13 @@ func createGitRepo(t testing.TB, dir string) {
 	require.NoError(t, err, "Failed to create origin remote")
 }
 
-// copyEmbeddedFolder copies files from embedded FS to target directory
-func copyEmbeddedFolder(t testing.TB, fs embed.FS, sourceDir, targetDir string) {
+// copyFolder copies files from source directory to target directory
+func copyFolder(t testing.TB, sourceDir, targetDir string) {
 	// Read the source directory
-	entries, err := fs.ReadDir(sourceDir)
+	entries, err := os.ReadDir(sourceDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// Directory doesn't exist in embedded FS, which is fine
+			// Directory doesn't exist, which is fine
 			return
 		}
 		require.NoError(t, err, "Failed to read directory: %s", sourceDir)
@@ -151,10 +157,10 @@ func copyEmbeddedFolder(t testing.TB, fs embed.FS, sourceDir, targetDir string) 
 			require.NoError(t, err, "Failed to create directory: %s", targetPath)
 
 			// Recursively copy the subdirectory
-			copyEmbeddedFolder(t, fs, sourcePath, targetPath)
+			copyFolder(t, sourcePath, targetPath)
 		} else {
 			// Read the file content
-			content, err := fs.ReadFile(sourcePath)
+			content, err := os.ReadFile(sourcePath)
 			require.NoError(t, err, "Failed to read file: %s", sourcePath)
 
 			// Write the file content to the target path
@@ -391,7 +397,7 @@ func extractErrorRegexes(line string) []string {
 }
 
 // validateResults checks if the files in tempReqs match the expected GoldenData
-func validateResults(t testing.TB, fs embed.FS, sysTestDataFolder, tempReqs string) {
+func validateResults(t testing.TB, sysTestDataFolder, tempReqs string) {
 	// Walk through all markdown files in tempReqs
 	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -436,11 +442,11 @@ func validateResults(t testing.TB, fs embed.FS, sysTestDataFolder, tempReqs stri
 	require.NoError(t, err, "Failed to validate results")
 
 	// Check for GoldenReqmd
-	validateGoldenReqmd(t, fs, sysTestDataFolder, tempReqs)
+	validateGoldenReqmd(t, sysTestDataFolder, tempReqs)
 }
 
 // validateGoldenReqmd checks if reqmd.json files match their golden counterparts
-func validateGoldenReqmd(t testing.TB, fs embed.FS, sysTestDataFolder, tempReqs string) {
+func validateGoldenReqmd(t testing.TB, sysTestDataFolder, tempReqs string) {
 	// Find all reqmd.json files in tempReqs
 	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -462,7 +468,7 @@ func validateGoldenReqmd(t testing.TB, fs embed.FS, sysTestDataFolder, tempReqs 
 		goldenFullPath := filepathJoin(sysTestDataFolder, "reqs", goldenPath)
 
 		// Try to read the golden file
-		goldenContent, err := fs.ReadFile(goldenFullPath)
+		goldenContent, err := os.ReadFile(goldenFullPath)
 		if os.IsNotExist(err) {
 			// No golden file - skip validation
 			return nil
