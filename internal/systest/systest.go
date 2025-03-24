@@ -43,12 +43,6 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	// Validate sysTestData Dir (MUST contain req and src Dirs)
 	validateSysTestDataDir(t, sysTestDataDir)
 
-	reqDir := filepathJoin(sysTestDataDir, "req")
-
-	// parseReqGoldenData
-	grd, err := parseReqGoldenData(reqDir)
-	require.NoError(t, err, "Failed to parse req golden data")
-
 	// Create temporary directories for req (tempReqs) and src (tempSrc)
 	tempReqs := t.TempDir()
 	tempSrc := t.TempDir()
@@ -60,6 +54,10 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	// Copy sysTestData.req to tempReqs and sysTestData.src to tempSrc
 	copyDir(t, filepathJoin(sysTestDataDir, "req"), tempReqs)
 	copyDir(t, filepathJoin(sysTestDataDir, "src"), tempSrc)
+
+	// parseReqGoldenData
+	grd, err := parseReqGoldenData(tempReqs)
+	require.NoError(t, err, "Failed to parse req golden data")
 
 	// Commit all files in tempSrc
 	commitAllFiles(t, tempSrc)
@@ -83,7 +81,7 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	validateErrors(t, &stderr, tempReqs, grd)
 
 	// Validate the tempReqs against GoldenData
-	validateTempReqs(t, sysTestDataDir, tempReqs)
+	validateTempReqs(t, grd, tempReqs)
 
 	// Check for GoldenReqmd
 	validateReqmd(t, sysTestDataDir, tempReqs)
@@ -387,10 +385,62 @@ func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenReqDa
 	}
 }
 
-// validateTempReqs checks if the files in tempReqs match the expected GoldenData
-func validateTempReqs(t T, sysTestDataDir, tempReqs string) {
+// validateTempReqs checks if the files in tempReqs match the expected goldenReqData
+// - reqsites
+// - footnotes
+// - newfootnotes
+func validateTempReqs(t T, grd *goldenReqData, tempReqsDir string) {
+
+	if len(grd.reqsites) == 0 && len(grd.footnotes) == 0 && len(grd.newfootnotes) == 0 {
+		// No validation data found, nothing to validate
+		return
+	}
+
+	// Track which items have been found
+	reqsitesFound := make(map[string]map[int]map[string]bool)
+	footnotesFound := make(map[string]map[int]map[string]bool)
+	newfootnotesFound := make(map[string]map[string]bool)
+
+	// Initialize the tracking maps
+	for filePath, lineItems := range grd.reqsites {
+		if reqsitesFound[filePath] == nil {
+			reqsitesFound[filePath] = make(map[int]map[string]bool)
+		}
+		for lineNum, items := range lineItems {
+			if reqsitesFound[filePath][lineNum] == nil {
+				reqsitesFound[filePath][lineNum] = make(map[string]bool)
+			}
+			for _, item := range items {
+				reqsitesFound[filePath][lineNum][item.data] = false
+			}
+		}
+	}
+
+	for filePath, lineItems := range grd.footnotes {
+		if footnotesFound[filePath] == nil {
+			footnotesFound[filePath] = make(map[int]map[string]bool)
+		}
+		for lineNum, items := range lineItems {
+			if footnotesFound[filePath][lineNum] == nil {
+				footnotesFound[filePath][lineNum] = make(map[string]bool)
+			}
+			for _, item := range items {
+				footnotesFound[filePath][lineNum][item.data] = false
+			}
+		}
+	}
+
+	for filePath, items := range grd.newfootnotes {
+		if newfootnotesFound[filePath] == nil {
+			newfootnotesFound[filePath] = make(map[string]bool)
+		}
+		for _, item := range items {
+			newfootnotesFound[filePath][item.data] = false
+		}
+	}
+
 	// Walk through all markdown files in tempReqs
-	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(tempReqsDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -405,33 +455,93 @@ func validateTempReqs(t T, sysTestDataDir, tempReqs string) {
 			return err
 		}
 
-		// Parse content line by line
-		lines := strings.Split(string(content), "\n")
+		// Get relative path to match with golden data
+		relPath, err := filepath.Rel(tempReqsDir, path)
+		if err != nil {
+			return err
+		}
+		relPath = filepath.ToSlash(relPath)
 
-		// For each line, check if the next line contains GoldenData
-		for i := range len(lines)-1 {
-			nextLine := lines[i+1]
+		// For each file in the golden data, check if this file matches (by base name)
+		for goldFilePath := range grd.reqsites {
+			goldBaseName := filepath.Base(goldFilePath)
+			currentBaseName := filepath.Base(path)
 
-			// If next line starts with "// reqsite" or "// footnote", it contains GoldenData
-			if strings.HasPrefix(nextLine, "// reqsite") || strings.HasPrefix(nextLine, "// footnote") {
-				// Extract the expected pattern from the GoldenData line
-				goldenData := strings.TrimPrefix(nextLine, "// ")
+			if strings.EqualFold(goldBaseName, currentBaseName) {
+				validateFileContents(t, string(content), goldFilePath, relPath, reqsitesFound, "reqsite")
+			}
+		}
 
-				// Replace backticks with double quotes in GoldenData
-				goldenData = strings.ReplaceAll(goldenData, "`", "\"")
+		for goldFilePath := range grd.footnotes {
+			goldBaseName := filepath.Base(goldFilePath)
+			currentBaseName := filepath.Base(path)
 
-				// Check if the current line matches the expected pattern
-				currentLine := lines[i]
-				assert.Contains(t, currentLine, goldenData,
-					"Line content doesn't match GoldenData at line %d in %s", i+1, path)
+			if strings.EqualFold(goldBaseName, currentBaseName) {
+				validateFileContents(t, string(content), goldFilePath, relPath, footnotesFound, "footnote")
+			}
+		}
+
+		// Check for newfootnotes (these don't have line numbers, just check if they exist in the file)
+		for goldFilePath, items := range grd.newfootnotes {
+			goldBaseName := filepath.Base(goldFilePath)
+			currentBaseName := filepath.Base(path)
+
+			if strings.EqualFold(goldBaseName, currentBaseName) {
+				for _, item := range items {
+					if strings.Contains(string(content), item.data) {
+						newfootnotesFound[goldFilePath][item.data] = true
+					}
+				}
 			}
 		}
 
 		return nil
 	})
+	require.NoError(t, err, "Failed to walk through markdown files")
 
-	require.NoError(t, err, "Failed to validate results")
+	// Verify all reqsites were found
+	for filePath, lineItems := range reqsitesFound {
+		for lineNum, items := range lineItems {
+			for item, found := range items {
+				assert.True(t, found, "Expected reqsite not found in %s at line %d: %s", filePath, lineNum, item)
+			}
+		}
+	}
 
+	// Verify all footnotes were found
+	for filePath, lineItems := range footnotesFound {
+		for lineNum, items := range lineItems {
+			for item, found := range items {
+				assert.True(t, found, "Expected footnote not found in %s at line %d: %s", filePath, lineNum, item)
+			}
+		}
+	}
+
+	// Verify all newfootnotes were found
+	for filePath, items := range newfootnotesFound {
+		for item, found := range items {
+			assert.True(t, found, "Expected newfootnote not found in %s: %s", filePath, item)
+		}
+	}
+}
+
+// validateFileContents checks file contents for the existence of expected items
+func validateFileContents(t T, content string, goldFilePath string, relPath string, itemsFound map[string]map[int]map[string]bool, itemType string) {
+	lines := strings.Split(content, "\n")
+
+	// For each line in the file
+	for i, line := range lines {
+		lineNum := i + 1 // Convert to 1-based line numbers
+
+		// Check if this line number has expected items in the golden data
+		if itemsFound[goldFilePath][lineNum] != nil {
+			for expectedItem := range itemsFound[goldFilePath][lineNum] {
+				if strings.Contains(line, expectedItem) {
+					itemsFound[goldFilePath][lineNum][expectedItem] = true
+				}
+			}
+		}
+	}
 }
 
 // validateReqmd checks if reqmd.json files match their golden counterparts
