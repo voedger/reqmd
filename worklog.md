@@ -411,6 +411,7 @@ Based on your attachments, I have a better understanding of the SysTestFixture, 
 - *Insiders.Edit.S37: #file:systest.go #file:systest_test.go replace the `fs embed.FS parameter` of the RunSysTest to `testsFolder string`*.👍
 
 - *Check that the sources comply with the `## System tests` requirements `#file:sys_test.go #file:systest.go #file:systest_test.go`*👍
+- Total time spent improving `Implement RunSysTest...` ~6h
 
 ```markdown
 ## Compliance Analysis
@@ -430,6 +431,7 @@ Based on your attachments, I have a better understanding of the SysTestFixture, 
 - *Me. Adjust the specification of the goldenReqData*
 - *Insiders.Agent.S37: Make validateErrors comply the specification*❌
 - *Insiders.Agent.S37: Implement validateErrors function*
+- *
 
 --------------------
 
