@@ -239,20 +239,25 @@ type Action struct {
 - System tests (SysTests) are located in the `internal/sys_test.go` file
 - Each SysTest has a symbolic TestID
 - Each SysTest is associated with a  SysTestData folder located in `testdata/systest/<TestID>` folder
-  - `req`: TestMarkdown-s, Reqmd-s, GoldenReqmd-s
+  - `req`: TestMarkdown-s, Reqmd-s, GoldenFile-s
   - `src`: Source files
-- TestMarkdown file contains requirements and Golden Data
-- Golden Data are the expected outputs
-- Golden Data are represented as lines started with `//`
+- TestMarkdown file contains NormalLines and GoldenLines (for errors), see below
+- GoldenLines represent expected errors for the previous NormalLine
 - SysTestData are loaded and processed by the `internal/systest/RunSysTest` function
-- `RunSysTest` uses `parseReqGoldenData` function to parse the Golden Data and returns `goldenReqData` struct
-- `goldenReqData` struct
-  - Contains `goldenReqItem` by type:
-    - `errors` - expected errors (compiled regexes)
-    - `lines` - expected lines for each file
-- `parseReqGoldenData`
+- `RunSysTest` uses `parseGoldenData` function to parse the Golden Data and returns `goldenData` struct
+- `goldenData` struct
+  - `errors map[Path]map[int][]*regexp.Regexp` - expected errors (compiled regexes)
+  - `lines map[Path][]string` - expected lines
+- `parseGoldenData`
   - Takes the path to the `req` folder as a parameter
-  - Reads all lines from TestMarkdown-s
+  - Definitions
+    - Root Name is a file name without extension
+    - GoldenFile is a file whose Root Name ends with "_"
+    - NormalFile is a file whose Root Name does not end with "_"
+  - NormalFiles that ends with ".md" are processed to extract GoldenErrors (see below)
+  - NormalFiles that do not have GoldenFile counterpart are loaded to goldenData.lines
+  - GoldenFiles are loaded to goldenData.lines, name is normalized ("_" is removed)
+
 
 ### TestMarkdown
 
@@ -261,22 +266,12 @@ File structure:
 ```ebnf
 WS       = { " " | "\t" } .
 Body     = { NormalLine | GoldenLine} .
-GoldenLine = "//" {WS} (GoldenErrors | GoldenData ) .
-GoldenData = ( GoldenReqSiteData | GoldenFootnoteData | GoldenNewFootnoteData ) .
+GoldenLine = "//" {WS} (GoldenErrors) .
 GoldenErrors = "errors:" {WS} {"""" ErrRegex """" {WS}} .
-GoldenReqSiteData = "reqsite:" {AnyCharacter} .
-GoldenFootnoteData = "footnote:" {AnyCharacter} .
-GoldenNewFootnoteData = "newfootnote:" {AnyCharacter} .
 ```
 
 Specification:
 
-- GoldenReqSiteData and GoldenFootnoteData represents the expected output for the previous line
-- GoldenNewFootnoteData represents the expected output for the new footnote
-- GoldenData
-  - backticks are replaced with double quotes
-  - MAY have multiple placeholders for the actual commit hash: {{.CommitHash}}
-  - GoldenData is always a single line
 - GoldenErrors represent the expected errors for the previous line
 - ErrRegex is a regular expression that matches the error message
   - If line is related to multiple errors then multiple ErrRegexes are used
