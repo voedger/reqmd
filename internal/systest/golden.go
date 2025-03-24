@@ -67,7 +67,6 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 					}
 
 					item := &goldenReqItem{
-						path:  filePath,
 						regex: regex,
 					}
 
@@ -91,7 +90,6 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 				data = strings.ReplaceAll(data, "`", "\"")
 
 				item := &goldenReqItem{
-					path: filePath,
 					data: data,
 				}
 
@@ -114,7 +112,6 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 				data = strings.ReplaceAll(data, "`", "\"")
 
 				item := &goldenReqItem{
-					path: filePath,
 					data: data,
 				}
 
@@ -133,7 +130,6 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 				data = strings.ReplaceAll(data, "`", "\"")
 
 				item := &goldenReqItem{
-					path: filePath,
 					data: data,
 				}
 
@@ -148,6 +144,7 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 
 // goldenReqData holds the parsed golden data from TestMarkdown files
 type goldenReqData struct {
+	// Maps file paths to line numbers to goldenReqItem slices
 	errors       map[string]map[int][]*goldenReqItem
 	reqsites     map[string]map[int][]*goldenReqItem
 	footnotes    map[string]map[int][]*goldenReqItem
@@ -156,7 +153,6 @@ type goldenReqData struct {
 
 // goldenReqItem represents a single golden data item with its context
 type goldenReqItem struct {
-	path  string         // File path
 	data  string         // Content for reqsites, footnotes, and newfootnotes
 	regex *regexp.Regexp // Compiled regex for errors
 }

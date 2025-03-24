@@ -5,11 +5,9 @@ package systest
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"text/template"
 
@@ -47,7 +45,6 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	// parseReqGoldenData
 	grd, err := parseReqGoldenData(reqDir)
 	require.NoError(t, err, "Failed to parse req golden data")
-	_ = grd
 
 	// Create temporary directories for req (tempReqs) and src (tempSrc)
 	tempReqs := t.TempDir()
@@ -58,7 +55,7 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	createGitRepo(t, tempSrc)
 
 	// Copy sysTestData.req to tempReqs and sysTestData.src to tempSrc
-	copyDir(t, filepathJoin(sysTestDataDir, reqDir), tempReqs)
+	copyDir(t, filepathJoin(sysTestDataDir, "req"), tempReqs)
 	copyDir(t, filepathJoin(sysTestDataDir, "src"), tempSrc)
 
 	// Commit all files in tempSrc
@@ -80,7 +77,7 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	_ = execRootCmd(rootCmd, testArgs, version, &stdout, &stderr)
 
 	// Check errors
-	validateErrors(t, &stderr, tempReqs)
+	validateErrors(t, &stderr, tempReqs, grd)
 
 	// Validate the tempReqs against GoldenData
 	validateResults(t, sysTestDataDir, tempReqs)
@@ -287,105 +284,13 @@ func execRootCmd(rootCmd ExecRootCmdFunc, args []string, version string, stdout,
 	return err
 }
 
-// validateErrors checks if the stderr output matches expected error patterns
+// validateErrors checks if the stderr output matches expected error patterns from goldenReqData
 // Lines are formatted as : `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
-// All lines in serr must match at least one GoldenErrors
-// All GoldenErrors must match at least one line in serr
-func validateErrors(t T, stderr *bytes.Buffer, tempReqs string) {
-	// Split stderr into lines
-	stderrLines := strings.Split(strings.TrimSpace(stderr.String()), "\n")
+// All lines in stderr must match at least one item in grd.errors
+// All grd.errors items must match at least one line in stderr
+// stderr lines and grd.errors items are matched using all partes of the stderr lines: err.FilePath, err.Line, err.Message
+func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenReqData) {
 
-	// Create a map to track which stderr lines have been matched
-	stderrMatched := make(map[string]bool)
-	for _, line := range stderrLines {
-		stderrMatched[line] = false
-	}
-
-	// Map to collect all golden error patterns
-	goldenErrors := make(map[string]bool)
-
-	// Read all markdown files in tempReqs to find GoldenErrors
-	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() || !strings.HasSuffix(strings.ToLower(path), ".md") {
-			return nil
-		}
-
-		// Read file content
-		content, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		// Parse content line by line to find GoldenErrors
-		lines := strings.Split(string(content), "\n")
-		for i, line := range lines {
-			// Skip if not a line with expected errors
-			if !strings.HasPrefix(line, "// errors: ") {
-				continue
-			}
-
-			// Extract error regexes from the line
-			errLine := strings.TrimPrefix(line, "// errors: ")
-			errRegexes := extractErrorRegexes(errLine)
-
-			// The line number to check is i (0-based) for previous line
-			lineNum := i
-			if lineNum > 0 {
-				lineNum-- // Reference the line before the error comment
-			}
-
-			// Create patterns for matching stderr lines
-			for _, regex := range errRegexes {
-				pattern := fmt.Sprintf(`%s:%d: .*%s`, regexp.QuoteMeta(filepath.Base(path)), lineNum+1, regex)
-				goldenErrors[pattern] = false
-
-				// Try to match this pattern against stderr lines
-				for stderrLine := range stderrMatched {
-					matched, err := regexp.MatchString(pattern, stderrLine)
-					require.NoError(t, err, "Invalid error regex pattern: %s", pattern)
-					if matched {
-						stderrMatched[stderrLine] = true
-						goldenErrors[pattern] = true
-					}
-				}
-			}
-		}
-
-		return nil
-	})
-
-	require.NoError(t, err, "Failed to validate errors")
-
-	// Check that all stderr lines were matched
-	for line, matched := range stderrMatched {
-		if len(line) == 0 {
-			continue
-		}
-		assert.True(t, matched, "Unexpected error in stderr: %s", line)
-	}
-
-	// Check that all golden errors were matched
-	for pattern, matched := range goldenErrors {
-		assert.True(t, matched, "Expected error not found in stderr: %s", pattern)
-	}
-}
-
-// extractErrorRegexes extracts error regexes from a line like 'error: "regex1" "regex2"'
-func extractErrorRegexes(line string) []string {
-	var regexes []string
-	regex := regexp.MustCompile(`"([^"]*)"`)
-
-	matches := regex.FindAllStringSubmatch(line, -1)
-	for _, match := range matches {
-		if len(match) > 1 {
-			regexes = append(regexes, match[1])
-		}
-	}
-	return regexes
 }
 
 // validateResults checks if the files in tempReqs match the expected GoldenData

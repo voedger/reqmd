@@ -426,6 +426,10 @@ Based on your attachments, I have a better understanding of the SysTestFixture, 
 - *Insiders.Chat.S37: Is it clear how to implement parseGoldenData function? Ask questions*👍
 - *Insiders.Chat.S37: Implement parseGoldenData function*👍
   - 163 lines
+- *Insiders.Agent.S37: Make validateErros use goldenReqData*👍
+- *Me. Adjust the specification of the goldenReqData*
+- *Insiders.Agent.S37: Make validateErrors comply the specification*❌
+- *Insiders.Agent.S37: Implement parseGoldenData function*
 
 --------------------
 
