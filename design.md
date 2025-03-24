@@ -245,26 +245,45 @@ type Action struct {
 - Golden Data are the expected outputs
 - Golden Data are represented as lines started with `//`
 - SysTestData are loaded and processed by the `internal/systest/RunSysTest` function
+- `RunSysTest` uses parseReqGoldenData function to parse the Golden Data and returns `goldenReqData` struct
+- `goldenReqData` struct
+  - Contains goldenReqItem by type:
+    - `errors` - expected errors (compiled regexes)
+    - `reqsites` - expected RequirementSites
+    - `footnotes` - expected Footnotes
+    - `newfootnotes` - expected NewFootnotes
+  - goldenReqItem
+    - Fields:
+      - `expectedLineN`
+      - `path` fields
+    - For newfootnotes `expectedLineN` is 0
+- parseReqGoldenData
+  - Takes the path to the `req` folder as a parameter
+  - Reads all lines from TestMarkdown-s
 
 ### TestMarkdown
 
 File structure:
 
 ```ebnf
+WS       = { " " | "\t" } .
 Body     = { NormalLine | GoldenLine} .
-GoldenLine = "// " (GoldenErrors | GoldenData ) .
-GoldenData = ( GoldenReqSiteData | GoldenFootnoteData ) .
-GoldenErrors = "errors: " {"""" ErrRegex """"} .
-GoldenReqSiteData = "reqsite" {AnyCharacter} .
-GoldenFootnoteData = "footnote" {AnyCharacter} .
+GoldenLine = "//" {WS} (GoldenErrors | GoldenData ) .
+GoldenData = ( GoldenReqSiteData | GoldenFootnoteData | GoldenNewFootnoteData ) .
+GoldenErrors = "errors:" {WS} {"""" ErrRegex """" {WS}} .
+GoldenReqSiteData = "reqsite:" {AnyCharacter} .
+GoldenFootnoteData = "footnote:" {AnyCharacter} .
+GoldenNewFootnoteData = "newfootnote:" {AnyCharacter} .
 ```
 
 Specification:
 
 - GoldenReqSiteData and GoldenFootnoteData represents the expected output for the previous line
+- GoldenNewFootnoteData represents the expected output for the new footnote
 - GoldenData
   - backticks are replaced with double quotes
   - MAY have multiple placeholders for the actual commit hash: {{.CommitHash}}
+  - GoldenData is always a single line
 - GoldenErrors represent the expected errors for the previous line
 - ErrRegex is a regular expression that matches the error message
   - If line is related to multiple errors then multiple ErrRegexes are used

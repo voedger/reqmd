@@ -422,6 +422,10 @@ Based on your attachments, I have a better understanding of the SysTestFixture, 
    - Actual implementation has them in sys_test.go (naming discrepancy)
 ...   
 ```
+
+- *Insiders.Chat.S37: Is it clear how to implement parseGoldenData function? Ask questions*👍
+- *Insiders.Chat.S37: Implement parseGoldenData function*👍
+
 --------------------
 
 ## TODOs
