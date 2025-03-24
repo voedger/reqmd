@@ -1,3 +1,6 @@
+// Copyright (c) 2025-present unTill Software Development Group B. V. and Contributors
+// SPDX-License-Identifier: Apache-2.0
+
 package systest
 
 import (
@@ -33,7 +36,8 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 		}
 
 		// Process the file line by line
-		lines := strings.Split(string(content), "\n")
+		lines := strings.Split(string(content), "
+")
 		previousLineN := 0
 
 		for i, line := range lines {
