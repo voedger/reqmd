@@ -7,8 +7,13 @@ import (
 	"fmt"
 	"os"
 
+	_ "embed"
+
 	"github.com/spf13/cobra"
 )
+
+//go:embed version
+var Version string
 
 func ExecRootCmd(args []string, ver string) error {
 	rootCmd := prepareRootCmd(

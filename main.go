@@ -10,11 +10,8 @@ import (
 	"github.com/voedger/reqmd/internal"
 )
 
-//go:embed version
-var version string
-
 func main() {
-	if err := internal.ExecRootCmd(os.Args, version); err != nil {
+	if err := internal.ExecRootCmd(os.Args, internal.Version); err != nil {
 		os.Exit(1)
 	}
 }
