@@ -385,163 +385,185 @@ func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenReqDa
 	}
 }
 
-// validateTempReqs checks if the files in tempReqs match the expected goldenReqData
-// - reqsites
-// - footnotes
-// - newfootnotes
+// validateTempReqs checks if the actual content of the files in tempReqsDir match the expected goldenReqData
+// listFilePaths is used to find all markdown files in tempReqsDir.
+// validateTempReqs reads all files into memory and assure that:
+// - All lines mentioned in goldenReqData.reqsites exactly match the lines with the same line numbers from the actual content
+// - All lines mentioned in goldenReqData.footnotes exactly match the lines with the same line numbers from the actual content
+// - All lines mentioned in goldenReqData.newfootnotes match the tail of the actual files (order is important)
+// - All lines of the actual content that are not mentioned in goldenReqData are unchanged
 func validateTempReqs(t T, grd *goldenReqData, tempReqsDir string) {
+    // Find all markdown files in the tempReqsDir
+    files, err := listFilePaths(tempReqsDir, `.*\.md`)
+    require.NoError(t, err, "Failed to find markdown files in tempReqsDir")
 
-	if len(grd.reqsites) == 0 && len(grd.footnotes) == 0 && len(grd.newfootnotes) == 0 {
-		// No validation data found, nothing to validate
-		return
-	}
+    // For each file in tempReqsDir
+    for _, actualPath := range files {
+        // Read the actual file content
+        actualContent, err := os.ReadFile(actualPath)
+        require.NoError(t, err, "Failed to read file %s", actualPath)
 
-	// Track which items have been found
-	reqsitesFound := make(map[string]map[int]map[string]bool)
-	footnotesFound := make(map[string]map[int]map[string]bool)
-	newfootnotesFound := make(map[string]map[string]bool)
+        // Split into lines
+        actualLines := strings.Split(string(actualContent), "\n")
 
-	// Initialize the tracking maps
-	for filePath, lineItems := range grd.reqsites {
-		if reqsitesFound[filePath] == nil {
-			reqsitesFound[filePath] = make(map[int]map[string]bool)
-		}
-		for lineNum, items := range lineItems {
-			if reqsitesFound[filePath][lineNum] == nil {
-				reqsitesFound[filePath][lineNum] = make(map[string]bool)
-			}
-			for _, item := range items {
-				reqsitesFound[filePath][lineNum][item.data] = false
-			}
-		}
-	}
+        // Find corresponding file in goldenReqData
+        // First, try to match by absolute path
+        originalPath := actualPath
+        originalLines, exists := grd.lines[originalPath]
+        
+        // If not found by absolute path, try to match by filename
+        if !exists {
+            // Get the filename from the path
+            actualFileName := filepath.Base(actualPath)
+            
+            // Look for a matching file in goldenReqData by filename
+            for goldenPath, goldenLines := range grd.lines {
+                if filepath.Base(goldenPath) == actualFileName {
+                    originalPath = goldenPath
+                    originalLines = goldenLines
+                    exists = true
+                    break
+                }
+            }
+        }
 
-	for filePath, lineItems := range grd.footnotes {
-		if footnotesFound[filePath] == nil {
-			footnotesFound[filePath] = make(map[int]map[string]bool)
-		}
-		for lineNum, items := range lineItems {
-			if footnotesFound[filePath][lineNum] == nil {
-				footnotesFound[filePath][lineNum] = make(map[string]bool)
-			}
-			for _, item := range items {
-				footnotesFound[filePath][lineNum][item.data] = false
-			}
-		}
-	}
+        // If no corresponding file in goldenReqData, fail the test
+        // This ensures we catch any unexpected new files
+        if !exists {
+            t.Errorf("File %s not found in golden data", actualPath)
+            continue
+        }
 
-	for filePath, items := range grd.newfootnotes {
-		if newfootnotesFound[filePath] == nil {
-			newfootnotesFound[filePath] = make(map[string]bool)
-		}
-		for _, item := range items {
-			newfootnotesFound[filePath][item.data] = false
-		}
-	}
+        // 1. Check reqsites - lines that should exactly match at specific line numbers
+        if reqsitesForFile, hasReqsites := grd.reqsites[originalPath]; hasReqsites {
+            for lineNum, items := range reqsitesForFile {
+                // Adjust for 0-based indexing
+                actualLineIdx := lineNum - 1
+                
+                // Check if line number is valid in the actual file
+                if actualLineIdx >= 0 && actualLineIdx < len(actualLines) {
+                    for _, item := range items {
+                        assert.Equal(t, item.data, actualLines[actualLineIdx], 
+                            "Reqsite line mismatch at %s:%d", actualPath, lineNum)
+                    }
+                } else {
+                    t.Errorf("Line number %d out of range in file %s", lineNum, actualPath)
+                }
+            }
+        }
 
-	// Walk through all markdown files in tempReqs
-	err := filepath.Walk(tempReqsDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+        // 2. Check footnotes - lines that should exactly match at specific line numbers
+        if footnotesForFile, hasFootnotes := grd.footnotes[originalPath]; hasFootnotes {
+            for lineNum, items := range footnotesForFile {
+                // Adjust for 0-based indexing
+                actualLineIdx := lineNum - 1
+                
+                // Check if line number is valid in the actual file
+                if actualLineIdx >= 0 && actualLineIdx < len(actualLines) {
+                    for _, item := range items {
+                        assert.Equal(t, item.data, actualLines[actualLineIdx], 
+                            "Footnote line mismatch at %s:%d", actualPath, lineNum)
+                    }
+                } else {
+                    t.Errorf("Line number %d out of range in file %s", lineNum, actualPath)
+                }
+            }
+        }
 
-		if info.IsDir() || !strings.HasSuffix(strings.ToLower(path), ".md") {
-			return nil
-		}
+        // 3. Check newfootnotes - should be appended to the end of the file in the given order
+        if newFootnotesForFile, hasNewFootnotes := grd.newfootnotes[originalPath]; hasNewFootnotes {
+            // Get the tail of the actual file
+            startIdx := len(actualLines) - len(newFootnotesForFile)
+            if startIdx < 0 {
+                t.Errorf("File %s is too short to contain all expected newfootnotes", actualPath)
+                continue
+            }
 
-		// Read file content
-		content, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
+            // Check that each footnote matches in the correct order
+            for i, item := range newFootnotesForFile {
+                actualIdx := startIdx + i
+                if actualIdx < len(actualLines) {
+                    assert.Equal(t, item.data, actualLines[actualIdx],
+                        "Newfootnote mismatch at %s tail, item %d", actualPath, i+1)
+                } else {
+                    t.Errorf("Newfootnote index %d out of range in file %s", actualIdx, actualPath)
+                }
+            }
+        }
 
-		// Get relative path to match with golden data
-		relPath, err := filepath.Rel(tempReqsDir, path)
-		if err != nil {
-			return err
-		}
-		relPath = filepath.ToSlash(relPath)
-
-		// For each file in the golden data, check if this file matches (by base name)
-		for goldFilePath := range grd.reqsites {
-			goldBaseName := filepath.Base(goldFilePath)
-			currentBaseName := filepath.Base(path)
-
-			if strings.EqualFold(goldBaseName, currentBaseName) {
-				validateFileContents(t, string(content), goldFilePath, relPath, reqsitesFound, "reqsite")
-			}
-		}
-
-		for goldFilePath := range grd.footnotes {
-			goldBaseName := filepath.Base(goldFilePath)
-			currentBaseName := filepath.Base(path)
-
-			if strings.EqualFold(goldBaseName, currentBaseName) {
-				validateFileContents(t, string(content), goldFilePath, relPath, footnotesFound, "footnote")
-			}
-		}
-
-		// Check for newfootnotes (these don't have line numbers, just check if they exist in the file)
-		for goldFilePath, items := range grd.newfootnotes {
-			goldBaseName := filepath.Base(goldFilePath)
-			currentBaseName := filepath.Base(path)
-
-			if strings.EqualFold(goldBaseName, currentBaseName) {
-				for _, item := range items {
-					if strings.Contains(string(content), item.data) {
-						newfootnotesFound[goldFilePath][item.data] = true
-					}
-				}
-			}
-		}
-
-		return nil
-	})
-	require.NoError(t, err, "Failed to walk through markdown files")
-
-	// Verify all reqsites were found
-	for filePath, lineItems := range reqsitesFound {
-		for lineNum, items := range lineItems {
-			for item, found := range items {
-				assert.True(t, found, "Expected reqsite not found in %s at line %d: %s", filePath, lineNum, item)
-			}
-		}
-	}
-
-	// Verify all footnotes were found
-	for filePath, lineItems := range footnotesFound {
-		for lineNum, items := range lineItems {
-			for item, found := range items {
-				assert.True(t, found, "Expected footnote not found in %s at line %d: %s", filePath, lineNum, item)
-			}
-		}
-	}
-
-	// Verify all newfootnotes were found
-	for filePath, items := range newfootnotesFound {
-		for item, found := range items {
-			assert.True(t, found, "Expected newfootnote not found in %s: %s", filePath, item)
-		}
-	}
-}
-
-// validateFileContents checks file contents for the existence of expected items
-func validateFileContents(t T, content string, goldFilePath string, relPath string, itemsFound map[string]map[int]map[string]bool, itemType string) {
-	lines := strings.Split(content, "\n")
-
-	// For each line in the file
-	for i, line := range lines {
-		lineNum := i + 1 // Convert to 1-based line numbers
-
-		// Check if this line number has expected items in the golden data
-		if itemsFound[goldFilePath][lineNum] != nil {
-			for expectedItem := range itemsFound[goldFilePath][lineNum] {
-				if strings.Contains(line, expectedItem) {
-					itemsFound[goldFilePath][lineNum][expectedItem] = true
-				}
-			}
-		}
-	}
+        // 4. Check that all lines not mentioned in goldenReqData are unchanged
+        // Create a map to track which lines are expected to change
+        changedLines := make(map[int]bool)
+        
+        // Mark reqsite lines as changed
+        if reqsitesForFile, hasReqsites := grd.reqsites[originalPath]; hasReqsites {
+            for lineNum := range reqsitesForFile {
+                changedLines[lineNum-1] = true // Adjust for 0-based index
+            }
+        }
+        
+        // Mark footnote lines as changed
+        if footnotesForFile, hasFootnotes := grd.footnotes[originalPath]; hasFootnotes {
+            for lineNum := range footnotesForFile {
+                changedLines[lineNum-1] = true // Adjust for 0-based index
+            }
+        }
+        
+        // Mark newfootnote lines as changed (at the end of the file)
+        if newFootnotesForFile, hasNewFootnotes := grd.newfootnotes[originalPath]; hasNewFootnotes {
+            startIdx := len(actualLines) - len(newFootnotesForFile)
+            if startIdx >= 0 {
+                for i := 0; i < len(newFootnotesForFile); i++ {
+                    changedLines[startIdx+i] = true
+                }
+            }
+        }
+        
+        // Check all lines that should be unchanged
+        minLen := len(originalLines)
+        if len(actualLines) < minLen {
+            minLen = len(actualLines)
+        }
+        
+        for i := 0; i < minLen; i++ {
+            if !changedLines[i] {
+                assert.Equal(t, originalLines[i], actualLines[i],
+                    "Unexpected change in %s at line %d", actualPath, i+1)
+            }
+        }
+        
+        // If the file length changed (other than newfootnotes), report an error
+        if len(actualLines) > len(originalLines) {
+            extraLines := len(actualLines) - len(originalLines)
+            newFootnoteCount := 0
+            if newFootnotesForFile, hasNewFootnotes := grd.newfootnotes[originalPath]; hasNewFootnotes {
+                newFootnoteCount = len(newFootnotesForFile)
+            }
+            
+            if extraLines > newFootnoteCount {
+                t.Errorf("Unexpected additional lines in %s: got %d lines, expected %d plus %d newfootnotes",
+                    actualPath, len(actualLines), len(originalLines), newFootnoteCount)
+            }
+        } else if len(actualLines) < len(originalLines) {
+            t.Errorf("Missing lines in %s: got %d lines, expected %d", 
+                actualPath, len(actualLines), len(originalLines))
+        }
+    }
+    
+    // Also check that we don't have any missing files from the original goldenReqData
+    for originalPath := range grd.lines {
+        found := false
+        for _, actualPath := range files {
+            if filepath.Base(actualPath) == filepath.Base(originalPath) {
+                found = true
+                break
+            }
+        }
+        
+        if !found {
+            t.Errorf("File %s from golden data not found in actual files", originalPath)
+        }
+    }
 }
 
 // validateReqmd checks if reqmd.json files match their golden counterparts
@@ -594,4 +616,45 @@ func validateReqmd(t T, sysTestDataDir, tempReqs string) {
 
 func filepathJoin(elem ...string) string {
 	return filepath.ToSlash(filepath.Join(elem...))
+}
+
+// listFilePaths returns a list of file paths from the given directory for the files whose names match the pattern
+func listFilePaths(dir string, patternStr string) ([]string, error) {
+	var pattern *regexp.Regexp
+
+	// Compile the regexp pattern if provided
+	if patternStr != "" {
+		var err error
+		pattern, err = regexp.Compile(patternStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid pattern: %v", err)
+		}
+	}
+
+	var files []string
+
+	// Walk through all files and directories
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip directories
+		if info.IsDir() {
+			return nil
+		}
+
+		// Get the base filename
+		fileName := filepath.Base(path)
+
+		// Skip files that don't match the pattern
+		if pattern != nil && !pattern.MatchString(fileName) {
+			return nil
+		}
+
+		files = append(files, path)
+		return nil
+	})
+
+	return files, err
 }

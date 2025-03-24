@@ -6,7 +6,6 @@ package systest
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -20,10 +19,11 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 		reqsites:     make(map[string]map[int][]*goldenReqItem),
 		footnotes:    make(map[string]map[int][]*goldenReqItem),
 		newfootnotes: make(map[string][]*goldenReqItem),
+		lines:        make(map[string][]string),
 	}
 
 	// Walk through the req folder to find TestMarkdown files
-	files, err := filepath.Glob(filepath.Join(reqFolderPath, "*.md"))
+	files, err := listFilePaths(reqFolderPath, `.*\.md`)
 	if err != nil {
 		return nil, fmt.Errorf("error finding TestMarkdown files: %v", err)
 	}
@@ -37,6 +37,10 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 
 		// Process the file line by line
 		lines := strings.Split(string(content), "\n")
+
+		// Store the lines in the result
+		result.lines[filePath] = lines
+
 		previousLineN := 0
 
 		for i, line := range lines {
@@ -147,11 +151,17 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 
 // goldenReqData holds the parsed golden data from TestMarkdown files
 type goldenReqData struct {
+
 	// Maps file paths to line numbers to goldenReqItem slices
-	errors       map[string]map[int][]*goldenReqItem
-	reqsites     map[string]map[int][]*goldenReqItem
-	footnotes    map[string]map[int][]*goldenReqItem
+	errors    map[string]map[int][]*goldenReqItem
+	reqsites  map[string]map[int][]*goldenReqItem
+	footnotes map[string]map[int][]*goldenReqItem
+
+	// Maps file paths to the expected tail of the file
 	newfootnotes map[string][]*goldenReqItem
+
+	// Maps file paths to lines
+	lines map[string][]string
 }
 
 // goldenReqItem represents a single golden data item with its context
