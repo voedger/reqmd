@@ -83,7 +83,10 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	validateErrors(t, &stderr, tempReqs, grd)
 
 	// Validate the tempReqs against GoldenData
-	validateResults(t, sysTestDataDir, tempReqs)
+	validateTempReqs(t, sysTestDataDir, tempReqs)
+
+	// Check for GoldenReqmd
+	validateReqmd(t, sysTestDataDir, tempReqs)
 }
 
 // findSysTestDataDir locates the test data Dir for the given testID
@@ -384,8 +387,8 @@ func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenReqDa
 	}
 }
 
-// validateResults checks if the files in tempReqs match the expected GoldenData
-func validateResults(t T, sysTestDataDir, tempReqs string) {
+// validateTempReqs checks if the files in tempReqs match the expected GoldenData
+func validateTempReqs(t T, sysTestDataDir, tempReqs string) {
 	// Walk through all markdown files in tempReqs
 	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -406,7 +409,7 @@ func validateResults(t T, sysTestDataDir, tempReqs string) {
 		lines := strings.Split(string(content), "\n")
 
 		// For each line, check if the next line contains GoldenData
-		for i := 0; i < len(lines)-1; i++ {
+		for i := range len(lines)-1 {
 			nextLine := lines[i+1]
 
 			// If next line starts with "// reqsite" or "// footnote", it contains GoldenData
@@ -429,12 +432,10 @@ func validateResults(t T, sysTestDataDir, tempReqs string) {
 
 	require.NoError(t, err, "Failed to validate results")
 
-	// Check for GoldenReqmd
-	validateGoldenReqmd(t, sysTestDataDir, tempReqs)
 }
 
-// validateGoldenReqmd checks if reqmd.json files match their golden counterparts
-func validateGoldenReqmd(t T, sysTestDataDir, tempReqs string) {
+// validateReqmd checks if reqmd.json files match their golden counterparts
+func validateReqmd(t T, sysTestDataDir, tempReqs string) {
 	// Find all reqmd.json files in tempReqs
 	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
