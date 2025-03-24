@@ -249,9 +249,7 @@ type Action struct {
 - `goldenReqData` struct
   - Contains `goldenReqItem` by type:
     - `errors` - expected errors (compiled regexes)
-    - `reqsites` - expected RequirementSites
-    - `footnotes` - expected Footnotes
-    - `newfootnotes` - expected NewFootnotes
+    - `lines` - expected lines for each file
 - `parseReqGoldenData`
   - Takes the path to the `req` folder as a parameter
   - Reads all lines from TestMarkdown-s
