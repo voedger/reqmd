@@ -22,6 +22,14 @@ func Test_err_NotOccurring(t *testing.T) {
 	require.Contains(t, mockT.failMsg, "this error is expected but not occurring")
 }
 
+func Test_err_Unexpected(t *testing.T) {
+	mockT := &MockT{t: t}
+	RunSysTest(mockT, runSysTestsDir, "err_unexpected", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
+	require.True(t, mockT.failed, "expected test to fail")
+	require.Contains(t, mockT.failMsg, "Unexpected error")
+	require.Contains(t, mockT.failMsg, "PackageID shall be an identifier: 11com.example.basic")
+}
+
 // MockT implements a subset of testing.T for controlled failure testing
 type MockT struct {
 	t       *testing.T

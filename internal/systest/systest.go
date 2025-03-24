@@ -5,9 +5,12 @@ package systest
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -285,12 +288,100 @@ func execRootCmd(rootCmd ExecRootCmdFunc, args []string, version string, stdout,
 }
 
 // validateErrors checks if the stderr output matches expected error patterns from goldenReqData
-// Lines are formatted as : `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
+// stderr lines are parsed into `path`, `line` and `message` parts according to the formatting: `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
 // All lines in stderr must match at least one item in grd.errors
 // All grd.errors items must match at least one line in stderr
-// stderr lines and grd.errors items are matched using all partes of the stderr lines: err.FilePath, err.Line, err.Message
+// stderr lines and grd.errors items are matched using all parts of the stderr lines: `path`, `line` and `message`
 func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenReqData) {
+	// If no errors are expected and none occurred, return successfully
+	if len(grd.errors) == 0 && stderr.Len() == 0 {
+		return
+	}
 
+	// Parse stderr lines into structured format
+	stderrLines := strings.Split(stderr.String(), "\n")
+	parsedErrors := make(map[string]bool)
+
+	// Regular expression to match error lines in format "path:line: message"
+	errRegex := regexp.MustCompile(`^(.+):(\d+): (.+)$`)
+
+	for _, line := range stderrLines {
+		if line == "" {
+			continue
+		}
+
+		matches := errRegex.FindStringSubmatch(line)
+		if len(matches) != 4 {
+			// This line doesn't match our expected format
+			t.Errorf("Unexpected error format: %s", line)
+			continue
+		}
+
+		filePath := matches[1]
+		lineNum, _ := strconv.Atoi(matches[2])
+		message := matches[3]
+
+		// Make path relative to tempReqs for comparison with golden data
+		relPath, err := filepath.Rel(tempReqs, filePath)
+		if err != nil {
+			t.Errorf("Failed to get relative path for %s: %v", filePath, err)
+			continue
+		}
+
+		// Normalize path for comparison
+		relPath = filepath.ToSlash(relPath)
+
+		// Check if this error matches any expected errors
+		errorFound := false
+
+		// Iterate through all expected errors in goldenReqData
+		for goldFilePath, lineErrors := range grd.errors {
+			// Get base filename for comparison
+			goldFileName := filepath.Base(goldFilePath)
+			errFileName := filepath.Base(filePath)
+
+			// Check if filenames match
+			if strings.EqualFold(goldFileName, errFileName) {
+				// For each line number in the golden errors
+				for goldLineNum, items := range lineErrors {
+					// For each regex pattern for this line number
+					for _, item := range items {
+						// Create a test string that combines the elements for matching
+						testString := fmt.Sprintf("%s:%d: %s", relPath, lineNum, message)
+
+						// Check if the regex matches
+						if item.regex.MatchString(testString) {
+							errorFound = true
+							// Mark this expected error as found
+							key := fmt.Sprintf("%s:%d:%s", goldFilePath, goldLineNum, item.regex.String())
+							parsedErrors[key] = true
+							break
+						}
+					}
+					if errorFound {
+						break
+					}
+				}
+			}
+		}
+
+		// If error doesn't match any expected errors, fail the test
+		if !errorFound {
+			t.Errorf("Unexpected error: %s", line)
+		}
+	}
+
+	// Check that all expected errors were found
+	for goldFilePath, lineErrors := range grd.errors {
+		for goldLineNum, items := range lineErrors {
+			for _, item := range items {
+				key := fmt.Sprintf("%s:%d:%s", goldFilePath, goldLineNum, item.regex.String())
+				if !parsedErrors[key] {
+					t.Errorf("Expected error not found in stderr: %s line %d: %s", goldFilePath, goldLineNum, item.regex.String())
+				}
+			}
+		}
+	}
 }
 
 // validateResults checks if the files in tempReqs match the expected GoldenData
