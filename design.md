@@ -251,13 +251,18 @@ type Action struct {
 - `parseGoldenData`
   - Takes the path to the `req` folder as a parameter
   - Definitions
-    - Root Name is a file name without extension
-    - GoldenFile is a file whose Root Name ends with "_"
-    - NormalFile is a file whose Root Name does not end with "_"
+    - RootName is a file name without extension
+    - GoldenFile is a file whose RootName ends with "_"
+    - NormalFile is a file whose RootName does not end with "_"
+    - NormalizedPath is the path with "_" removed from the RootName
   - NormalFiles that ends with ".md" are processed to extract GoldenErrors (see below)
   - NormalFiles that do not have GoldenFile counterpart are loaded to goldenData.lines
   - GoldenFiles are loaded to goldenData.lines, name is normalized ("_" is removed)
-
+  - Processing of goldenData.lines:
+    - For each NormalFile without a GoldenFile counterpart, read the file content line by line and store in goldenData.lines[normalizedPath]
+    - For each GoldenFile, read the file content line by line and store in goldenData.lines[normalizedPath]
+    - The lines are stored in the same order as they appear in the file
+    - Empty lines and whitespace are preserved exactly as they appear in the files
 
 ### TestMarkdown
 
