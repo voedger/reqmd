@@ -36,8 +36,7 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 		}
 
 		// Process the file line by line
-		lines := strings.Split(string(content), "
-")
+		lines := strings.Split(string(content), "\n")
 		previousLineN := 0
 
 		for i, line := range lines {
