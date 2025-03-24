@@ -13,9 +13,9 @@ import (
 func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 	// Initialize the goldenReqData structure
 	result := &goldenReqData{
-		errors:       make(map[string][]*goldenReqItem),
-		reqsites:     make(map[string][]*goldenReqItem),
-		footnotes:    make(map[string][]*goldenReqItem),
+		errors:       make(map[string]map[int][]*goldenReqItem),
+		reqsites:     make(map[string]map[int][]*goldenReqItem),
+		footnotes:    make(map[string]map[int][]*goldenReqItem),
 		newfootnotes: make(map[string][]*goldenReqItem),
 	}
 
@@ -67,12 +67,15 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 					}
 
 					item := &goldenReqItem{
-						expectedLineN: previousLineN,
-						path:          filePath,
-						regex:         regex,
+						path:  filePath,
+						regex: regex,
 					}
 
-					result.errors[filePath] = append(result.errors[filePath], item)
+					// Initialize the line map if it doesn't exist
+					if result.errors[filePath] == nil {
+						result.errors[filePath] = make(map[int][]*goldenReqItem)
+					}
+					result.errors[filePath][previousLineN] = append(result.errors[filePath][previousLineN], item)
 				}
 				continue
 			}
@@ -88,12 +91,15 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 				data = strings.ReplaceAll(data, "`", "\"")
 
 				item := &goldenReqItem{
-					expectedLineN: previousLineN,
-					path:          filePath,
-					data:          data,
+					path: filePath,
+					data: data,
 				}
 
-				result.reqsites[filePath] = append(result.reqsites[filePath], item)
+				// Initialize the line map if it doesn't exist
+				if result.reqsites[filePath] == nil {
+					result.reqsites[filePath] = make(map[int][]*goldenReqItem)
+				}
+				result.reqsites[filePath][previousLineN] = append(result.reqsites[filePath][previousLineN], item)
 				continue
 			}
 
@@ -108,12 +114,15 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 				data = strings.ReplaceAll(data, "`", "\"")
 
 				item := &goldenReqItem{
-					expectedLineN: previousLineN,
-					path:          filePath,
-					data:          data,
+					path: filePath,
+					data: data,
 				}
 
-				result.footnotes[filePath] = append(result.footnotes[filePath], item)
+				// Initialize the line map if it doesn't exist
+				if result.footnotes[filePath] == nil {
+					result.footnotes[filePath] = make(map[int][]*goldenReqItem)
+				}
+				result.footnotes[filePath][previousLineN] = append(result.footnotes[filePath][previousLineN], item)
 				continue
 			}
 
@@ -124,9 +133,8 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 				data = strings.ReplaceAll(data, "`", "\"")
 
 				item := &goldenReqItem{
-					expectedLineN: 0, // For newfootnotes, expectedLineN is 0
-					path:          filePath,
-					data:          data,
+					path: filePath,
+					data: data,
 				}
 
 				result.newfootnotes[filePath] = append(result.newfootnotes[filePath], item)
@@ -140,16 +148,15 @@ func parseReqGoldenData(reqFolderPath string) (*goldenReqData, error) {
 
 // goldenReqData holds the parsed golden data from TestMarkdown files
 type goldenReqData struct {
-	errors       map[string][]*goldenReqItem
-	reqsites     map[string][]*goldenReqItem
-	footnotes    map[string][]*goldenReqItem
+	errors       map[string]map[int][]*goldenReqItem
+	reqsites     map[string]map[int][]*goldenReqItem
+	footnotes    map[string]map[int][]*goldenReqItem
 	newfootnotes map[string][]*goldenReqItem
 }
 
 // goldenReqItem represents a single golden data item with its context
 type goldenReqItem struct {
-	expectedLineN int            // Line number where the content is expected (0 for newfootnotes)
-	path          string         // File path
-	data          string         // Content for reqsites, footnotes, and newfootnotes
-	regex         *regexp.Regexp // Compiled regex for errors
+	path  string         // File path
+	data  string         // Content for reqsites, footnotes, and newfootnotes
+	regex *regexp.Regexp // Compiled regex for errors
 }

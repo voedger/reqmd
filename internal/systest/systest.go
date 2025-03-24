@@ -42,6 +42,13 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	// Validate sysTestData Dir (MUST contain req and src Dirs)
 	validateSysTestDataDir(t, sysTestDataDir)
 
+	reqDir := filepathJoin(sysTestDataDir, "req")
+
+	// parseReqGoldenData
+	grd, err := parseReqGoldenData(reqDir)
+	require.NoError(t, err, "Failed to parse req golden data")
+	_ = grd
+
 	// Create temporary directories for req (tempReqs) and src (tempSrc)
 	tempReqs := t.TempDir()
 	tempSrc := t.TempDir()
@@ -51,7 +58,7 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	createGitRepo(t, tempSrc)
 
 	// Copy sysTestData.req to tempReqs and sysTestData.src to tempSrc
-	copyDir(t, filepathJoin(sysTestDataDir, "req"), tempReqs)
+	copyDir(t, filepathJoin(sysTestDataDir, reqDir), tempReqs)
 	copyDir(t, filepathJoin(sysTestDataDir, "src"), tempSrc)
 
 	// Commit all files in tempSrc
