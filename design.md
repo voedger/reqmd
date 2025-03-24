@@ -245,14 +245,14 @@ type Action struct {
 - Golden Data are the expected outputs
 - Golden Data are represented as lines started with `//`
 - SysTestData are loaded and processed by the `internal/systest/RunSysTest` function
-- `RunSysTest` uses parseReqGoldenData function to parse the Golden Data and returns `goldenReqData` struct
+- `RunSysTest` uses `parseReqGoldenData` function to parse the Golden Data and returns `goldenReqData` struct
 - `goldenReqData` struct
-  - Contains goldenReqItem by type:
+  - Contains `goldenReqItem` by type:
     - `errors` - expected errors (compiled regexes)
     - `reqsites` - expected RequirementSites
     - `footnotes` - expected Footnotes
     - `newfootnotes` - expected NewFootnotes
-- parseReqGoldenData
+- `parseReqGoldenData`
   - Takes the path to the `req` folder as a parameter
   - Reads all lines from TestMarkdown-s
 
