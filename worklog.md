@@ -321,6 +321,123 @@ Implementation requirements:
   - CoverageFootnoteID shall be unique within a file
   - For each RequiremntID, maximum CoverageFootnoteID shall be found and then incremented
 
+### 020: System tests
+
+- *Chat.S37T: Create a plan how to build system tests*👍
+  - SysTestFixture
+
+- *Insiders.Chat.S37.Is it clear how to implement SysTestFixture? Ask questions*
+
+First attempt:
+
+```markdown
+Based on the provided documents, I still need significant clarification about the `SysTestFixture` implementation. Here are more specific questions to guide our discussion:
+
+1. **Creation and Setup**:
+   - Should `SysTestFixture` create a temporary directory for test execution or work directly with files in `testdata/<TestID>`?
+   - Does it need to initialize actual Git repositories for testing, or should it mock Git functionality?
+
+2. **Components and Dependencies**:
+   - Should `SysTestFixture` create real instances of `Scanner`, `Analyzer`, and `Applier`, or use mock implementations?
+   - Is there a need for custom implementations of these components specific to system testing?
+
+3. **TestRequirement Processing**:
+   - How exactly should the fixture process the "GoldenOutputLine" and "Errors" annotations in test requirements?
+   - Is there a specific format for the actual output that needs to be compared with golden output?
+
+4. **Test Execution Flow**:
+   - Should `SysTestFixture` provide methods to run individual stages (Scan, Analyze, Apply) or execute the entire pipeline?
+   - Do we need to capture stdout/stderr for comparison with golden output?
+
+5. **Validation Mechanism**:
+   - How should the fixture handle validation of actual vs. expected outputs?
+   - Should it compare file contents after operations, check specific actions generated, or both?
+
+6. **Error Handling in Tests**:
+   - How should the fixture handle expected errors vs. unexpected ones?
+   - Should it collect errors or fail fast?
+
+7. **Mocking External Dependencies**:
+   - For components like Git that interact with external systems, should they be mocked or real?
+   - If mocked, what level of fidelity is required?
+
+8. **Integration with Go Testing Framework**:
+   - How should `SysTestFixture` integrate with Go's testing package? 
+   - Should it provide helper methods that accept `*testing.T` for assertions?
+
+The design document provides a high-level overview but lacks implementation details for `SysTestFixture`. More clarity on these aspects would help create an effective implementation.
+```
+
+Second attempt:
+
+```markdown
+Based on your attachments, I have a better understanding of the SysTestFixture, but there are still some implementation details that need clarification:
+
+1. What should the specific signature of the SysTestFixture struct and constructor look like? For example:
+
+   type SysTestFixture struct {
+       // What fields should be included?
+   }
+   
+   func NewSysTestFixture(t *testing.T, testID string) *SysTestFixture {
+       // Implementation details?
+   }
+
+
+2. What's the exact signature of `main.execRootCmd` that will be called against TempReqs and TempSrc?
+
+3. How should the git initialization be handled in the temporary directories? The design mentions creating git repos but doesn't specify details like:
+   - Should they have an initial commit?
+   - Should they have a remote origin pointing to a specific URL?
+   - What branch should they use?
+
+4. For validating against GoldenErrors, should regex matching be exact or partial? The design defines ErrRegex but doesn't specify how to apply it.
+
+5. When validating resulting requirements text, should the comparison be line-by-line or full file comparison?
+
+6. Are there any specific error handling requirements for the SysTestFixture itself?
+
+7. Should SysTestFixture provide any cleanup functionality, or is that handled by `testing.TempDir()`?
+
+8. Is there an existing `TestMarkdown` parser to use, or should that be implemented as part of the SysTestFixture?
+
+```
+
+- *Insiders.Agent.S37: Implement RunSysTest*
+  - internal\systest\systest.go, 440 lines
+- *Insiders.Edit.S37:Use github.com/go-git/go-git/v5 instead of running git*
+- *Me: 2 hours, it works but in a very rough way*
+
+- *Insiders.Edit.S37: #file:systest.go #file:systest_test.go replace the `fs embed.FS parameter` of the RunSysTest to `testsFolder string`*.👍
+
+- *Check that the sources comply with the `## System tests` requirements `#file:sys_test.go #file:systest.go #file:systest_test.go`*👍
+- Total time spent improving `Implement RunSysTest...` ~6h
+- Insiders freezes the PC, switched to the stable VS Code
+
+- Cursor is way better than Copilot, in both quality and speed:🏆
+  - [parseGoldenData by Copilot](https://github.com/voedger/reqmd/blob/c6b61d2aef9640c878f94a9d738d65587e5ddd3f/internal/systest/golden.go#L26)
+  - [parseGoldenData by Cursor](https://github.com/voedger/reqmd/blob/e3c0587970dc127144162e7cca38ca65066adf15/internal/systest/golden.go#L26)
+
+```markdown
+## Compliance Analysis
+
+### Core Principles
+
+1. **Test Location** ❌
+   - Design requires tests in `internal/sys_test2.go`
+   - Actual implementation has them in sys_test.go (naming discrepancy)
+...   
+```
+
+- *Insiders.Chat.S37: Is it clear how to implement parseGoldenData function? Ask questions*👍
+- *Insiders.Chat.S37: Implement parseGoldenData function*👍
+  - 163 lines
+- *Insiders.Agent.S37: Make validateErros use goldenReqData*👍
+- *Me. Adjust the specification of the goldenReqData*
+- *Insiders.Agent.S37: Make validateErrors comply the specification*❌
+- *Insiders.Agent.S37: Implement validateErrors function*
+- *
+
 --------------------
 
 ## TODOs
@@ -331,6 +448,7 @@ Implementation requirements:
 - Avoid .git, .* folders?
 - Handle changing package name
 - Support links like: https://github.com/voedger/voedger-internals/blob/3ccdc6074f12c800f092a55bf2b036d10a74443c/server/design/sequences.md?plain=1#L407
+- Duplication of footnote ids `~test.isequencer.LongRecovery~`uncvrd[^11]❓
 
 ## Intermediate results
 
@@ -627,3 +745,14 @@ Made changes.
 - Me: Oops, models.go does not match the design (created it manually)
 - It is cool to review each function using UI (it is way faster then Copilot) but it takes more time in total
 - Provide implementation details: coversions is made reading lines one by one and tracking the status (finite-state machine)
+- Check that the sources comply with the `## System tests` requirements `#file:sys_test.go #file:systest.go #file:systest_test.go`👍
+
+```markdown
+## Compliance Analysis
+
+### Core Principles
+
+1. **Test Location** ❌
+   - Design requires tests in `internal/sys_test2.go`
+   - Actual implementation has them in sys_test.go (naming discrepancy)
+```
