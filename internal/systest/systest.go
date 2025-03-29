@@ -17,7 +17,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	cfg "github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -80,8 +79,50 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	// Check errors
 	validateErrors(t, &stderr, tempReqs, goldenData)
 
-	// Check for GoldenReqmd
-	validateReqmd(t, sysTestDataDir, tempReqs)
+	validateGoldenLines(t, goldenData, tempReqs)
+}
+
+func validateGoldenLines(t T, goldenData *goldenData, tempReqs string) {
+	// Skip validation if no golden lines are defined
+	if len(goldenData.lines) == 0 {
+		return
+	}
+
+	// For each file path in goldenData.lines
+	for goldenPath, expectedLines := range goldenData.lines {
+		// Construct full path to the actual file
+		actualPath := filepathJoin(tempReqs, goldenPath)
+
+		// Read the actual file content
+		content, err := os.ReadFile(actualPath)
+		if err != nil {
+			t.Errorf("Failed to read file %s: %v", actualPath, err)
+			continue
+		}
+
+		// Split content into lines, preserving empty lines
+		actualLines := strings.Split(string(content), "\n")
+
+		// Compare number of lines
+		if len(actualLines) != len(expectedLines) {
+			t.Errorf("Line count mismatch in %s: expected %d lines, got %d lines",
+				goldenPath, len(expectedLines), len(actualLines))
+			continue
+		}
+
+		// Compare each line
+		for i, expectedLine := range expectedLines {
+			if i >= len(actualLines) {
+				t.Errorf("Missing line %d in %s", i+1, goldenPath)
+				continue
+			}
+
+			if actualLines[i] != expectedLine {
+				t.Errorf("Line mismatch in %s at line %d:\nexpected: %q\ngot: %q",
+					goldenPath, i+1, expectedLine, actualLines[i])
+			}
+		}
+	}
 }
 
 // findSysTestDataDir locates the test data Dir for the given testID
@@ -380,54 +421,6 @@ func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenData)
 			}
 		}
 	}
-}
-
-// validateReqmd checks if reqmd.json files match their golden counterparts
-func validateReqmd(t T, sysTestDataDir, tempReqs string) {
-	// Find all reqmd.json files in tempReqs
-	err := filepath.Walk(tempReqs, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() || info.Name() != "reqmd.json" {
-			return nil
-		}
-
-		// Get relative path from tempReqs
-		relPath, err := filepath.Rel(tempReqs, path)
-		if err != nil {
-			return err
-		}
-
-		// Check if there's a corresponding reqmd-golden.json
-		goldenPath := filepathJoin(filepath.Dir(relPath), "reqmd-golden.json")
-		goldenFullPath := filepathJoin(sysTestDataDir, "req", goldenPath)
-
-		// Try to read the golden file
-		goldenContent, err := os.ReadFile(goldenFullPath)
-		if os.IsNotExist(err) {
-			// No golden file - skip validation
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-
-		// Read the actual reqmd.json
-		actualContent, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		// Compare contents
-		assert.Equal(t, string(goldenContent), string(actualContent),
-			"reqmd.json doesn't match golden file at %s", goldenFullPath)
-
-		return nil
-	})
-
-	require.NoError(t, err, "Failed to validate reqmd.json files")
 }
 
 func filepathJoin(elem ...string) string {

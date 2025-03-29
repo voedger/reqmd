@@ -282,13 +282,6 @@ Specification:
   - If line is related to multiple errors then multiple ErrRegexes are used
   - errors and ErrRegexes are related one-to-one
 
-### GoldenReqmds
-
-GoldenReqmd is a reqmd.json file:
-
-- Named "reqmd-golden.json"
-- MAY have multiple placeholders for the actual commit hash: {{.CommitHash}}
-
 ---
 
 ## Implementation details

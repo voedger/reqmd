@@ -37,9 +37,15 @@ func parseGoldenData(reqFolderPath string) (*goldenData, error) {
 			return nil
 		}
 
+		// Get path relative to reqFolderPath
+		relPath, err := filepath.Rel(reqFolderPath, path)
+		if err != nil {
+			return fmt.Errorf("getting relative path for %s: %v", path, err)
+		}
+
 		// Convert path to slash format for consistency
-		path = filepath.ToSlash(path)
-		normalizedPath := getNormalizedPath(path)
+		relPath = filepath.ToSlash(relPath)
+		normalizedPath := getNormalizedPath(relPath)
 
 		// Load file contents
 		lines, err := loadFileLines(path)
@@ -50,7 +56,7 @@ func parseGoldenData(reqFolderPath string) (*goldenData, error) {
 		// Only store lines for markdown files we need to check for errors
 		// and golden files we need to compare against
 		if (strings.HasSuffix(strings.ToLower(path), ".md") && !isGoldenFile(path)) || isGoldenFile(path) {
-			gd.lines[path] = lines
+			gd.lines[relPath] = lines
 			if isGoldenFile(path) {
 				gd.lines[normalizedPath] = lines
 			}
@@ -58,8 +64,8 @@ func parseGoldenData(reqFolderPath string) (*goldenData, error) {
 
 		// Process markdown files for golden errors
 		if strings.HasSuffix(strings.ToLower(path), ".md") && !isGoldenFile(path) {
-			if err := extractGoldenErrors(path, lines, gd); err != nil {
-				return fmt.Errorf("extracting golden errors from %s: %v", path, err)
+			if err := extractGoldenErrors(relPath, lines, gd); err != nil {
+				return fmt.Errorf("extracting golden errors from %s: %v", relPath, err)
 			}
 		}
 
