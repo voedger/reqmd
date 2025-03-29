@@ -234,7 +234,7 @@ type Action struct {
 
 ## System tests
 
-### Core principles
+### System tests. Core principles
 
 - System tests (SysTests) are located in the `internal/sys_test.go` file
 - Each SysTest has a symbolic TestID

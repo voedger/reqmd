@@ -22,135 +22,176 @@ type goldenData struct {
 }
 
 // parseGoldenData
-//
-// Definitions
-// - RootName is a file name without extension
-// - GoldenFile is a file whose RootName ends with "_"
-// - NormalFile is a file whose RootName does not end with "_"
-// - NormalizedPath is the path with "_" removed from the RootName
-//
-// Description
-// - Takes the path to the `req` folder as a parameter
-// - NormalFiles that ends with ".md" are processed to extract GoldenErrors (see below)
-// - NormalFiles that do not have GoldenFile counterpart are loaded to goldenData.lines
-// - GoldenFiles are loaded to goldenData.lines, path is normalized ("_" is removed)
-// - Processing of goldenData.lines:
-//   - For each NormalFile without a GoldenFile counterpart, read the file content line by line and store in goldenData.lines[normalizedPath]
-//   - For each GoldenFile, read the file content line by line and store in goldenData.lines[normalizedPath]
-//   - The lines are stored in the same order as they appear in the file
-//   - Empty lines and whitespace are preserved exactly as they appear in the files
+// Ref. design.md, the "System tests" section
 func parseGoldenData(reqFolderPath string) (*goldenData, error) {
-	// Initialize the goldenData structure
-	result := &goldenData{
-		errors: make(map[string]map[int][]*regexp.Regexp),
-		lines:  make(map[string][]string),
+	gd := &goldenData{
+		errors: make(map[Path]map[int][]*regexp.Regexp),
+		lines:  make(map[Path][]string),
 	}
 
-	// Walk through the req folder to find TestMarkdown files
-	files, err := listFilePaths(reqFolderPath, `.*\.md`)
+	// Get all files in the reqFolderPath
+	files, err := listFilePaths(reqFolderPath, "")
 	if err != nil {
-		return nil, fmt.Errorf("error finding TestMarkdown files: %v", err)
+		return nil, fmt.Errorf("failed to list files: %v", err)
 	}
 
-	// Separate files into golden files and normal files
-	goldenFiles := make(map[string]string) // normalized path -> file path
-	normalFiles := make(map[string]string) // normalized path -> file path
-
-	for _, filePath := range files {
-		// Extract the filename from the path
-		fileName := filepath.Base(filePath)
-		ext := filepath.Ext(fileName)
-		rootName := fileName[:len(fileName)-len(ext)]
-
-		// Determine if this is a GoldenFile (ends with "_") or NormalFile
-		isGoldenFile := strings.HasSuffix(rootName, "_")
-
-		// Determine the normalized path (remove "_" for golden files)
-		normalizedPath := filePath
-		if isGoldenFile {
-			// Remove the "_" from the root name
-			normalizedRootName := rootName[:len(rootName)-1]
-			normalizedFileName := normalizedRootName + ext
-			normalizedPath = filepath.Join(filepath.Dir(filePath), normalizedFileName)
-		}
-
-		// Store in appropriate map
-		if isGoldenFile {
-			goldenFiles[normalizedPath] = filePath
-		} else {
-			normalFiles[normalizedPath] = filePath
-		}
-	}
-
-	// Process normal files to extract errors
-	for normalizedPath, filePath := range normalFiles {
-		// Read file contents
-		content, err := os.ReadFile(filePath)
+	// Group files by their normalized paths
+	normalizedPathMap := make(map[string][]string)
+	for _, path := range files {
+		relPath, err := filepath.Rel(reqFolderPath, path)
 		if err != nil {
-			return nil, fmt.Errorf("error reading file %s: %v", filePath, err)
+			return nil, fmt.Errorf("failed to get relative path: %v", err)
 		}
 
-		// Process the file line by line
-		lines := strings.Split(string(content), "\n")
+		relPath = filepath.ToSlash(relPath)
+		normalizedPath := getNormalizedPath(relPath)
+		normalizedPathMap[normalizedPath] = append(normalizedPathMap[normalizedPath], path)
+	}
 
-		// Extract errors from the file
-		previousLineN := 0
-		for i, line := range lines {
-			trimmedLine := strings.TrimSpace(line)
-
-			// Skip if not a golden line
-			if !strings.HasPrefix(trimmedLine, "//") {
-				previousLineN = i + 1 // Store current line number for reference
-				continue
+	// Process each file
+	for normalizedPath, filePaths := range normalizedPathMap {
+		// Check if there's a golden file
+		hasGoldenFile := false
+		for _, path := range filePaths {
+			if isGoldenFile(path) {
+				hasGoldenFile = true
+				break
 			}
+		}
 
-			// Remove the "//" prefix and trim whitespace
-			goldenContent := strings.TrimSpace(strings.TrimPrefix(trimmedLine, "//"))
-
-			// Process errors line
-			if strings.HasPrefix(goldenContent, "errors:") {
-				if previousLineN == 0 {
-					return nil, fmt.Errorf("errors line found without preceding content at %s:%d", filePath, i+1)
-				}
-
-				// Extract error regexes from the line
-				errorPart := strings.TrimSpace(strings.TrimPrefix(goldenContent, "errors:"))
-				reErrPattern := regexp.MustCompile(`"([^"]*)"`)
-				matches := reErrPattern.FindAllStringSubmatch(errorPart, -1)
-
-				// Initialize the line map if it doesn't exist
-				if result.errors[filePath] == nil {
-					result.errors[filePath] = make(map[int][]*regexp.Regexp)
-				}
-
-				for _, match := range matches {
-					pattern := match[1]
-					regex, err := regexp.Compile(pattern)
-					if err != nil {
-						return nil, fmt.Errorf("invalid error regex at %s:%d: %v", filePath, i+1, err)
+		// Process normal files
+		for _, path := range filePaths {
+			if !isGoldenFile(path) {
+				// If it's a Markdown file, process it to extract errors
+				if filepath.Ext(path) == ".md" {
+					if err := extractGoldenErrors(path, gd); err != nil {
+						return nil, fmt.Errorf("failed to extract golden errors: %v", err)
 					}
-					result.errors[filePath][previousLineN] = append(result.errors[filePath][previousLineN], regex)
 				}
-				continue
+
+				// If there's no golden file counterpart, load lines
+				if !hasGoldenFile {
+					if err := loadFileLines(path, normalizedPath, gd); err != nil {
+						return nil, fmt.Errorf("failed to load file lines: %v", err)
+					}
+				}
+			} else {
+				// Load golden file lines
+				if err := loadFileLines(path, normalizedPath, gd); err != nil {
+					return nil, fmt.Errorf("failed to load golden file lines: %v", err)
+				}
 			}
 		}
+	}
 
-		// If no golden counterpart exists, store the normal file's lines
-		if _, hasGoldenCounterpart := goldenFiles[normalizedPath]; !hasGoldenCounterpart {
-			result.lines[normalizedPath] = lines
+	return gd, nil
+}
+
+// getNormalizedPath removes the "_" from the RootName (file name without extension)
+func getNormalizedPath(path string) string {
+	dir := filepath.Dir(path)
+	filename := filepath.Base(path)
+	ext := filepath.Ext(filename)
+	rootName := strings.TrimSuffix(filename, ext)
+
+	// Remove trailing "_" from the root name
+	normalizedRootName := strings.TrimSuffix(rootName, "_")
+
+	if dir == "." {
+		return normalizedRootName + ext
+	}
+	return filepath.ToSlash(filepath.Join(dir, normalizedRootName+ext))
+}
+
+// isGoldenFile checks if a file is a golden file (ends with "_" before extension)
+func isGoldenFile(path string) bool {
+	filename := filepath.Base(path)
+	ext := filepath.Ext(filename)
+	rootName := strings.TrimSuffix(filename, ext)
+	return strings.HasSuffix(rootName, "_")
+}
+
+// loadFileLines loads the lines from a file into goldenData.lines
+func loadFileLines(filePath, normalizedPath string, gd *goldenData) error {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to read file: %v", err)
+	}
+
+	// Split content into lines, preserving exact whitespace
+	lines := strings.Split(string(content), "\n")
+	gd.lines[normalizedPath] = lines
+
+	return nil
+}
+
+// extractGoldenErrors extracts error patterns from markdown files
+func extractGoldenErrors(filePath string, gd *goldenData) error {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to read file: %v", err)
+	}
+
+	lines := strings.Split(string(content), "\n")
+	// Regular expression for golden error lines: "// errors: "regex" "regex" ..."
+	errLineRegex := regexp.MustCompile(`^\s*//\s*errors:\s*(.*)$`)
+
+	for i := 0; i < len(lines); i++ {
+		matches := errLineRegex.FindStringSubmatch(lines[i])
+		if len(matches) > 1 {
+			// This is a golden error line, process it for the previous line
+			if i == 0 {
+				return fmt.Errorf("golden error line found at the beginning of the file")
+			}
+
+			// Extract error regexes
+			errorRegexes := extractErrorRegexes(matches[1])
+			if len(errorRegexes) == 0 {
+				continue
+			}
+
+			// Compile the regexes
+			compiledRegexes := make([]*regexp.Regexp, 0, len(errorRegexes))
+			for _, regex := range errorRegexes {
+				compiled, err := regexp.Compile(regex)
+				if err != nil {
+					return fmt.Errorf("invalid error regex '%s': %v", regex, err)
+				}
+				compiledRegexes = append(compiledRegexes, compiled)
+			}
+
+			// Store the error regexes for the previous line
+			if gd.errors[filePath] == nil {
+				gd.errors[filePath] = make(map[int][]*regexp.Regexp)
+			}
+			gd.errors[filePath][i] = compiledRegexes
 		}
 	}
 
-	// Process golden files
-	for normalizedPath, goldenFilePath := range goldenFiles {
-		content, err := os.ReadFile(goldenFilePath)
-		if err != nil {
-			return nil, fmt.Errorf("error reading golden file %s: %v", goldenFilePath, err)
-		}
+	return nil
+}
 
-		// Store the lines using the normalized path
-		result.lines[normalizedPath] = strings.Split(string(content), "\n")
+// extractErrorRegexes parses a string containing quoted regex patterns
+func extractErrorRegexes(s string) []string {
+	var regexes []string
+	var inQuote bool
+	var currentRegex strings.Builder
+
+	for _, r := range s {
+		if r == '"' {
+			inQuote = !inQuote
+			if !inQuote {
+				// End of a regex
+				regexStr := currentRegex.String()
+				if regexStr != "" {
+					regexes = append(regexes, regexStr)
+				}
+				currentRegex.Reset()
+			}
+		} else if inQuote {
+			currentRegex.WriteRune(r)
+		}
 	}
 
-	return result, nil
+	return regexes
 }
