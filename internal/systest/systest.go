@@ -12,7 +12,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"text/template"
 
 	"github.com/go-git/go-git/v5"
 	cfg "github.com/go-git/go-git/v5/config"
@@ -65,7 +64,7 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	commitHash := getCommitHash(t, tempSrc)
 
 	// Replace placeholders in all files in the tempReqs Dir with commitHash
-	replacePlaceholders(t, tempReqs, commitHash)
+	replacePlaceholders(t, goldenData, commitHash)
 
 	// Prepare args to include tempReqs and tempSrc
 	testArgs := append([]string{"reqmd"}, args...)
@@ -238,47 +237,14 @@ func getCommitHash(t T, dir string) string {
 	return ref.Hash().String()
 }
 
-// replacePlaceholders replaces {{.CommitHash}} in all files with the actual commitHash
-func replacePlaceholders(t T, dir string, commitHash string) {
-	// Walk through all files in the directory
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
+// replacePlaceholders replaces {{.CommitHash}} in all goldenData.lines with the actual commit hash
+func replacePlaceholders(_ T, goldenData *goldenData, commitHash string) {
+	// Replace in goldenData.lines
+	for filePath, lines := range goldenData.lines {
+		for i, line := range lines {
+			goldenData.lines[filePath][i] = strings.ReplaceAll(line, "{{.CommitHash}}", commitHash)
 		}
-
-		if info.IsDir() {
-			return nil
-		}
-
-		// Read file content
-		content, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		// Check if the file contains the placeholder
-		if !bytes.Contains(content, []byte("{{.CommitHash}}")) {
-			return nil
-		}
-
-		// Create a template from the file content
-		tmpl, err := template.New(filepath.Base(path)).Parse(string(content))
-		if err != nil {
-			return err
-		}
-
-		// Apply the template with the commitHash
-		var buf bytes.Buffer
-		err = tmpl.Execute(&buf, map[string]string{"CommitHash": commitHash})
-		if err != nil {
-			return err
-		}
-
-		// Write the result back to the file
-		return os.WriteFile(path, buf.Bytes(), info.Mode())
-	})
-
-	require.NoError(t, err, "Failed to replace placeholders in %s", dir)
+	}
 }
 
 // execRootCmd redirects stdout and stderr to capture output and call the main package's execRootCmd

@@ -23,3 +23,7 @@ func Test_systest_errors(t *testing.T) {
 func Test_systest_justreqs(t *testing.T) {
 	systest.RunSysTest(t, sysTestsDir, "justreqs", ExecRootCmd, []string{"trace"}, "0.0.1")
 }
+
+func Test_systest_reqsrc(t *testing.T) {
+	systest.RunSysTest(t, sysTestsDir, "reqsrc", ExecRootCmd, []string{"trace"}, "0.0.1")
+}
