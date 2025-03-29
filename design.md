@@ -42,7 +42,7 @@ The system is designed using SOLID principles:
    - Interfaces (`IScanner`, `IAnalyzer`, `IApplier`) can be replaced with new implementations as long as they respect the same contracts.
 
 4. **Interface Segregation Principle**
-   - Instead of having a single “monolithic” interface, smaller interfaces reflect the actual steps: scanning, analyzing, applying.
+   - Instead of having a single "monolithic" interface, smaller interfaces reflect the actual steps: scanning, analyzing, applying.
    - The consumer (the `Tracer`) depends only on the interfaces it needs.
 
 5. **Dependency Inversion Principle**

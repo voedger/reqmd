@@ -46,10 +46,6 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	tempReqs := t.TempDir()
 	tempSrc := t.TempDir()
 
-	// Create git repos for tempReqs and tempSrc
-	createGitRepo(t, tempReqs)
-	createGitRepo(t, tempSrc)
-
 	// Copy sysTestData.req to tempReqs and sysTestData.src to tempSrc
 	copyDir(t, filepathJoin(sysTestDataDir, "req"), tempReqs)
 	copyDir(t, filepathJoin(sysTestDataDir, "src"), tempSrc)
@@ -57,6 +53,10 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 	// parseReqGoldenData
 	goldenData, err := parseGoldenData(tempReqs)
 	require.NoError(t, err, "Failed to parse req golden data")
+
+	// Create git repos for tempReqs and tempSrc
+	createGitRepo(t, tempReqs)
+	createGitRepo(t, tempSrc)
 
 	// Commit all files in tempSrc
 	commitAllFiles(t, tempSrc)
@@ -93,15 +93,12 @@ func validateGoldenLines(t T, goldenData *goldenData, tempReqs string) {
 		// Construct full path to the actual file
 		actualPath := filepathJoin(tempReqs, goldenPath)
 
-		// Read the actual file content
-		content, err := os.ReadFile(actualPath)
+		// Read the actual file content using loadFileLines
+		actualLines, err := loadFileLines(actualPath)
 		if err != nil {
 			t.Errorf("Failed to read file %s: %v", actualPath, err)
 			continue
 		}
-
-		// Split content into lines, preserving empty lines
-		actualLines := strings.Split(string(content), "\n")
 
 		// Compare number of lines
 		if len(actualLines) != len(expectedLines) {
@@ -118,7 +115,7 @@ func validateGoldenLines(t T, goldenData *goldenData, tempReqs string) {
 			}
 
 			if actualLines[i] != expectedLine {
-				t.Errorf("Line mismatch in %s at line %d:\nexpected: %q\ngot: %q",
+				t.Errorf("Line mismatch in %s at line %d:\nexpected: %s\ngot: %s",
 					goldenPath, i+1, expectedLine, actualLines[i])
 			}
 		}
@@ -136,9 +133,7 @@ func validateSysTestDataDir(t T, Dir string) {
 	_, err := os.Stat(reqDir)
 	require.NoError(t, err, "Failed to read `req` dir")
 
-	srcDir := filepath.ToSlash(filepathJoin(Dir, "src"))
-	_, err = os.Stat(srcDir)
-	require.NoError(t, err, "Failed to read `src` dir")
+	// Removed src directory check as requested
 }
 
 // createGitRepo initializes a git repository in the given directory
@@ -171,7 +166,14 @@ func copyDir(t T, sourceDir, targetDir string) {
 	entries, err := os.ReadDir(sourceDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// Directory doesn't exist, which is fine
+			// Directory doesn't exist, create target directory with empty .gitkeep file
+			err = os.MkdirAll(targetDir, 0755)
+			require.NoError(t, err, "Failed to create directory: %s", targetDir)
+
+			// Create empty .gitkeep file
+			gitkeepPath := filepathJoin(targetDir, ".gitkeep")
+			err = os.WriteFile(gitkeepPath, []byte{}, 0644)
+			require.NoError(t, err, "Failed to create .gitkeep file: %s", gitkeepPath)
 			return
 		}
 		require.NoError(t, err, "Failed to read directory: %s", sourceDir)
@@ -397,9 +399,6 @@ func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenData)
 							break
 						}
 					}
-					if errorFound {
-						break
-					}
 				}
 			}
 		}
@@ -425,4 +424,21 @@ func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenData)
 
 func filepathJoin(elem ...string) string {
 	return filepath.ToSlash(filepath.Join(elem...))
+}
+
+// loadFileLines loads and splits the file content into lines
+func loadFileLines(filePath string) ([]string, error) {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %v", err)
+	}
+
+	// Replace all Windows CRLF with LF and split content into lines
+	normalized := strings.ReplaceAll(string(content), "\r\n", "\n")
+	normalized = strings.ReplaceAll(normalized, "\r", "\n")
+
+	// Split on LF
+	lines := strings.Split(normalized, "\n")
+
+	return lines, nil
 }

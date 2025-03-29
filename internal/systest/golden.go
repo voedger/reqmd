@@ -55,11 +55,8 @@ func parseGoldenData(reqFolderPath string) (*goldenData, error) {
 
 		// Only store lines for markdown files we need to check for errors
 		// and golden files we need to compare against
-		if (strings.HasSuffix(strings.ToLower(path), ".md") && !isGoldenFile(path)) || isGoldenFile(path) {
-			gd.lines[relPath] = lines
-			if isGoldenFile(path) {
-				gd.lines[normalizedPath] = lines
-			}
+		if isGoldenFile(path) || !hasGoldenCounterpart(path) {
+			gd.lines[normalizedPath] = lines
 		}
 
 		// Process markdown files for golden errors
@@ -101,17 +98,6 @@ func isGoldenFile(path string) bool {
 	ext := filepath.Ext(filename)
 	rootName := strings.TrimSuffix(filename, ext)
 	return strings.HasSuffix(rootName, "_")
-}
-
-// loadFileLines loads and splits the file content into lines
-func loadFileLines(filePath string) ([]string, error) {
-	content, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %v", err)
-	}
-
-	// Split content into lines, preserving exact whitespace
-	return strings.Split(string(content), "\n"), nil
 }
 
 // extractGoldenErrors extracts error patterns from markdown files
@@ -177,4 +163,20 @@ func extractErrorRegexes(s string) []string {
 	}
 
 	return regexes
+}
+
+// hasGoldenCounterpart checks if a file has a corresponding golden file
+// A golden file has the same name as the original file but with "_" appended before the extension
+func hasGoldenCounterpart(path string) bool {
+	dir := filepath.Dir(path)
+	filename := filepath.Base(path)
+	ext := filepath.Ext(filename)
+	rootName := strings.TrimSuffix(filename, ext)
+
+	// Construct the golden file path
+	goldenPath := filepath.Join(dir, rootName+"_"+ext)
+
+	// Check if the golden file exists
+	_, err := os.Stat(goldenPath)
+	return err == nil
 }

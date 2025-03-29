@@ -415,7 +415,7 @@ Based on your attachments, I have a better understanding of the SysTestFixture, 
 - Insiders freezes the PC, switched to the stable VS Code
 
 - Cursor is way better than Copilot, in both quality and speed:🏆
-  - [parseGoldenData by Copilot](https://github.com/voedger/reqmd/blob/c6b61d2aef9640c878f94a9d738d65587e5ddd3f/internal/systest/golden.go#L26) 
+  - [parseGoldenData by Copilot](https://github.com/voedger/reqmd/blob/c6b61d2aef9640c878f94a9d738d65587e5ddd3f/internal/systest/golden.go#L26)
   - [parseGoldenData by Cursor](https://github.com/voedger/reqmd/blob/e3c0587970dc127144162e7cca38ca65066adf15/internal/systest/golden.go#L26)
 
 ```markdown
