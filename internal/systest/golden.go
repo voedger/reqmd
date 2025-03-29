@@ -29,59 +29,45 @@ func parseGoldenData(reqFolderPath string) (*goldenData, error) {
 		lines:  make(map[Path][]string),
 	}
 
-	// Get all files in the reqFolderPath
-	files, err := listFilePaths(reqFolderPath, "")
-	if err != nil {
-		return nil, fmt.Errorf("failed to list files: %v", err)
-	}
-
-	// Group files by their normalized paths
-	normalizedPathMap := make(map[string][]string)
-	for _, path := range files {
-		relPath, err := filepath.Rel(reqFolderPath, path)
+	err := filepath.Walk(reqFolderPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil, fmt.Errorf("failed to get relative path: %v", err)
+			return err
+		}
+		if info.IsDir() {
+			return nil
 		}
 
-		relPath = filepath.ToSlash(relPath)
-		normalizedPath := getNormalizedPath(relPath)
-		normalizedPathMap[normalizedPath] = append(normalizedPathMap[normalizedPath], path)
-	}
+		// Convert path to slash format for consistency
+		path = filepath.ToSlash(path)
+		normalizedPath := getNormalizedPath(path)
 
-	// Process each file
-	for normalizedPath, filePaths := range normalizedPathMap {
-		// Check if there's a golden file
-		hasGoldenFile := false
-		for _, path := range filePaths {
+		// Load file contents
+		lines, err := loadFileLines(path)
+		if err != nil {
+			return fmt.Errorf("loading file %s: %v", path, err)
+		}
+
+		// Only store lines for markdown files we need to check for errors
+		// and golden files we need to compare against
+		if (strings.HasSuffix(strings.ToLower(path), ".md") && !isGoldenFile(path)) || isGoldenFile(path) {
+			gd.lines[path] = lines
 			if isGoldenFile(path) {
-				hasGoldenFile = true
-				break
+				gd.lines[normalizedPath] = lines
 			}
 		}
 
-		// Process normal files
-		for _, path := range filePaths {
-			if !isGoldenFile(path) {
-				// If it's a Markdown file, process it to extract errors
-				if filepath.Ext(path) == ".md" {
-					if err := extractGoldenErrors(path, gd); err != nil {
-						return nil, fmt.Errorf("failed to extract golden errors: %v", err)
-					}
-				}
-
-				// If there's no golden file counterpart, load lines
-				if !hasGoldenFile {
-					if err := loadFileLines(path, normalizedPath, gd); err != nil {
-						return nil, fmt.Errorf("failed to load file lines: %v", err)
-					}
-				}
-			} else {
-				// Load golden file lines
-				if err := loadFileLines(path, normalizedPath, gd); err != nil {
-					return nil, fmt.Errorf("failed to load golden file lines: %v", err)
-				}
+		// Process markdown files for golden errors
+		if strings.HasSuffix(strings.ToLower(path), ".md") && !isGoldenFile(path) {
+			if err := extractGoldenErrors(path, lines, gd); err != nil {
+				return fmt.Errorf("extracting golden errors from %s: %v", path, err)
 			}
 		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("walking directory %s: %v", reqFolderPath, err)
 	}
 
 	return gd, nil
@@ -111,32 +97,23 @@ func isGoldenFile(path string) bool {
 	return strings.HasSuffix(rootName, "_")
 }
 
-// loadFileLines loads the lines from a file into goldenData.lines
-func loadFileLines(filePath, normalizedPath string, gd *goldenData) error {
+// loadFileLines loads and splits the file content into lines
+func loadFileLines(filePath string) ([]string, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		return fmt.Errorf("failed to read file: %v", err)
+		return nil, fmt.Errorf("failed to read file: %v", err)
 	}
 
 	// Split content into lines, preserving exact whitespace
-	lines := strings.Split(string(content), "\n")
-	gd.lines[normalizedPath] = lines
-
-	return nil
+	return strings.Split(string(content), "\n"), nil
 }
 
 // extractGoldenErrors extracts error patterns from markdown files
-func extractGoldenErrors(filePath string, gd *goldenData) error {
-	content, err := os.ReadFile(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to read file: %v", err)
-	}
-
-	lines := strings.Split(string(content), "\n")
+func extractGoldenErrors(filePath string, lines []string, gd *goldenData) error {
 	// Regular expression for golden error lines: "// errors: "regex" "regex" ..."
 	errLineRegex := regexp.MustCompile(`^\s*//\s*errors:\s*(.*)$`)
 
-	for i := 0; i < len(lines); i++ {
+	for i := range lines {
 		matches := errLineRegex.FindStringSubmatch(lines[i])
 		if len(matches) > 1 {
 			// This is a golden error line, process it for the previous line
