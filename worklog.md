@@ -412,6 +412,7 @@ Based on your attachments, I have a better understanding of the SysTestFixture, 
 
 - *Check that the sources comply with the `## System tests` requirements `#file:sys_test.go #file:systest.go #file:systest_test.go`*👍
 - Total time spent improving `Implement RunSysTest...` ~6h
+- Insiders freezes the PC, switched to the stable VS Code
 
 ```markdown
 ## Compliance Analysis

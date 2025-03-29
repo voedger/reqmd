@@ -249,15 +249,15 @@ type Action struct {
   - `errors map[Path]map[int][]*regexp.Regexp` - expected errors (compiled regexes)
   - `lines map[Path][]string` - expected lines
 - `parseGoldenData`
-  - Takes the path to the `req` folder as a parameter
   - Definitions
     - RootName is a file name without extension
     - GoldenFile is a file whose RootName ends with "_"
     - NormalFile is a file whose RootName does not end with "_"
     - NormalizedPath is the path with "_" removed from the RootName
+  - Takes the path to the `req` folder as a parameter
   - NormalFiles that ends with ".md" are processed to extract GoldenErrors (see below)
   - NormalFiles that do not have GoldenFile counterpart are loaded to goldenData.lines
-  - GoldenFiles are loaded to goldenData.lines, name is normalized ("_" is removed)
+  - GoldenFiles are loaded to goldenData.lines, path is normalized ("_" is removed)
   - Processing of goldenData.lines:
     - For each NormalFile without a GoldenFile counterpart, read the file content line by line and store in goldenData.lines[normalizedPath]
     - For each GoldenFile, read the file content line by line and store in goldenData.lines[normalizedPath]
