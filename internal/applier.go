@@ -93,6 +93,11 @@ func applyMdActions(path FilePath, actions []MdAction) error {
 		}
 	}
 
+	// if last line is not empty, add an empty line
+	if len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) != "" {
+		lines = append(lines, "")
+	}
+
 	if err := writeFilePreserveEndings(string(path), lines, hasCRLF); err != nil {
 		return err
 	}

@@ -102,8 +102,8 @@ func validateGoldenLines(t T, goldenData *goldenData, tempReqs string) {
 
 		// Compare number of lines
 		if len(actualLines) != len(expectedLines) {
-			t.Errorf("Line count mismatch in %s: expected %d lines, got %d lines",
-				goldenPath, len(expectedLines), len(actualLines))
+			t.Errorf("Line count mismatch in %s: expected %d lines, got %d lines\n%s",
+				goldenPath, len(expectedLines), len(actualLines), strings.Join(actualLines, "\n"))
 			continue
 		}
 
