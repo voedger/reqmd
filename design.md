@@ -244,8 +244,8 @@ type Action struct {
 - TestMarkdown file contains NormalLines and GoldenLines (for errors), see below
 - GoldenLines represent expected errors for the previous NormalLine
 - SysTestData are loaded and processed by the `internal/systest/RunSysTest` function
-- `RunSysTest` uses `parseGoldenData()` function to parse the Golden Data and returns `goldenData` struct
-- `RunSysTest` uses `actualizeGoldenData()` function to replace `{{.CommitHash}}` with actual commit hash
+- `RunSysTest` uses `parseGoldenData()` function to parse and load the Golden Data and returns `goldenData` struct
+- `RunSysTest` uses `replacePlaceholders()` function to replace `{{.CommitHash}}` in parsed Golden Data lines with actual commit hash
 - `goldenData` struct
   - `errors map[Path]map[int][]*regexp.Regexp` - expected errors (compiled regexes)
   - `lines map[Path][]string` - expected lines
