@@ -250,10 +250,9 @@ type Action struct {
   - `lines map[Path][]string` - expected lines
 - `parseGoldenData`
   - Definitions
-    - RootName is a file name without extension
-    - GoldenFile is a file whose RootName ends with "_"
-    - NormalFile is a file whose RootName does not end with "_"
-    - NormalizedPath is the path with "_" removed from the RootName
+    - GoldenFile is a file whose path ends with "_", e.q. `req.md_`
+    - NormalFile is a file whose path does not end with "_"
+    - NormalizedPath is the path with "_" removed from the path
   - Takes the path to the `req` folder as a parameter
   - NormalFiles that ends with ".md" are processed to extract GoldenErrors (see below)
   - NormalFiles that do not have GoldenFile counterpart are loaded to goldenData.lines

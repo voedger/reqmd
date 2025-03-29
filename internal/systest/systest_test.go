@@ -15,6 +15,12 @@ import (
 
 var runSysTestsDir = filepath.Join("testdata", "runsystest")
 
+func Test_noerr(t *testing.T) {
+	mockT := &MockT{t: t}
+	RunSysTest(mockT, runSysTestsDir, "noerr", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
+	require.False(t, mockT.failed, "expected test to pass")
+}
+
 func Test_err_NotOccurring(t *testing.T) {
 	mockT := &MockT{t: t}
 	RunSysTest(mockT, runSysTestsDir, "err_undetected", internal.ExecRootCmd, []string{"trace"}, "0.0.1")

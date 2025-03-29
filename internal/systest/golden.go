@@ -76,28 +76,19 @@ func parseGoldenData(reqFolderPath string) (*goldenData, error) {
 	return gd, nil
 }
 
-// getNormalizedPath removes the "_" from the RootName (file name without extension)
+// getNormalizedPath removes the "_" suffix, if exists, and converts the path to slash format
 func getNormalizedPath(path string) string {
-	dir := filepath.Dir(path)
-	filename := filepath.Base(path)
-	ext := filepath.Ext(filename)
-	rootName := strings.TrimSuffix(filename, ext)
+	// If the path ends with an underscore, remove it
+	path = strings.TrimSuffix(path, "_")
 
-	// Remove trailing "_" from the root name
-	normalizedRootName := strings.TrimSuffix(rootName, "_")
-
-	if dir == "." {
-		return normalizedRootName + ext
-	}
-	return filepath.ToSlash(filepath.Join(dir, normalizedRootName+ext))
+	// Convert to slash format for consistency across platforms
+	return filepath.ToSlash(path)
 }
 
 // isGoldenFile checks if a file is a golden file (ends with "_" before extension)
+// Based on design.md: "GoldenFile is a file whose name ends with '_', e.q. `req.md_`"
 func isGoldenFile(path string) bool {
-	filename := filepath.Base(path)
-	ext := filepath.Ext(filename)
-	rootName := strings.TrimSuffix(filename, ext)
-	return strings.HasSuffix(rootName, "_")
+	return strings.HasSuffix(path, "_")
 }
 
 // extractGoldenErrors extracts error patterns from markdown files
@@ -166,17 +157,11 @@ func extractErrorRegexes(s string) []string {
 }
 
 // hasGoldenCounterpart checks if a file has a corresponding golden file
-// A golden file has the same name as the original file but with "_" appended before the extension
+// Based on design.md: "GoldenFile is a file whose path  ends with '_', e.q. `req.md_`"
 func hasGoldenCounterpart(path string) bool {
-	dir := filepath.Dir(path)
-	filename := filepath.Base(path)
-	ext := filepath.Ext(filename)
-	rootName := strings.TrimSuffix(filename, ext)
-
-	// Construct the golden file path
-	goldenPath := filepath.Join(dir, rootName+"_"+ext)
-
-	// Check if the golden file exists
+	// Check if the golden version of this file exists
+	// A golden file has the same path but with an underscore appended
+	goldenPath := path + "_"
 	_, err := os.Stat(goldenPath)
 	return err == nil
 }
