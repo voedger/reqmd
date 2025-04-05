@@ -296,6 +296,7 @@ func execRootCmd(rootCmd ExecRootCmdFunc, args []string, version string, stdout,
 
 // validateErrors checks if the stderr output matches expected error patterns from goldenReqData
 // stderr lines are parsed into `path`, `line` and `message` parts according to the formatting: `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
+// If the line in stderr starts with the tab character, it is appended to the previous line
 // All lines in stderr must match at least one item in grd.errors
 // All grd.errors items must match at least one line in stderr
 // stderr lines and grd.errors items are matched using all parts of the stderr lines: `path`, `line` and `message`
@@ -306,17 +307,38 @@ func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenData)
 	}
 
 	// Parse stderr lines into structured format
-	stderrLines := strings.Split(stderr.String(), "\n")
-	parsedErrors := make(map[string]bool)
+	rawLines := strings.Split(stderr.String(), "\n")
+	var processedLines []string
+	var currentLine string
 
-	// Regular expression to match error lines in format "path:line: message"
-	errRegex := regexp.MustCompile(`^(.+):(\d+): (.+)$`)
-
-	for _, line := range stderrLines {
+	// Process lines, combining tab-indented lines with their parent
+	for _, line := range rawLines {
 		if line == "" {
 			continue
 		}
 
+		if strings.HasPrefix(line, "\t") {
+			// Append tab-indented line to current line
+			if currentLine != "" {
+				currentLine += " " + strings.TrimSpace(line)
+			}
+		} else {
+			// Save previous line if exists
+			if currentLine != "" {
+				processedLines = append(processedLines, currentLine)
+			}
+			currentLine = line
+		}
+	}
+	// Add the last line if exists
+	if currentLine != "" {
+		processedLines = append(processedLines, currentLine)
+	}
+
+	parsedErrors := make(map[string]bool)
+	errRegex := regexp.MustCompile(`^(.+):(\d+): (.+)$`)
+
+	for _, line := range processedLines {
 		matches := errRegex.FindStringSubmatch(line)
 		if len(matches) != 4 {
 			// This line doesn't match our expected format
@@ -375,6 +397,8 @@ func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenData)
 		}
 	}
 
+	allErrorsFound := true
+
 	// Check that all expected errors were found
 	for goldFilePath, lineErrors := range grd.errors {
 		for goldLineNum, regexps := range lineErrors {
@@ -382,9 +406,14 @@ func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenData)
 				key := fmt.Sprintf("%s:%d:%s", goldFilePath, goldLineNum, regexp.String())
 				if !parsedErrors[key] {
 					t.Errorf("Expected error not found in stderr: %s line %d: %s", goldFilePath, goldLineNum, regexp.String())
+					allErrorsFound = false
 				}
 			}
 		}
+	}
+
+	if !allErrorsFound {
+		t.Errorf("Not all expected errors were found in stderr:\n%s", stderr.String())
 	}
 }
 
