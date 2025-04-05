@@ -253,6 +253,10 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 				// Check CoverageFootnotes
 				for _, cf := range file.CoverageFootnotes {
 					updateMaxFootnoteId(cf.CoverageFootnoteId)
+					// Check if package ID in footnote matches the file's package ID
+					if file.PackageID != "" && cf.PackageID != file.PackageID {
+						*errors = append(*errors, NewErrPackageIDMismatch(file.Path, cf.Line, cf.PackageID, file.PackageID))
+					}
 				}
 			}
 

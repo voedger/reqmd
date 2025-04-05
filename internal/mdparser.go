@@ -201,5 +201,6 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 			}
 		}
 	}
+
 	return footnote
 }

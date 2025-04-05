@@ -70,7 +70,7 @@ type RequirementSite struct {
 	CoverageFootnoteID  CoverageFootnoteId // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
 	CoverageStatusWord  CoverageStatusWord // "covered", "uncvrd", or empty
 	CoverageStatusEmoji CoverageStatusEmoji
-	HasAnnotationRef    bool // true if it already has coverage annotation reference, false if it’s bare
+	HasAnnotationRef    bool // true if it already has coverage annotation reference, false if it's bare
 }
 
 var RequirementSiteRegex = regexp.MustCompile(
@@ -308,4 +308,9 @@ type AnalyzerResult struct {
 	MdActions        map[FilePath][]MdAction
 	Reqmdjsons       map[FolderPath]*Reqmdjson
 	ProcessingErrors []ProcessingError
+}
+
+// File represents metadata about a file being processed
+type File struct {
+	PackageID string
 }

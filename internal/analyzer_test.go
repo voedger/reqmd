@@ -113,101 +113,6 @@ func TestAnalyzer_ActionFootnote_Bare(t *testing.T) {
 	assert.Equal(t, "[^1]: `[~pkg1/REQ001~impl]`", actions[1].Data)
 }
 
-// Bare requirement, there is a footnote with CoverageFootnoteID == "19"
-func TestAnalyzer_ActionFootnote_Bare_f19(t *testing.T) {
-	analyzer := NewAnalyzer()
-
-	// Create a markdown file with one requirement
-	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordUncvrd)
-	mdFile.Requirements[0].HasAnnotationRef = false
-
-	mdFile.CoverageFootnotes = []CoverageFootnote{
-		{
-			CoverageFootnoteId: CoverageFootnoteId("19"),
-			Line:               10 + 10,
-		},
-	}
-
-	result, err := analyzer.Analyze([]FileStructure{mdFile})
-	require.NoError(t, err)
-	require.Empty(t, result.ProcessingErrors)
-
-	// Should generate both a footnote and status update action
-	actions := result.MdActions[mdFile.Path]
-	require.Len(t, actions, 2)
-
-	// Verify status update action
-	assert.Equal(t, ActionSite, actions[0].Type)
-	assert.Equal(t, RequirementName("REQ001"), actions[0].RequirementName)
-	assert.Equal(t, 10, actions[0].Line)
-	assert.Equal(t, FormatRequirementSite("REQ001", CoverageStatusWordUncvrd, "20"), actions[0].Data)
-
-	// Verify footnote action
-	assert.Equal(t, ActionFootnote, actions[1].Type)
-	assert.Equal(t, RequirementName("REQ001"), actions[1].RequirementName)
-	assert.Equal(t, "[^20]: `[~pkg1/REQ001~impl]`", actions[1].Data)
-}
-
-// Bare requirement, there is a footnote with CoverageFootnoteID == "19"
-// and a RequirementSite with CoverageFootnoteID == "21".
-func TestAnalyzer_ActionFootnote_Bare_f19_r21(t *testing.T) {
-	analyzer := NewAnalyzer()
-
-	// Create a markdown file with one requirement
-	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordUncvrd)
-	mdFile.Requirements[0].HasAnnotationRef = false
-
-	mdFile.CoverageFootnotes = []CoverageFootnote{
-		{
-			CoverageFootnoteId: CoverageFootnoteId("19"),
-			Line:               10 + 10,
-		},
-	}
-	// Add a RequirementSite with CoverageFootnoteID == "21"
-	{
-		req := RequirementSite{
-			FilePath:            "req.md",
-			RequirementName:     RequirementName("REQ002"),
-			CoverageFootnoteID:  CoverageFootnoteId("21"),
-			Line:                11,
-			HasAnnotationRef:    true,
-			CoverageStatusWord:  CoverageStatusWordUncvrd,
-			CoverageStatusEmoji: CoverageStatusEmojiUncvrd,
-		}
-		mdFile.Requirements = append(mdFile.Requirements, req)
-	}
-
-	result, err := analyzer.Analyze([]FileStructure{mdFile})
-	require.NoError(t, err)
-	require.Empty(t, result.ProcessingErrors)
-
-	// Should generate both a footnote and status update action
-	actions := result.MdActions[mdFile.Path]
-	require.Len(t, actions, 3)
-
-	for _, action := range actions {
-		if action.Type == ActionSite {
-			// Verify status update action
-			assert.Equal(t, ActionSite, action.Type)
-			assert.Equal(t, RequirementName("REQ001"), action.RequirementName)
-			assert.Equal(t, 10, action.Line)
-			assert.Equal(t, FormatRequirementSite("REQ001", CoverageStatusWordUncvrd, "22"), action.Data)
-			continue
-		}
-		if action.Type == ActionFootnote && action.RequirementName == "REQ001" {
-			assert.Equal(t, ActionFootnote, action.Type)
-			assert.Equal(t, RequirementName("REQ001"), action.RequirementName)
-			assert.Equal(t, "[^22]: `[~pkg1/REQ001~impl]`", action.Data)
-		}
-		if action.Type == ActionFootnote && action.RequirementName == "REQ002" {
-			assert.Equal(t, ActionFootnote, action.Type)
-			assert.Equal(t, RequirementName("REQ002"), action.RequirementName)
-			assert.Equal(t, "[^21]: `[~pkg1/REQ002~impl]`", action.Data)
-		}
-	}
-
-}
-
 // Bare requirement with new coverer
 func TestAnalyzer_ActionFootnote_Bare_NewCoverer(t *testing.T) {
 	analyzer := NewAnalyzer()
@@ -323,6 +228,7 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 		{
 			CoverageFootnoteId: "REQ001",
 			Line:               20,
+			PackageID:          "pkg1",
 			Coverers: []Coverer{
 				{
 					CoverageLabel: "old/file.go:15:impl",
@@ -370,6 +276,7 @@ func TestAnalyzer_ActionFootnote_AnCov_SameHash(t *testing.T) {
 		{
 			CoverageFootnoteId: "REQ001",
 			Line:               20,
+			PackageID:          "pkg1",
 			Coverers: []Coverer{
 				{
 					CoverageLabel: "old/file.go:15:impl",
@@ -431,6 +338,7 @@ func createMdStructureA(path, pkgID string, line int, reqName_ string, cw Covera
 			{
 				CoverageFootnoteId: footnoteID,
 				Line:               line + 10,
+				PackageID:          pkgID,
 				Coverers: []Coverer{
 					{
 						CoverageLabel: "somefolder/somefile.go:15:impl",

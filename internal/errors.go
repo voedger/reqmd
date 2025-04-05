@@ -95,3 +95,12 @@ func NewErrDuplicateFootnoteID(filePath string, line1 int, line2 int, footnoteID
 		Message:  fmt.Sprintf("duplicate CoverageFootnoteID detected in the same file:\n\t%s\n\tline %d and line %d", footnoteID, line1, line2),
 	}
 }
+
+func NewErrPackageIDMismatch(filePath string, line int, footnotePackageID string, declaredPackageID string) ProcessingError {
+	return ProcessingError{
+		Code:     "pkgidmismatch",
+		FilePath: filePath,
+		Line:     line,
+		Message:  fmt.Sprintf("PackageID in CoverageFootnoteHint ('%s') does not match PackageID in PackageDeclaration ('%s')", footnotePackageID, declaredPackageID),
+	}
+}

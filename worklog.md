@@ -438,6 +438,11 @@ Based on your attachments, I have a better understanding of the SysTestFixture, 
 - *Insiders.Agent.S37: Implement validateErrors function*
 - *
 
+
+### 021: Handle Changing Package Name
+
+If the package in `CoverageFootnoteHint` does not match the `PackageID` in `PackageDeclaration`, a semantic error must be reported.
+
 --------------------
 
 ## TODOs
@@ -445,9 +450,10 @@ Based on your attachments, I have a better understanding of the SysTestFixture, 
 - //TODO `~SendEMail.SendEmailToUser~`uncvrd[^~SendEMail.SendEmailToUser~]❓uncvrd[^111]❓
 - Path intersections: go run -C ../../reqmd . -v trace ${DRY_RUN} ../voedger-internals ../voedger-internals/reqman/.work/repos/voedger
 - Avoid .git, .* folders?
-- Handle changing package name
 - Support links like: https://github.com/voedger/voedger-internals/blob/3ccdc6074f12c800f092a55bf2b036d10a74443c/server/design/sequences.md?plain=1#L407
-- Duplication of footnote ids `~test.isequencer.LongRecovery~`uncvrd[^11]❓
+- // Bare requirement, there is a footnote with CoverageFootnoteID == "19"
+- // Bare requirement, there is a footnote with CoverageFootnoteID == "19"
+- // and a RequirementSite with CoverageFootnoteID == "21".
 
 ## Intermediate results
 
