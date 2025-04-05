@@ -85,3 +85,13 @@ func NewErrMissingPackageIDWithReqs(filePath string, lineOfTheFirstReqSite int) 
 		Message:  "markdown file with RequirementSites shall define reqmd.package",
 	}
 }
+
+// Duplicate CoverageFootnoteID in the same file
+func NewErrDuplicateFootnoteID(filePath string, line1 int, line2 int, footnoteID CoverageFootnoteId) ProcessingError {
+	return ProcessingError{
+		Code:     "dupfnoteid",
+		FilePath: filePath,
+		Line:     line1,
+		Message:  fmt.Sprintf("duplicate CoverageFootnoteID detected in the same file:\n\t%s\n\tline %d and line %d", footnoteID, line1, line2),
+	}
+}

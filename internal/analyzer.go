@@ -256,6 +256,18 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 				}
 			}
 
+			// Check for duplicate CoverageFootnoteIDs in the same file
+			footnoteIDMap := make(map[CoverageFootnoteId]int)
+			for _, req := range file.Requirements {
+				if req.CoverageFootnoteID != "" {
+					if line, exists := footnoteIDMap[req.CoverageFootnoteID]; exists {
+						*errors = append(*errors, NewErrDuplicateFootnoteID(file.Path, line, req.Line, req.CoverageFootnoteID))
+					} else {
+						footnoteIDMap[req.CoverageFootnoteID] = req.Line
+					}
+				}
+			}
+
 			for _, req := range file.Requirements {
 				var reqID RequirementId = RequirementId(file.PackageID + "/" + string(req.RequirementName)) // FIXME make NewRequirementId
 

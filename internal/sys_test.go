@@ -16,8 +16,12 @@ func Test_systest_noreqs(t *testing.T) {
 	systest.RunSysTest(t, sysTestsDir, "noreqs", ExecRootCmd, []string{"trace"}, "0.0.1")
 }
 
-func Test_systest_errors(t *testing.T) {
-	systest.RunSysTest(t, sysTestsDir, "errors", ExecRootCmd, []string{"trace"}, "0.0.1")
+func Test_systest_synerrors(t *testing.T) {
+	systest.RunSysTest(t, sysTestsDir, "synerrors", ExecRootCmd, []string{"trace"}, "0.0.1")
+}
+
+func Test_systest_semerrors(t *testing.T) {
+	systest.RunSysTest(t, sysTestsDir, "semerrors", ExecRootCmd, []string{"trace"}, "0.0.1")
 }
 
 func Test_systest_justreqs(t *testing.T) {

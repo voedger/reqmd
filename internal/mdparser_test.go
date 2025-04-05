@@ -57,7 +57,7 @@ func TestMdParser_ParseMarkdownFile(t *testing.T) {
 }
 
 func TestMdParser_ParseMarkdownFile_error_pkgident(t *testing.T) {
-	testData := filepath.Join("testdata", "systest", "errors", "req", "err_pkgident.md")
+	testData := filepath.Join("testdata", "systest", "synerrors", "req", "err_pkgident.md")
 	_, errors, err := ParseMarkdownFile(newMdCtx(), testData)
 	require.NoError(t, err)
 	require.Len(t, errors, 1, "expected exactly 1 syntax error")
