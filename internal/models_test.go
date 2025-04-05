@@ -29,7 +29,7 @@ func TestReqmdjson_UnmarshalJSON(t *testing.T) {
 				}
 			}`,
 			want: Reqmdjson{
-				FileUrl2FileHash: map[string]string{
+				FileURL2FileHash: map[string]string{
 					"https://github.com/voedger/voedger/blob/main/pkg/api/handler.go":      "979d75b2c7da961f94396ce2b286e7389eb73d75",
 					"https://github.com/voedger/voedger/blob/main/pkg/api/handler_test.go": "845a23c8f9d6a8b7e9c2d4f5a6b7c8d9e0f1a2b3",
 				},
@@ -39,7 +39,7 @@ func TestReqmdjson_UnmarshalJSON(t *testing.T) {
 			name: "empty file hashes",
 			json: `{"FileURL2FileHash":{}}`,
 			want: Reqmdjson{
-				FileUrl2FileHash: map[string]string{},
+				FileURL2FileHash: map[string]string{},
 			},
 		},
 		{
@@ -60,14 +60,14 @@ func TestReqmdjson_UnmarshalJSON(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.want.FileUrl2FileHash, got.FileUrl2FileHash)
+			assert.Equal(t, tt.want.FileURL2FileHash, got.FileURL2FileHash)
 		})
 	}
 }
 
 func TestReqmdjson_MarshalJSON_sorted(t *testing.T) {
 	input := Reqmdjson{
-		FileUrl2FileHash: map[string]string{
+		FileURL2FileHash: map[string]string{
 			// Deliberately not in lexical order
 			"https://github.com/org/repo/blob/main/zzz/last.go":      "hash20",
 			"https://github.com/org/repo/blob/main/src/app.go":       "hash10",
@@ -96,7 +96,7 @@ func TestReqmdjson_MarshalJSON_sorted(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify exact number of entries
-	assert.Equal(t, 20, len(input.FileUrl2FileHash), "should have exactly 20 entries")
+	assert.Equal(t, 20, len(input.FileURL2FileHash), "should have exactly 20 entries")
 
 	// Unmarshal to verify structure
 	var output Reqmdjson
@@ -104,11 +104,11 @@ func TestReqmdjson_MarshalJSON_sorted(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify content equality
-	assert.Equal(t, input.FileUrl2FileHash, output.FileUrl2FileHash)
+	assert.Equal(t, input.FileURL2FileHash, output.FileURL2FileHash)
 
 	// Extract and sort all keys
-	keys := make([]string, 0, len(input.FileUrl2FileHash))
-	for k := range input.FileUrl2FileHash {
+	keys := make([]string, 0, len(input.FileURL2FileHash))
+	for k := range input.FileURL2FileHash {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)

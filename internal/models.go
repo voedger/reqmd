@@ -194,22 +194,22 @@ const ReqmdjsonFileName = "reqmd.json"
 
 // Reqmdjson models the structure of the reqmd.json file.
 type Reqmdjson struct {
-	FileUrl2FileHash map[string]string //
+	FileURL2FileHash map[string]string //
 }
 
 // MarshalJSON implements custom JSON serialization for Reqmdjson
 // to ensure FileURLs are ordered lexically
 func (r *Reqmdjson) MarshalJSON() ([]byte, error) {
 	// Get all keys and sort them
-	keys := make([]string, 0, len(r.FileUrl2FileHash))
-	for k := range r.FileUrl2FileHash {
+	keys := make([]string, 0, len(r.FileURL2FileHash))
+	for k := range r.FileURL2FileHash {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
 	// Build ordered map manually
 	var b strings.Builder
-	b.WriteString(`{"FileUrl2FileHash":{`)
+	b.WriteString(`{"FileURL2FileHash":{`)
 	for i, k := range keys {
 		if i > 0 {
 			b.WriteString(",")
@@ -219,7 +219,7 @@ func (r *Reqmdjson) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		valueJSON, err := json.Marshal(r.FileUrl2FileHash[k])
+		valueJSON, err := json.Marshal(r.FileURL2FileHash[k])
 		if err != nil {
 			return nil, err
 		}
@@ -246,7 +246,7 @@ func (r *Reqmdjson) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
 	}
-	r.FileUrl2FileHash = temp.FileHashes
+	r.FileURL2FileHash = temp.FileHashes
 	return nil
 }
 

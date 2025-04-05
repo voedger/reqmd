@@ -178,14 +178,14 @@ func (a *analyzer) analyzeReqmdjsons(result *AnalyzerResult) {
 			// Initialize Reqmdjson for this folder if not exists
 			if _, exists := allJsons[folder]; !exists {
 				allJsons[folder] = &Reqmdjson{
-					FileUrl2FileHash: make(map[string]string),
+					FileURL2FileHash: make(map[string]string),
 				}
 			}
 
 			// Add FileURLs and hashes from current coverers
 			for _, c := range coverage.CurrentCoverers {
 				fileURL := FileUrl(c.CoverageUrL)
-				allJsons[folder].FileUrl2FileHash[fileURL] = c.FileHash
+				allJsons[folder].FileURL2FileHash[fileURL] = c.FileHash
 			}
 		}
 	}
@@ -198,7 +198,7 @@ func (a *analyzer) analyzeReqmdjsons(result *AnalyzerResult) {
 			// Initialize Reqmdjson for this folder if not exists
 			if _, exists := allJsons[folder]; !exists {
 				allJsons[folder] = &Reqmdjson{
-					FileUrl2FileHash: make(map[string]string),
+					FileURL2FileHash: make(map[string]string),
 				}
 			}
 
@@ -208,7 +208,7 @@ func (a *analyzer) analyzeReqmdjsons(result *AnalyzerResult) {
 			// Add FileURLs and hashes from new coverers
 			for _, c := range coverage.NewCoverers {
 				fileURL := FileUrl(c.CoverageUrL)
-				allJsons[folder].FileUrl2FileHash[fileURL] = c.FileHash
+				allJsons[folder].FileURL2FileHash[fileURL] = c.FileHash
 			}
 		}
 	}

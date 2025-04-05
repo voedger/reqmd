@@ -156,7 +156,7 @@ func Test_ParseCoverageFootnote(t *testing.T) {
 	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L11), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#L22)"
 	ctx := &MarkdownContext{
 		rfiles: &Reqmdjson{
-			FileUrl2FileHash: map[string]string{
+			FileURL2FileHash: map[string]string{
 				"https://example.com/pkg1/filename1": "hash1",
 				"https://example.com/pkg2/filename2": "hash2",
 			},
@@ -181,7 +181,7 @@ func Test_ParseCoverageFootnote2(t *testing.T) {
 	line := "[^~VVMLeader.def~]: `[~server.design.orch/VVMLeader.def~]` [apps/app.go:80:impl](https://example.com/pkg1/filename1#L80)"
 	ctx := &MarkdownContext{
 		rfiles: &Reqmdjson{
-			FileUrl2FileHash: map[string]string{
+			FileURL2FileHash: map[string]string{
 				"https://example.com/pkg1/filename1": "hash1",
 			},
 		},
@@ -200,7 +200,7 @@ func Test_ParseCoverageFootnote_JustFootnote(t *testing.T) {
 	line := "[^12]:"
 	ctx := &MarkdownContext{
 		rfiles: &Reqmdjson{
-			FileUrl2FileHash: map[string]string{
+			FileURL2FileHash: map[string]string{
 				"https://example.com/pkg1/filename1": "hash1",
 			},
 		},
