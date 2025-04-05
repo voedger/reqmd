@@ -1,0 +1,10 @@
+---
+reqmd.package: footnoteexists
+---
+# One footnote exists + empty line
+
+`~Req1~`uncvrd[^1]❓
+`~Req2~`uncvrd[^2]❓
+
+[^1]: `[~footnoteexists/Req1~impl]`
+[^2]: `[~footnoteexists/Req2~impl]`

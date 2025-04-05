@@ -58,6 +58,11 @@ func applyMdActions(path FilePath, actions []MdAction) error {
 		return err
 	}
 
+	//trim all empty lines at the end of the file
+	for len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) == "" {
+		lines = lines[:len(lines)-1]
+	}
+
 	for _, action := range actions {
 		if action.Line > 0 {
 			lineIndex := action.Line - 1
