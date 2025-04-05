@@ -442,7 +442,6 @@ Based on your attachments, I have a better understanding of the SysTestFixture, 
 
 ## TODOs
 
-- FileURL2FileHash
 - //TODO `~SendEMail.SendEmailToUser~`uncvrd[^~SendEMail.SendEmailToUser~]❓uncvrd[^111]❓
 - Path intersections: go run -C ../../reqmd . -v trace ${DRY_RUN} ../voedger-internals ../voedger-internals/reqman/.work/repos/voedger
 - Avoid .git, .* folders?
