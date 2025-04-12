@@ -14,7 +14,7 @@ import (
 	"github.com/voedger/reqmd/internal"
 )
 
-var runSysTestsDir = filepath.Join("testdata", "testsystest")
+var runSysTestsDir = filepath.Join("testdata")
 
 func Test_noerr(t *testing.T) {
 	mockT := &MockT{t: t}
