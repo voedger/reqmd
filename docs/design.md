@@ -9,7 +9,8 @@ The solution is split into a CLI entry point (`main.go`) and an internal package
 The tool follows a three-stage pipeline architecture:
 
 1. **Scan** – Build the Domain Model
-   - Recursively discovers Markdown and source files
+   - Recursively discovers Markdown and source files from multiple root paths
+   - Each path can contain both markdown and source files
    - Extracts requirement references from Markdown files
    - Identifies coverage tags in source code
    - Builds file structures with Git metadata
@@ -76,7 +77,7 @@ Summary of responsibilities
 - **interfaces.go**: All high-level contracts (`ITracer`, `IScanner`, `IAnalyzer`, `IApplier`, etc.).  
 - **models.go**: Domain entities and data structures (`FileStructure`, `Action`, errors, coverage descriptors...).  
 - **tracer.go**: Implement `ITracer`, coordinate scanning, analyzing, and applying.  
-- **scanner.go**: Implement `IScanner`, discover and parse files into structured data.  
+- **scanner.go**: Implement `IScanner`, discover and parse files from multiple root paths into structured data.  
 - **fscanner.go**: Provides concurrent file system scanning functionality with worker pools, breadth-first directory traversal, and error handling.  
 - **mdparser.go / srccoverparser.go**: Specialized parsing logic for Markdown / source coverage tags.  
 - **analyzer.go**: Implement `IAnalyzer`, checks for semantic errors, determine required transformations.  

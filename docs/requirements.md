@@ -23,7 +23,7 @@ go install github.com/voedger/reqmd@latest
 #### SYNOPSIS
 
 ```bash
-reqmd [-v] trace [ (-e | --extensions) <extensions>] [--dry-run | -n] <path-to-markdowns> [<path-to-sources>...]
+reqmd [-v] trace [ (-e | --extensions) <extensions>] [--dry-run | -n] <paths>...
 ```
 
 #### DESCRIPTION
@@ -32,8 +32,10 @@ Analyzes markdown requirement files and their corresponding source code implemen
 
 General processing rules:
 
-- Files that are larger than 128K are skipped.
-- Only source files that are tracked by git (hash can be obtained) are processed.
+- Files that are larger than 128K are skipped
+- Only source files that are tracked by git (hash can be obtained) are processed
+- Each path can contain both markdown and source files
+- Multiple paths can be specified to process different parts of a repository
 
 #### OPTIONS
 
@@ -51,16 +53,16 @@ General processing rules:
 
 #### ARGUMENTS
 
-- `<path-to-markdowns>`:
-  - Required. Directory containing markdown requirement files to process.
-
-- `<path-to-sources>`:
-  - Optional. One or more paths to local git repository clones containing source code with coverage tags. When omitted, only markdown parsing is performed.
+- `<paths>`:
+  - One or more paths to process. Each path can contain both markdown requirement files and source code with coverage tags
+  - At least one path must be provided
+  - When multiple paths are provided, they are processed in sequence
 
 #### OUTPUT FILES
 
 - `reqmdfiles.json`:
-  - Created or updated in `<path-to-markdowns>` directories when FileURLs are present. Maps FileURLs to their git hashes.
+  - Created or updated in each directory containing markdown files when FileURLs are present
+  - Maps FileURLs to their git hashes
 
 - Markdown files:
   - Updated with:
@@ -80,27 +82,28 @@ General processing rules:
 
 #### EXAMPLES
 
-Process markdown files only:
+Process a single directory containing both markdown and source files:
 
 ```bash
-reqmd trace docs/requirements/
+reqmd trace project/
 ```
 
-Process only Go and TypeScript files:
+Process multiple directories with mixed content:
+
 ```bash
-reqmd trace -e .go,.ts docs/requirements/ src/backend/
+reqmd trace docs/ src/ tests/
 ```
 
-Process markdown with coverage from multiple source directories:
+Process only Go and TypeScript files in multiple directories:
 
 ```bash
-reqmd trace docs/requirements/ src/backend/ src/frontend/
+reqmd trace -e .go,.ts docs/ src/ tests/
 ```
 
 Process with verbose output:
 
 ```bash
-reqmd trace -v docs/requirements/ src/impl/
+reqmd trace -v docs/ src/ tests/
 ```
 
 ## Processing requirements
