@@ -18,13 +18,13 @@ var runSysTestsDir = filepath.Join("testdata")
 
 func Test_noerr(t *testing.T) {
 	mockT := &MockT{t: t}
-	RunSysTest(mockT, runSysTestsDir, "noerr", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
+	RunSysTest(mockT, runSysTestsDir, "noerr", internal.ExecRootCmd, "0.0.1")
 	assert.False(t, mockT.failed, mockT.String())
 }
 
 func Test_err_NotOccurring(t *testing.T) {
 	mockT := &MockT{t: t}
-	RunSysTest(mockT, runSysTestsDir, "err_notoccuring", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
+	RunSysTest(mockT, runSysTestsDir, "err_notoccuring", internal.ExecRootCmd, "0.0.1")
 	require.True(t, mockT.failed, "expected test to fail")
 	mockT.assertMsgsContains("Expected error not found in stderr")
 	mockT.assertMsgsContains("this error is expected but not occurring")
@@ -33,7 +33,7 @@ func Test_err_NotOccurring(t *testing.T) {
 // Errors are not declared but occurr
 func Test_err_Unexpected(t *testing.T) {
 	mockT := &MockT{t: t}
-	RunSysTest(mockT, runSysTestsDir, "err_unexpected", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
+	RunSysTest(mockT, runSysTestsDir, "err_unexpected", internal.ExecRootCmd, "0.0.1")
 	require.True(t, mockT.failed, "expected test to fail")
 	mockT.assertMsgsContains("Unexpected error")
 	mockT.assertMsgsContains("PackageID shall be an identifier: 11com.example.basic")
@@ -42,7 +42,7 @@ func Test_err_Unexpected(t *testing.T) {
 // Errors are declared and occur but not matched
 func Test_err_MatchedAndUnmatched(t *testing.T) {
 	mockT := &MockT{t: t}
-	RunSysTest(mockT, runSysTestsDir, "err_matchedunmatched", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
+	RunSysTest(mockT, runSysTestsDir, "err_matchedunmatched", internal.ExecRootCmd, "0.0.1")
 	require.True(t, mockT.failed, "expected test to fail")
 	mockT.assertMsgsContains("Expected error not found in stderr")
 	mockT.assertMsgsContains("Unexpected error")
@@ -51,14 +51,14 @@ func Test_err_MatchedAndUnmatched(t *testing.T) {
 
 func Test_err_LineCountMismatch(t *testing.T) {
 	mockT := &MockT{t: t}
-	RunSysTest(mockT, runSysTestsDir, "err_linecountmismatch", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
+	RunSysTest(mockT, runSysTestsDir, "err_linecountmismatch", internal.ExecRootCmd, "0.0.1")
 	require.True(t, mockT.failed, "expected test to fail")
 	require.Contains(t, mockT.failMsg, "Line count mismatch in req.md: expected 1 lines, got 2 lines")
 }
 
 func Test_err_LineMismatch(t *testing.T) {
 	mockT := &MockT{t: t}
-	RunSysTest(mockT, runSysTestsDir, "err_linemismatch", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
+	RunSysTest(mockT, runSysTestsDir, "err_linemismatch", internal.ExecRootCmd, "0.0.1")
 	require.True(t, mockT.failed)
 	mockT.assertMsgsContains("Line mismatch in req.md at line 1:\nexpected: line 1\ngot: line 1+")
 }

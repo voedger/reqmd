@@ -13,23 +13,27 @@ import (
 var sysTestsDir = filepath.Join("testdata", "systest")
 
 func Test_systest_noreqs(t *testing.T) {
-	systrun.RunSysTest(t, sysTestsDir, "noreqs", ExecRootCmd, []string{"trace"}, "0.0.1")
+	runSysTest(t, "noreqs")
 }
 
 func Test_systest_errors(t *testing.T) {
-	systrun.RunSysTest(t, sysTestsDir, "errors", ExecRootCmd, []string{"trace"}, "0.0.1")
+	runSysTest(t, "errors")
 }
 
 func Test_systest_justreqs(t *testing.T) {
-	systrun.RunSysTest(t, sysTestsDir, "justreqs", ExecRootCmd, []string{"trace"}, "0.0.1")
+	runSysTest(t, "justreqs")
 }
 
 // Reqs and srcs in different folders
 func Test_systest_req_src(t *testing.T) {
-	systrun.RunSysTest(t, sysTestsDir, "req_src", ExecRootCmd, []string{"trace"}, "0.0.1")
+	runSysTest(t, "req_src")
 }
 
 // Requirements and sources in the same folder
 func Test_systest_reqsrc(t *testing.T) {
-	systrun.RunSysTest(t, sysTestsDir, "reqsrc", ExecRootCmd, []string{"trace"}, "0.0.1")
+	runSysTest(t, "reqsrc")
+}
+
+func runSysTest(t *testing.T, testID string) {
+	systrun.RunSysTest(t, sysTestsDir, testID, ExecRootCmd, Version)
 }

@@ -36,7 +36,7 @@ type ExecRootCmdFunc func(args []string, version string) error
 // RunSysTest executes a system test with the given parameters
 // If testID contains no subfoldersthen a single git repo is created and reqmd receives a single folder as an argument
 // Otherwise, each subfolder is treated as a separate path and separate git repos are created for each subfolder
-func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, args []string, version string) {
+func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, version string) {
 
 	t.Helper()
 
