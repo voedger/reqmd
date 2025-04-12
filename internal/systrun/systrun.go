@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -90,6 +91,8 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ve
 		// Prepare args
 		testArgs = append(testArgs, tempFolder)
 	}
+
+	log.Println("commitHashes", commitHashes)
 
 	// Replace placeholders in tempReqs
 	replacePlaceholders(t, goldenData, commitHashes)
@@ -274,9 +277,12 @@ func replacePlaceholders(_ T, goldenData *goldenData, commitHashes map[string]st
 	// Replace in goldenData.lines
 	for filePath, lines := range goldenData.lines {
 		for i, line := range lines {
-			for k, v := range commitHashes {
-				placeholder := fmt.Sprintf("{{.CommitHash.%s}}", k)
-				goldenData.lines[filePath][i] = strings.ReplaceAll(line, placeholder, v)
+			if strings.Contains(line, "CommitHash") {
+				for k, v := range commitHashes {
+					placeholder := fmt.Sprintf("{{.CommitHash.%s}}", k)
+					line = strings.ReplaceAll(line, placeholder, v)
+					goldenData.lines[filePath][i] = line
+				}
 			}
 		}
 	}
