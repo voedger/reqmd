@@ -18,6 +18,10 @@ To install the tool:
 go install github.com/voedger/reqmd@latest
 ```
 
+### Ignore `.*` folders
+
+Folder with names that start with a `.` are ignored.
+
 ### Tracing
 
 #### SYNOPSIS

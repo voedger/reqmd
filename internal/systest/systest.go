@@ -27,6 +27,7 @@ type T interface {
 	Errorf(format string, args ...interface{})
 	FailNow()
 	TempDir() string
+	Helper()
 }
 
 // ExecRootCmdFunc defines the signature for the main execRootCmd function
@@ -34,6 +35,9 @@ type ExecRootCmdFunc func(args []string, version string) error
 
 // RunSysTest executes a system test with the given parameters
 func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, args []string, version string) {
+
+	t.Helper()
+
 	// Find sysTestData Dir using testID
 	sysTestDataDir, err := findSysTestDataDir(testsDir, testID)
 	require.NoError(t, err, "Failed to find sysTestData Dir for testID: %s", testID)

@@ -365,7 +365,7 @@ func (s *scanner) scanFile(filePath string, mctx *MarkdownContext, gitRepos map[
 		return err
 	}
 
-	if structure != nil {
+	if structure != nil { // TODO: should check if it has requirements or coverage tags
 		// Set FileStructure fields for URL construction for all files
 		structure.FileHash = hash
 		structure.RelativePath = relPath
@@ -416,7 +416,13 @@ func (s *scanner) scanFiles(paths []string) ([]FileStructure, []ProcessingError,
 	}
 
 	// Create a unified file processor that handles both markdown and source files
-	folderProcessor := func(folder string) (FileProcessor, error) {
+	folderProcessor := func(folderPath string) (FileProcessor, error) {
+
+		// If folder name starts with a dot, skip it
+		if strings.HasPrefix(filepath.Base(folderPath), ".") {
+			return nil, nil
+		}
+
 		// Initialize markdown context for this folder
 		mctx := &MarkdownContext{
 			rfiles: &Reqmdjson{
@@ -425,7 +431,7 @@ func (s *scanner) scanFiles(paths []string) ([]FileStructure, []ProcessingError,
 		}
 
 		// Try to load reqmd.json if it exists
-		reqmdPath := filepath.Join(folder, ReqmdjsonFileName)
+		reqmdPath := filepath.Join(folderPath, ReqmdjsonFileName)
 		if content, err := os.ReadFile(reqmdPath); err == nil {
 			if err := json.Unmarshal(content, &mctx.rfiles); err != nil {
 				return nil, fmt.Errorf("failed to parse %s: %w", ReqmdjsonFileName, err)

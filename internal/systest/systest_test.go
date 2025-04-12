@@ -38,7 +38,7 @@ func Test_err_Unexpected(t *testing.T) {
 	mockT.assertMsgsContains("PackageID shall be an identifier: 11com.example.basic")
 }
 
-// Errors are declared but not occur
+// Errors are declared but not occurr
 func Test_err_Undetected(t *testing.T) {
 	mockT := &MockT{t: t}
 	RunSysTest(mockT, runSysTestsDir, "err_undetected", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
@@ -79,6 +79,10 @@ type MockT struct {
 	failMsgs []string
 }
 
+func (m *MockT) Helper() {
+	m.t.Helper()
+}
+
 func (m *MockT) Errorf(format string, args ...interface{}) {
 	m.failed = true
 	m.failMsg = m.failMsg + "\n" + fmt.Sprintf(format, args...)
@@ -100,6 +104,7 @@ func (m *MockT) TempDir() string {
 }
 
 func (m *MockT) assertMsgsContains(msg string) {
+	m.t.Helper()
 	for _, failMsg := range m.failMsgs {
 		if strings.Contains(failMsg, msg) {
 			return
