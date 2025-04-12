@@ -58,25 +58,15 @@ func (s *scanner) ScanMultiPath(paths []string) (*ScannerResult, error) {
 	s.stats.skippedFiles.Store(0)
 	s.stats.skippedBytes.Store(0)
 
-	result := &ScannerResult{}
+	// Use the unified scanFiles method to process all paths
+	files, errs, err := s.scanFiles(paths)
+	if err != nil {
+		return nil, err
+	}
 
-	// For each path, scan both markdown and source files
-	for _, path := range paths {
-		// Scan for markdown files in this path
-		mdFiles, mdErrs, err := scanMarkdowns(path)
-		if err != nil {
-			return nil, err
-		}
-		result.Files = append(result.Files, mdFiles...)
-		result.ProcessingErrors = append(result.ProcessingErrors, mdErrs...)
-
-		// Scan for source files in this path
-		srcFiles, srcErrs, err := s.scanSources([]string{path})
-		if err != nil {
-			return nil, err
-		}
-		result.Files = append(result.Files, srcFiles...)
-		result.ProcessingErrors = append(result.ProcessingErrors, srcErrs...)
+	result := &ScannerResult{
+		Files:            files,
+		ProcessingErrors: errs,
 	}
 
 	// Report statistics after scanning is complete
@@ -313,4 +303,153 @@ func ByteCountSI(b int64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "kMGTPE"[exp])
+}
+
+// scanFile handles both markdown and source files in a unified way
+func (s *scanner) scanFile(filePath string, mctx *MarkdownContext, gitRepos map[string]IGit, files *[]FileStructure, syntaxErrors *[]ProcessingError) error {
+	filePath = filepath.ToSlash(filePath)
+	ext := strings.ToLower(filepath.Ext(filePath))
+
+	// Get file info to check size
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to get file info: %w", err)
+	}
+
+	// Skip large files
+	if fileInfo.Size() > maxFileSize {
+		s.stats.skippedFiles.Add(1)
+		s.stats.skippedBytes.Add(fileInfo.Size())
+		Verbose("Skipping large file", "path", filePath, "size", ByteCountSI(fileInfo.Size()))
+		return nil
+	}
+
+	// Track processed file
+	s.stats.processedFiles.Add(1)
+	s.stats.processedBytes.Add(fileInfo.Size())
+
+	// Process markdown files
+	if ext == markdownExtension {
+		structure, errs, err := ParseMarkdownFile(mctx, filePath)
+		if err != nil {
+			return err
+		}
+
+		if structure != nil && len(structure.Requirements) > 0 {
+			*files = append(*files, *structure)
+		}
+		if len(errs) > 0 {
+			*syntaxErrors = append(*syntaxErrors, errs...)
+		}
+		return nil
+	}
+
+	// Process source files
+	if s.sourceExtensions[ext] {
+		// Find the git repository for this file
+		var git IGit
+		for path, repo := range gitRepos {
+			if strings.HasPrefix(filePath, path) {
+				git = repo
+				break
+			}
+		}
+		if git == nil {
+			return fmt.Errorf("no git repository found for file: %s", filePath)
+		}
+
+		// Get relative path for the file
+		relPath, err := filepath.Rel(git.PathToRoot(), filePath)
+		if err != nil {
+			return fmt.Errorf("failed to get relative path: %w", err)
+		}
+		relPath = filepath.ToSlash(relPath)
+
+		// Try to get file hash - this will fail for untracked files
+		hash, err := git.FileHash(relPath)
+		if err != nil {
+			// Skip untracked files
+			return nil
+		}
+
+		structure, errs, err := ParseSourceFile(filePath)
+		if err != nil {
+			return err
+		}
+
+		if structure != nil && len(structure.CoverageTags) > 0 {
+			// Set FileStructure fields for URL construction
+			structure.FileHash = hash
+			structure.RelativePath = relPath
+			structure.RepoRootFolderURL = git.RepoRootFolderURL()
+
+			*files = append(*files, *structure)
+		}
+
+		if len(errs) > 0 {
+			*syntaxErrors = append(*syntaxErrors, errs...)
+		}
+	}
+
+	return nil
+}
+
+func (s *scanner) scanFiles(paths []string) ([]FileStructure, []ProcessingError, error) {
+	var files []FileStructure
+	var syntaxErrors []ProcessingError
+
+	// Initialize git repositories for all paths
+	gitRepos := make(map[string]IGit)
+	for _, path := range paths {
+		var gitPath string
+		currentPath := path
+		for {
+			if _, err := os.Stat(filepath.Join(currentPath, gitFolderName)); err == nil {
+				gitPath = currentPath
+				break
+			}
+			parent := filepath.Dir(currentPath)
+			if parent == currentPath {
+				return nil, nil, fmt.Errorf("no git repository found for path: %s", path)
+			}
+			currentPath = parent
+		}
+
+		git, err := NewIGit(gitPath)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to initialize git for path %s: %w", path, err)
+		}
+		gitRepos[path] = git
+	}
+
+	// Create a unified file processor that handles both markdown and source files
+	fileProcessor := func(folder string) (FileProcessor, error) {
+		// Initialize markdown context for this folder
+		mctx := &MarkdownContext{
+			rfiles: &Reqmdjson{
+				FileUrl2FileHash: make(map[string]string),
+			},
+		}
+
+		// Try to load reqmd.json if it exists
+		reqmdPath := filepath.Join(folder, ReqmdjsonFileName)
+		if content, err := os.ReadFile(reqmdPath); err == nil {
+			if err := json.Unmarshal(content, &mctx.rfiles); err != nil {
+				return nil, fmt.Errorf("failed to parse %s: %w", ReqmdjsonFileName, err)
+			}
+		}
+
+		return func(filePath string) error {
+			return s.scanFile(filePath, mctx, gitRepos, &files, &syntaxErrors)
+		}, nil
+	}
+
+	// Process all paths
+	for _, path := range paths {
+		if errs := FoldersScanner(defaultMaxWorkers, defaultMaxErrQueueSize, path, fileProcessor); len(errs) > 0 {
+			return nil, nil, fmt.Errorf("error scanning files in %s: %v", path, errs[0])
+		}
+	}
+
+	return files, syntaxErrors, nil
 }
