@@ -216,6 +216,7 @@ func (s *scanner) scanFiles(paths []string) ([]FileStructure, []ProcessingError,
 
 		// If folder name starts with a dot, skip it
 		if strings.HasPrefix(filepath.Base(folderPath), ".") {
+			Verbose("Skipping folder", "path", folderPath)
 			return nil, nil
 		}
 

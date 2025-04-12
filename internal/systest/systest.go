@@ -299,10 +299,14 @@ func execRootCmd(rootCmd ExecRootCmdFunc, args []string, version string, stdout,
 
 // validateErrors checks if the stderr output matches expected error patterns from goldenReqData
 // stderr lines are parsed into `path`, `line` and `message` parts according to the formatting: `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
+// Is a stderr line starts with `\t` it is appended to the previous line
 // All lines in stderr must match at least one item in grd.errors
 // All grd.errors items must match at least one line in stderr
 // stderr lines and grd.errors items are matched using all parts of the stderr lines: `path`, `line` and `message`
 func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenData) {
+
+	t.Helper()
+
 	// If no errors are expected and none occurred, return successfully
 	if len(grd.errors) == 0 && stderr.Len() == 0 {
 		return
@@ -315,11 +319,39 @@ func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenData)
 	// Regular expression to match error lines in format "path:line: message"
 	errRegex := regexp.MustCompile(`^(.+):(\d+): (.+)$`)
 
+	// Process lines, handling indented lines (starting with \t)
+	var processedLines []string
+	var currentLine string
+
 	for _, line := range stderrLines {
 		if line == "" {
+			if currentLine != "" {
+				processedLines = append(processedLines, currentLine)
+				currentLine = ""
+			}
 			continue
 		}
 
+		if strings.HasPrefix(line, "\t") {
+			// If line starts with \t, append it to the previous line
+			if currentLine != "" {
+				currentLine += " " + strings.TrimSpace(line)
+			}
+		} else {
+			// If it's a new line, add the previous completed line to processedLines
+			if currentLine != "" {
+				processedLines = append(processedLines, currentLine)
+			}
+			currentLine = line
+		}
+	}
+
+	// Add the last line if it exists
+	if currentLine != "" {
+		processedLines = append(processedLines, currentLine)
+	}
+
+	for _, line := range processedLines {
 		matches := errRegex.FindStringSubmatch(line)
 		if len(matches) != 4 {
 			// This line doesn't match our expected format
