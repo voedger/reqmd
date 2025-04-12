@@ -62,7 +62,7 @@ The system is designed using SOLID principles:
     ├── models.go
     ├── tracer.go
     ├── scanner.go
-    ├── fscanner.go
+    ├── fprocessor.go
     ├── analyzer.go
     ├── applier.go
     ├── mdparser.go
@@ -78,7 +78,7 @@ Summary of responsibilities
 - **models.go**: Domain entities and data structures (`FileStructure`, `Action`, errors, coverage descriptors...).  
 - **tracer.go**: Implement `ITracer`, coordinate scanning, analyzing, and applying.  
 - **scanner.go**: Implement `IScanner`, discover and parse files from multiple root paths into structured data.  
-- **fscanner.go**: Provides concurrent file system scanning functionality with worker pools, breadth-first directory traversal, and error handling.  
+- **fprocessor.go**: Provides concurrent file system scanning functionality with worker pools, breadth-first directory traversal, and error handling.  
 - **mdparser.go / srccoverparser.go**: Specialized parsing logic for Markdown / source coverage tags.  
 - **analyzer.go**: Implement `IAnalyzer`, checks for semantic errors, determine required transformations.  
 - **applier.go**: Implement `IApplier`, apply transformations to markdown and `reqmd.json`.  
