@@ -207,31 +207,19 @@ Process ActionFootnotes:
 - If Reqmdjson is empty and the file specified by FilePath exists then it is deleted
 - Else Reqmdjson is jsonized with indentation and written to the file specified by FilePath
 
-### Error Handling
+### Error handling
 
-**Processing Errors**:
+**Processing errors**:
 
 - Processing stops immediately on first error
 - Remaining actions are not processed and the caller receives an error
 
-**Non-atomic Changes**:
+**Non-atomic changes**:
 
 - Files may be left in inconsistent state if error occurs, e.g.:
   - Partially updated footnotes
   - Missing coverage annotations
 - No rollback mechanism required
-
-### Action Structure
-
-```go
-type Action struct {
-    Type            ActionType
-    FileStruct      *FileStructure 
-    Line            int           
-    Data            string        // New content for the line
-    RequirementId   string        // Line is expected to contain this RequirementId
-}
-```
 
 ---
 
