@@ -98,6 +98,11 @@ func FoldersScanner(nroutines int, nerrors int, root string, fp FolderProcessor)
 			continue
 		}
 
+		// Skip folder processing if fileProcessor is nil
+		if fileProcessor == nil {
+			continue
+		}
+
 		// Read directory entries
 		entries, err := os.ReadDir(currentFolder)
 		if err != nil {

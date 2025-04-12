@@ -95,6 +95,7 @@ func TestFoldersScanner(t *testing.T) {
 		errorOnFile   string
 		errorOnFolder string
 		expectErrors  bool
+		skipFolder    string
 	}{
 		{
 			name:      "successful processing",
@@ -125,6 +126,11 @@ func TestFoldersScanner(t *testing.T) {
 			name:      "verify absolute paths",
 			nroutines: 1,
 		},
+		{
+			name:       "skip specific folder",
+			nroutines:  2,
+			skipFolder: "dir2",
+		},
 	}
 
 	for _, tt := range tests {
@@ -147,6 +153,10 @@ func TestFoldersScanner(t *testing.T) {
 
 				if tt.errorOnFolder != "" && strings.HasSuffix(folder, tt.errorOnFolder) {
 					return nil, errors.New("folder processor error")
+				}
+
+				if tt.skipFolder != "" && strings.HasSuffix(folder, tt.skipFolder) {
+					return nil, nil
 				}
 
 				return func(filePath string) error {
@@ -191,6 +201,18 @@ func TestFoldersScanner(t *testing.T) {
 					filepath.Join("root", "dir2", "subdir", "file4.txt"),
 					filepath.Join("root", "root-file.txt"),
 				}
+
+				// Adjust expected files if a folder is being skipped
+				if tt.skipFolder != "" {
+					filteredFiles := []string{}
+					for _, file := range expectedFiles {
+						if !strings.Contains(file, tt.skipFolder) {
+							filteredFiles = append(filteredFiles, file)
+						}
+					}
+					expectedFiles = filteredFiles
+				}
+
 				sort.Strings(expectedFiles)
 
 				if !tt.expectErrors {
