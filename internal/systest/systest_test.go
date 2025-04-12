@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/voedger/reqmd/internal"
 )
@@ -18,7 +19,7 @@ var runSysTestsDir = filepath.Join("testdata", "testsystest")
 func Test_noerr(t *testing.T) {
 	mockT := &MockT{t: t}
 	RunSysTest(mockT, runSysTestsDir, "noerr", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
-	require.False(t, mockT.failed, "expected test to pass")
+	assert.False(t, mockT.failed, mockT.String())
 }
 
 func Test_err_NotOccurring(t *testing.T) {
@@ -72,6 +73,10 @@ type MockT struct {
 
 func (m *MockT) Helper() {
 	m.t.Helper()
+}
+
+func (m *MockT) String() string {
+	return fmt.Sprintf("MockT: failed=%v, failMsgs=%v", m.failed, m.failMsgs)
 }
 
 func (m *MockT) Errorf(format string, args ...interface{}) {
