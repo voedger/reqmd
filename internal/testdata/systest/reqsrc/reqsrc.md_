@@ -1,0 +1,7 @@
+---
+reqmd.package: reqsrc
+---
+
+`~main~`covered[^1]✅
+
+[^1]: `[~reqsrc/main~impl]` [main.go:5:impl](https://github.com/voedger/example/blob/{{.CommitHash.}}/main.go#L5)

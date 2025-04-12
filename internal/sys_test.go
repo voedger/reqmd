@@ -24,6 +24,12 @@ func Test_systest_justreqs(t *testing.T) {
 	systest.RunSysTest(t, sysTestsDir, "justreqs", ExecRootCmd, []string{"trace"}, "0.0.1")
 }
 
+// Reqs and srcs in different folders
+func Test_systest_req_src(t *testing.T) {
+	systest.RunSysTest(t, sysTestsDir, "req_src", ExecRootCmd, []string{"trace"}, "0.0.1")
+}
+
+// Requirements and sources in the same folder
 func Test_systest_reqsrc(t *testing.T) {
 	systest.RunSysTest(t, sysTestsDir, "reqsrc", ExecRootCmd, []string{"trace"}, "0.0.1")
 }
