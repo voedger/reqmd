@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -102,7 +103,7 @@ func ByteCountSI(b int64) string {
 }
 
 // scanFile handles both markdown and source files in a unified way
-func (s *scanner) scanFile(filePath string, mctx *MarkdownContext, gitRepos map[string]IGit, files *[]FileStructure, syntaxErrors *[]ProcessingError) error {
+func (s *scanner) scanFile(mu *sync.Mutex, filePath string, mctx *MarkdownContext, gitRepos map[string]IGit, files *[]FileStructure, syntaxErrors *[]ProcessingError) error {
 	filePath = filepath.ToSlash(filePath)
 	ext := strings.ToLower(filepath.Ext(filePath))
 
@@ -170,13 +171,17 @@ func (s *scanner) scanFile(filePath string, mctx *MarkdownContext, gitRepos map[
 		// Add to files list if it has requirements or coverage tags
 		if (ext == markdownExtension && len(structure.Requirements) > 0) ||
 			(ext != markdownExtension && len(structure.CoverageTags) > 0) {
+			mu.Lock()
 			*files = append(*files, *structure)
+			mu.Unlock()
 		}
 	}
 
 	// Add any errors found during parsing
 	if len(errs) > 0 {
+		mu.Lock()
 		*syntaxErrors = append(*syntaxErrors, errs...)
+		mu.Unlock()
 	}
 
 	return nil
@@ -211,6 +216,8 @@ func (s *scanner) scanFiles(paths []string) ([]FileStructure, []ProcessingError,
 		gitRepos[path] = git
 	}
 
+	var mu sync.Mutex
+
 	// Create a unified file processor that handles both markdown and source files
 	folderProcessor := func(folderPath string) (FileProcessor, error) {
 
@@ -236,7 +243,7 @@ func (s *scanner) scanFiles(paths []string) ([]FileStructure, []ProcessingError,
 		}
 
 		return func(filePath string) error {
-			return s.scanFile(filePath, mctx, gitRepos, &files, &syntaxErrors)
+			return s.scanFile(&mu, filePath, mctx, gitRepos, &files, &syntaxErrors)
 		}, nil
 	}
 
