@@ -29,10 +29,21 @@ FILES=$(find .. -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name 
 
 # Process each file found
 for FILE in $FILES; do
+    # Skip files that are in testdata folders (handle both Unix and Windows paths)
+    if [[ "$FILE" == *"/testdata/"* || "$FILE" == *"\\testdata\\"* ]]; then
+        continue
+    fi
+    
     # Check if the file already contains the SPDX header to avoid duplicate headers
     if ! grep -q "SPDX-License-Identifier: Apache-2.0" "$FILE"; then
-        # Add the header at the beginning of the file
-        echo -e "$HEADER\n\n$(cat "$FILE")" > "$FILE"
+        # Create a temporary file with the header
+        TMPFILE=$(mktemp)
+        echo -e "$HEADER" > "$TMPFILE"
+        echo "" >> "$TMPFILE"
+        # Append the original file preserving its line endings
+        cat "$FILE" >> "$TMPFILE"
+        # Replace the original file with the temporary one
+        mv "$TMPFILE" "$FILE"
         # Print the relative path of the modified file for logging purposes
         echo "Added SPDX to: $FILE"
     fi

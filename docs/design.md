@@ -63,23 +63,30 @@ The system is designed using SOLID principles:
     ├── tracer.go
     ├── scanner.go
     ├── fprocessor.go
+    ├── fileparser.go
     ├── analyzer.go
     ├── applier.go
     ├── mdparser.go
     ├── srccoverparser.go
-    ├── filehash.go
-    └── utils.go
+    ├── errors.go
+    ├── utils.go
+    ├── gogit.go
+    └── main.go
 ```
 
 Summary of responsibilities
 
-- **main.go**: CLI orchestration, argument parsing, creation of `Tracer`, top-level error handling.  
+- **main.go** (root): CLI entry point, argument parsing, package initialization.
+- **internal/main.go**: Internal CLI orchestration, implementation details for commands.
 - **interfaces.go**: All high-level contracts (`ITracer`, `IScanner`, `IAnalyzer`, `IApplier`, etc.).  
-- **models.go**: Domain entities and data structures (`FileStructure`, `Action`, errors, coverage descriptors...).  
+- **models.go**: Domain entities and data structures (`FileStructure`, `Action`, coverage descriptors...).  
+- **errors.go**: Error types, constructors and handlers for both syntax and semantic errors.
 - **tracer.go**: Implement `ITracer`, coordinate scanning, analyzing, and applying.  
 - **scanner.go**: Implement `IScanner`, discover and parse files from multiple root paths into structured data.  
 - **fprocessor.go**: Provides concurrent file system scanning functionality with worker pools, breadth-first directory traversal, and error handling.  
-- **mdparser.go / srccoverparser.go**: Specialized parsing logic for Markdown / source coverage tags.  
+- **fileparser.go**: Handles general file parsing operations for both markdown and source files.
+- **mdparser.go**: Specialized parsing logic for Markdown files.
+- **srccoverparser.go**: Specialized parsing logic for source coverage tags.  
 - **analyzer.go**: Implement `IAnalyzer`, checks for semantic errors, determine required transformations.  
 - **applier.go**: Implement `IApplier`, apply transformations to markdown and `reqmd.json`.  
 - **utils.go**: Common helper functions.
@@ -159,7 +166,7 @@ Principles:
 - As a result reqmd.json can be empty, in this case applier shall make an attempt to delete it, if exists
 - FileUrl() helper function is used to strip line numbers from CoverageURLs
 
-### Apply Markdown actions
+### Apply markdown actions
 
 #### Load file
 
@@ -203,7 +210,6 @@ Process ActionFootnotes:
 
 ### Apply Regmdjson actions
 
-- func applyReqmdjsons(reqmdjsons map[FilePath]*Reqmdjson) error
 - If Reqmdjson is empty and the file specified by FilePath exists then it is deleted
 - Else Reqmdjson is jsonized with indentation and written to the file specified by FilePath
 
