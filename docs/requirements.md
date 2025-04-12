@@ -110,7 +110,7 @@ reqmd trace -v docs/ src/ tests/
 
 ### Syntax errors
 
-- See [internal/errors.go](internal/errors.go)
+- See [internal/errors.go](../internal/errors.go)
 - RequirementName shall be an identifier
 - Opening fence found without matching closing fence
   - Message includes line information about the opening fence
