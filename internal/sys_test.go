@@ -71,6 +71,8 @@ func Test_systest_highvolume(t *testing.T) {
 		ImplsPerRequirement: 5,
 		BaseDir:             testDir,
 		PackageIDPrefix:     "com.example.hv",
+		GenerateGoldenFiles: true,
+		CoverageTypes:       []string{"impl", "test"},
 	}
 
 	if err := hvgen.HVGenerator(&config); err != nil {
