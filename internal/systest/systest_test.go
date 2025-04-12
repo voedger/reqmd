@@ -23,7 +23,7 @@ func Test_noerr(t *testing.T) {
 
 func Test_err_NotOccurring(t *testing.T) {
 	mockT := &MockT{t: t}
-	RunSysTest(mockT, runSysTestsDir, "err_undetected", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
+	RunSysTest(mockT, runSysTestsDir, "err_notoccuring", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
 	require.True(t, mockT.failed, "expected test to fail")
 	mockT.assertMsgsContains("Expected error not found in stderr")
 	mockT.assertMsgsContains("this error is expected but not occurring")
@@ -36,15 +36,6 @@ func Test_err_Unexpected(t *testing.T) {
 	require.True(t, mockT.failed, "expected test to fail")
 	mockT.assertMsgsContains("Unexpected error")
 	mockT.assertMsgsContains("PackageID shall be an identifier: 11com.example.basic")
-}
-
-// Errors are declared but not occurr
-func Test_err_Undetected(t *testing.T) {
-	mockT := &MockT{t: t}
-	RunSysTest(mockT, runSysTestsDir, "err_undetected", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
-	require.True(t, mockT.failed, "expected test to fail")
-	mockT.assertMsgsContains("Expected error not found in stderr")
-	mockT.assertMsgsContains("this error is expected but not occurring")
 }
 
 // Errors are declared and occur but not matched

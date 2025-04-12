@@ -11,10 +11,8 @@ type ITracer interface {
 
 // IScanner is responsible for scanning file paths and parsing them into FileStructures.
 type IScanner interface {
-	Scan(reqPath string, srcPaths []string) (*ScannerResult, error)
-
 	// ScanMultiPath scans multiple paths that can each contain both markdown and source files
-	ScanMultiPath(paths []string) (*ScannerResult, error)
+	Scan(paths []string) (*ScannerResult, error)
 }
 
 // IAnalyzer checks for semantic issues (e.g., unique RequirementIds) and generates Actions.

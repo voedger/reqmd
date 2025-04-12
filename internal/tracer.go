@@ -29,23 +29,11 @@ type tracer struct {
 	scanner  IScanner
 	analyzer IAnalyzer
 	applier  IApplier
-	reqPath  string
-	srcPaths []string
 	paths    []string // For multi-path approach
 }
 
-func NewTracer(scanner IScanner, analyzer IAnalyzer, applier IApplier, reqPath string, srcPaths []string) ITracer {
-	return &tracer{
-		scanner:  scanner,
-		analyzer: analyzer,
-		applier:  applier,
-		reqPath:  reqPath,
-		srcPaths: srcPaths,
-	}
-}
-
-// NewTracerMultiPath creates a tracer that handles multiple paths for both markdown and source files
-func NewTracerMultiPath(scanner IScanner, analyzer IAnalyzer, applier IApplier, paths []string) ITracer {
+// NewTracer creates a tracer that handles multiple paths for both markdown and source files
+func NewTracer(scanner IScanner, analyzer IAnalyzer, applier IApplier, paths []string) ITracer {
 	return &tracer{
 		scanner:  scanner,
 		analyzer: analyzer,
@@ -55,65 +43,11 @@ func NewTracerMultiPath(scanner IScanner, analyzer IAnalyzer, applier IApplier, 
 }
 
 func (t *tracer) Trace() error {
-	// If using multi-path approach
-	if len(t.paths) > 0 {
-		return t.traceMultiPath()
-	}
-
-	// Original approach with separate reqPath and srcPaths
-	// Make paths absolute
-	{
-		// Get current dir
-		wd, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("failed to get current directory: %w", err)
-		}
-
-		Verbose("Starting processing", "wd", wd, "reqPath", t.reqPath, "srcPaths", fmt.Sprintf("%v", t.srcPaths))
-
-		t.reqPath, err = filepath.Abs(t.reqPath)
-		if err != nil {
-			return fmt.Errorf("failed to get absolute path for requirement path: %w", err)
-		}
-		Verbose("Absolute requirement path: " + t.reqPath)
-
-		for i, srcPath := range t.srcPaths {
-			t.srcPaths[i], err = filepath.Abs(srcPath)
-			if err != nil {
-				return fmt.Errorf("failed to get absolute path for source path: %w", err)
-			}
-			Verbose("Absolute source path: " + t.srcPaths[i])
-		}
-	}
-
-	// Scanning phase
-	scanResult, err := t.scanner.Scan(t.reqPath, t.srcPaths)
-	if err != nil {
-		return err
-	}
-	if len(scanResult.ProcessingErrors) > 0 {
-		return &ProcessingErrors{Errors: scanResult.ProcessingErrors}
-	}
-
-	// Analyzing phase
-	analyzeResult, err := t.analyzer.Analyze(scanResult.Files)
-	if err != nil {
-		return err
-	}
-	if len(analyzeResult.ProcessingErrors) > 0 {
-		return &ProcessingErrors{Errors: analyzeResult.ProcessingErrors}
-	}
-
-	// Applying phase
-	if err := t.applier.Apply(analyzeResult); err != nil {
-		return err
-	}
-
-	return nil
+	return t.trace()
 }
 
 // traceMultiPath handles the new unified approach where multiple paths can contain both markdown and source files
-func (t *tracer) traceMultiPath() error {
+func (t *tracer) trace() error {
 	// Get current dir
 	wd, err := os.Getwd()
 	if err != nil {
@@ -134,7 +68,7 @@ func (t *tracer) traceMultiPath() error {
 	}
 
 	// Pass all paths to scanner
-	scanResult, err := t.scanner.ScanMultiPath(absolutePaths)
+	scanResult, err := t.scanner.Scan(absolutePaths)
 	if err != nil {
 		return err
 	}

@@ -68,7 +68,7 @@ func newTraceCmd() *cobra.Command {
 			analyzer := NewAnalyzer()
 			applier := NewApplier(dryRun)
 
-			tracer := NewTracerMultiPath(scanner, analyzer, applier, paths)
+			tracer := NewTracer(scanner, analyzer, applier, paths)
 
 			return tracer.Trace()
 		},
