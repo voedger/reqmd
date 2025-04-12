@@ -393,6 +393,7 @@ func (s *scanner) scanFiles(paths []string) ([]FileStructure, []ProcessingError,
 	// Initialize git repositories for all paths
 	gitRepos := make(map[string]IGit)
 	for _, path := range paths {
+		path = filepath.ToSlash(path)
 		var gitPath string
 		currentPath := path
 		for {

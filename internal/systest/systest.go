@@ -59,6 +59,7 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ar
 
 	// Commit all files in tempSrc
 	commitAllFiles(t, tempSrc)
+	commitAllFiles(t, tempReqs)
 
 	// Find commitHash for tempSrc
 	commitHash := getCommitHash(t, tempSrc)

@@ -1,3 +1,3 @@
 # Undetected error
 
-// errors: "this error is expected but not occurring"
+// errors: "thi error is expected but not occurring"
