@@ -49,6 +49,48 @@ func (s *scanner) Scan(reqPath string, srcPaths []string) (*ScannerResult, error
 	return s.scan(reqPath, srcPaths)
 }
 
+// ScanMultiPath scans multiple paths that can each contain both markdown and source files
+func (s *scanner) ScanMultiPath(paths []string) (*ScannerResult, error) {
+	// Reset statistics
+	start := time.Now()
+	s.stats.processedFiles.Store(0)
+	s.stats.processedBytes.Store(0)
+	s.stats.skippedFiles.Store(0)
+	s.stats.skippedBytes.Store(0)
+
+	result := &ScannerResult{}
+
+	// For each path, scan both markdown and source files
+	for _, path := range paths {
+		// Scan for markdown files in this path
+		mdFiles, mdErrs, err := scanMarkdowns(path)
+		if err != nil {
+			return nil, err
+		}
+		result.Files = append(result.Files, mdFiles...)
+		result.ProcessingErrors = append(result.ProcessingErrors, mdErrs...)
+
+		// Scan for source files in this path
+		srcFiles, srcErrs, err := s.scanSources([]string{path})
+		if err != nil {
+			return nil, err
+		}
+		result.Files = append(result.Files, srcFiles...)
+		result.ProcessingErrors = append(result.ProcessingErrors, srcErrs...)
+	}
+
+	// Report statistics after scanning is complete
+	Verbose("Scan complete (multi-path)",
+		"processed files", s.stats.processedFiles.Load(),
+		"processed size", ByteCountSI(s.stats.processedBytes.Load()),
+		"skipped files", s.stats.skippedFiles.Load(),
+		"skipped size", ByteCountSI(s.stats.skippedBytes.Load()),
+		"duration", time.Since(start),
+	)
+
+	return result, nil
+}
+
 type scanner struct {
 	sourceExtensions map[string]bool
 	stats            struct {

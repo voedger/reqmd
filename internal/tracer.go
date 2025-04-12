@@ -31,6 +31,7 @@ type tracer struct {
 	applier  IApplier
 	reqPath  string
 	srcPaths []string
+	paths    []string // For multi-path approach
 }
 
 func NewTracer(scanner IScanner, analyzer IAnalyzer, applier IApplier, reqPath string, srcPaths []string) ITracer {
@@ -43,10 +44,25 @@ func NewTracer(scanner IScanner, analyzer IAnalyzer, applier IApplier, reqPath s
 	}
 }
 
+// NewTracerMultiPath creates a tracer that handles multiple paths for both markdown and source files
+func NewTracerMultiPath(scanner IScanner, analyzer IAnalyzer, applier IApplier, paths []string) ITracer {
+	return &tracer{
+		scanner:  scanner,
+		analyzer: analyzer,
+		applier:  applier,
+		paths:    paths,
+	}
+}
+
 func (t *tracer) Trace() error {
+	// If using multi-path approach
+	if len(t.paths) > 0 {
+		return t.traceMultiPath()
+	}
+
+	// Original approach with separate reqPath and srcPaths
 	// Make paths absolute
 	{
-
 		// Get current dir
 		wd, err := os.Getwd()
 		if err != nil {
@@ -89,6 +105,53 @@ func (t *tracer) Trace() error {
 	}
 
 	// Applying phase
+	if err := t.applier.Apply(analyzeResult); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// traceMultiPath handles the new unified approach where multiple paths can contain both markdown and source files
+func (t *tracer) traceMultiPath() error {
+	// Get current dir
+	wd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory: %w", err)
+	}
+
+	Verbose("Starting processing with multi-path approach", "wd", wd, "paths", fmt.Sprintf("%v", t.paths))
+
+	// Convert to absolute paths
+	absolutePaths := make([]string, len(t.paths))
+	for i, path := range t.paths {
+		absolutePath, err := filepath.Abs(path)
+		if err != nil {
+			return fmt.Errorf("failed to get absolute path for %s: %w", path, err)
+		}
+		absolutePaths[i] = absolutePath
+		Verbose("Absolute path: " + absolutePath)
+	}
+
+	// Pass all paths to scanner
+	scanResult, err := t.scanner.ScanMultiPath(absolutePaths)
+	if err != nil {
+		return err
+	}
+	if len(scanResult.ProcessingErrors) > 0 {
+		return &ProcessingErrors{Errors: scanResult.ProcessingErrors}
+	}
+
+	// Analyzing phase (same as before)
+	analyzeResult, err := t.analyzer.Analyze(scanResult.Files)
+	if err != nil {
+		return err
+	}
+	if len(analyzeResult.ProcessingErrors) > 0 {
+		return &ProcessingErrors{Errors: analyzeResult.ProcessingErrors}
+	}
+
+	// Applying phase (same as before)
 	if err := t.applier.Apply(analyzeResult); err != nil {
 		return err
 	}
