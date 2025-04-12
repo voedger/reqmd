@@ -29,49 +29,46 @@ type tracer struct {
 	scanner  IScanner
 	analyzer IAnalyzer
 	applier  IApplier
-	reqPath  string
-	srcPaths []string
+	paths    []string // For multi-path approach
 }
 
-func NewTracer(scanner IScanner, analyzer IAnalyzer, applier IApplier, reqPath string, srcPaths []string) ITracer {
+// NewTracer creates a tracer that handles multiple paths for both markdown and source files
+func NewTracer(scanner IScanner, analyzer IAnalyzer, applier IApplier, paths []string) ITracer {
 	return &tracer{
 		scanner:  scanner,
 		analyzer: analyzer,
 		applier:  applier,
-		reqPath:  reqPath,
-		srcPaths: srcPaths,
+		paths:    paths,
 	}
 }
 
 func (t *tracer) Trace() error {
-	// Make paths absolute
-	{
+	return t.trace()
+}
 
-		// Get current dir
-		wd, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("failed to get current directory: %w", err)
-		}
-
-		Verbose("Starting processing", "wd", wd, "reqPath", t.reqPath, "srcPaths", fmt.Sprintf("%v", t.srcPaths))
-
-		t.reqPath, err = filepath.Abs(t.reqPath)
-		if err != nil {
-			return fmt.Errorf("failed to get absolute path for requirement path: %w", err)
-		}
-		Verbose("Absolute requirement path: " + t.reqPath)
-
-		for i, srcPath := range t.srcPaths {
-			t.srcPaths[i], err = filepath.Abs(srcPath)
-			if err != nil {
-				return fmt.Errorf("failed to get absolute path for source path: %w", err)
-			}
-			Verbose("Absolute source path: " + t.srcPaths[i])
-		}
+// traceMultiPath handles the new unified approach where multiple paths can contain both markdown and source files
+func (t *tracer) trace() error {
+	// Get current dir
+	wd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current directory: %w", err)
 	}
 
-	// Scanning phase
-	scanResult, err := t.scanner.Scan(t.reqPath, t.srcPaths)
+	Verbose("Starting processing with multi-path approach", "wd", wd, "paths", fmt.Sprintf("%v", t.paths))
+
+	// Convert to absolute paths
+	absolutePaths := make([]string, len(t.paths))
+	for i, path := range t.paths {
+		absolutePath, err := filepath.Abs(path)
+		if err != nil {
+			return fmt.Errorf("failed to get absolute path for %s: %w", path, err)
+		}
+		absolutePaths[i] = absolutePath
+		Verbose("Absolute path: " + absolutePath)
+	}
+
+	// Pass all paths to scanner
+	scanResult, err := t.scanner.Scan(absolutePaths)
 	if err != nil {
 		return err
 	}
@@ -79,7 +76,7 @@ func (t *tracer) Trace() error {
 		return &ProcessingErrors{Errors: scanResult.ProcessingErrors}
 	}
 
-	// Analyzing phase
+	// Analyzing phase (same as before)
 	analyzeResult, err := t.analyzer.Analyze(scanResult.Files)
 	if err != nil {
 		return err
@@ -88,7 +85,7 @@ func (t *tracer) Trace() error {
 		return &ProcessingErrors{Errors: analyzeResult.ProcessingErrors}
 	}
 
-	// Applying phase
+	// Applying phase (same as before)
 	if err := t.applier.Apply(analyzeResult); err != nil {
 		return err
 	}

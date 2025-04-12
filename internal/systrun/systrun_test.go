@@ -1,7 +1,7 @@
 // Copyright (c) 2025-present unTill Software Development Group B. V. and Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-package systest
+package systrun
 
 import (
 	"fmt"
@@ -9,21 +9,22 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/voedger/reqmd/internal"
 )
 
-var runSysTestsDir = filepath.Join("testdata", "testsystest")
+var runSysTestsDir = filepath.Join("testdata")
 
 func Test_noerr(t *testing.T) {
 	mockT := &MockT{t: t}
 	RunSysTest(mockT, runSysTestsDir, "noerr", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
-	require.False(t, mockT.failed, "expected test to pass")
+	assert.False(t, mockT.failed, mockT.String())
 }
 
 func Test_err_NotOccurring(t *testing.T) {
 	mockT := &MockT{t: t}
-	RunSysTest(mockT, runSysTestsDir, "err_undetected", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
+	RunSysTest(mockT, runSysTestsDir, "err_notoccuring", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
 	require.True(t, mockT.failed, "expected test to fail")
 	mockT.assertMsgsContains("Expected error not found in stderr")
 	mockT.assertMsgsContains("this error is expected but not occurring")
@@ -36,15 +37,6 @@ func Test_err_Unexpected(t *testing.T) {
 	require.True(t, mockT.failed, "expected test to fail")
 	mockT.assertMsgsContains("Unexpected error")
 	mockT.assertMsgsContains("PackageID shall be an identifier: 11com.example.basic")
-}
-
-// Errors are declared but not occur
-func Test_err_Undetected(t *testing.T) {
-	mockT := &MockT{t: t}
-	RunSysTest(mockT, runSysTestsDir, "err_undetected", internal.ExecRootCmd, []string{"trace"}, "0.0.1")
-	require.True(t, mockT.failed, "expected test to fail")
-	mockT.assertMsgsContains("Expected error not found in stderr")
-	mockT.assertMsgsContains("this error is expected but not occurring")
 }
 
 // Errors are declared and occur but not matched
@@ -79,6 +71,14 @@ type MockT struct {
 	failMsgs []string
 }
 
+func (m *MockT) Helper() {
+	m.t.Helper()
+}
+
+func (m *MockT) String() string {
+	return fmt.Sprintf("MockT: failed=%v, failMsgs=%v", m.failed, m.failMsgs)
+}
+
 func (m *MockT) Errorf(format string, args ...interface{}) {
 	m.failed = true
 	m.failMsg = m.failMsg + "\n" + fmt.Sprintf(format, args...)
@@ -100,6 +100,7 @@ func (m *MockT) TempDir() string {
 }
 
 func (m *MockT) assertMsgsContains(msg string) {
+	m.t.Helper()
 	for _, failMsg := range m.failMsgs {
 		if strings.Contains(failMsg, msg) {
 			return

@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMdParser_ParseMarkdownFile(t *testing.T) {
+func TestFileParser_md(t *testing.T) {
 	testDataFile := filepath.Join("testdata", "mdparser-1.md")
 
-	basicFile, _, err := ParseMarkdownFile(newMdCtx(), testDataFile)
+	basicFile, _, err := ParseFile(newMdCtx(), testDataFile)
 	require.NoError(t, err)
 
 	// Test package ID and requirements count
@@ -56,11 +56,59 @@ func TestMdParser_ParseMarkdownFile(t *testing.T) {
 	}
 }
 
-func TestMdParser_ParseMarkdownFile_error_pkgident(t *testing.T) {
-	testData := filepath.Join("testdata", "systest", "errors", "req", "err_pkgident.md")
-	_, errors, err := ParseMarkdownFile(newMdCtx(), testData)
+func TestFileParser_md_error_pkgident(t *testing.T) {
+	testData := filepath.Join("testdata", "systest", "errors", "err_pkgident.md")
+	_, errors, err := ParseFile(newMdCtx(), testData)
 	require.NoError(t, err)
 	require.Len(t, errors, 1, "expected exactly 1 syntax error")
+}
+
+func TestFileParser_md_IgnorePackage(t *testing.T) {
+	// Create a temporary file for testing
+	content := []byte(`---
+reqmd.package: ignoreme
+---
+This content should be ignored. ` + "`~REQ001~`" + `
+`)
+	tmpfile := filepath.Join(t.TempDir(), "test.md")
+	require.NoError(t, os.WriteFile(tmpfile, content, 0644))
+
+	// Parse the file
+	structure, errs, err := ParseFile(newMdCtx(), tmpfile)
+	require.NoError(t, err)
+	assert.Empty(t, errs)
+	assert.NotNil(t, structure)
+	assert.Equal(t, "ignoreme", structure.PackageID)
+	assert.Empty(t, structure.Requirements)
+	assert.Empty(t, structure.CoverageFootnotes)
+}
+
+func TestFileParser_src(t *testing.T) {
+	// Test data file contains a line with: [~server.api.v2/Post.handler~test]
+	testDataFile := filepath.Join("testdata", "srccoverparser-1.go")
+	srcFile, syntaxErrors, err := ParseFile(newMdCtx(), testDataFile)
+	require.NoError(t, err)
+	assert.Len(t, syntaxErrors, 0)
+
+	// Verify file type and that at least one coverage tag is found
+	assert.Equal(t, FileTypeSource, srcFile.Type)
+	require.NotEmpty(t, srcFile.CoverageTags)
+
+	{
+		tag := srcFile.CoverageTags[0]
+		assert.Equal(t, RequirementId("server.api.v2/Post.handler"), tag.RequirementId)
+		assert.Equal(t, "impl", tag.CoverageType)
+		// Adjust expected line number according to your test file content
+		assert.Equal(t, 11, tag.Line)
+	}
+
+	{
+		tag := srcFile.CoverageTags[1]
+		assert.Equal(t, RequirementId("server.api.v2/Post.handler"), tag.RequirementId)
+		assert.Equal(t, "test", tag.CoverageType)
+		// Adjust expected line number according to your test file content
+		assert.Equal(t, 17, tag.Line)
+	}
 }
 
 // Helper function to find requirement by name
@@ -152,7 +200,7 @@ func TestParseRequirements_table(t *testing.T) {
 	}
 }
 
-func Test_ParseCoverageFootnote(t *testing.T) {
+func TestParseCoverageFootnote(t *testing.T) {
 	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L11), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#L22)"
 	ctx := &MarkdownContext{
 		rfiles: &Reqmdjson{
@@ -177,7 +225,7 @@ func Test_ParseCoverageFootnote(t *testing.T) {
 	assert.Equal(t, "hash2", note.Coverers[1].FileHash)
 }
 
-func Test_ParseCoverageFootnote2(t *testing.T) {
+func TestParseCoverageFootnote2(t *testing.T) {
 	line := "[^~VVMLeader.def~]: `[~server.design.orch/VVMLeader.def~]` [apps/app.go:80:impl](https://example.com/pkg1/filename1#L80)"
 	ctx := &MarkdownContext{
 		rfiles: &Reqmdjson{
@@ -196,7 +244,7 @@ func Test_ParseCoverageFootnote2(t *testing.T) {
 	assert.Equal(t, "apps/app.go:80:impl", note.Coverers[0].CoverageLabel)
 }
 
-func Test_ParseCoverageFootnote_JustFootnote(t *testing.T) {
+func TestParseCoverageFootnote_JustFootnote(t *testing.T) {
 	line := "[^12]:"
 	ctx := &MarkdownContext{
 		rfiles: &Reqmdjson{
@@ -212,7 +260,7 @@ func Test_ParseCoverageFootnote_JustFootnote(t *testing.T) {
 
 }
 
-func Test_ParseCoverageFootnote_errors(t *testing.T) {
+func TestParseCoverageFootnote_errors(t *testing.T) {
 	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder2/filename2:line2:test](://example.com/path)"
 
 	var errors []ProcessingError
@@ -295,24 +343,4 @@ func TestParseRequirements_errors(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestMdParser_ParseMarkdownFile_IgnorePackage(t *testing.T) {
-	// Create a temporary file for testing
-	content := []byte(`---
-reqmd.package: ignoreme
----
-This content should be ignored. ` + "`~REQ001~`" + `
-`)
-	tmpfile := filepath.Join(t.TempDir(), "test.md")
-	require.NoError(t, os.WriteFile(tmpfile, content, 0644))
-
-	// Parse the file
-	structure, errs, err := ParseMarkdownFile(newMdCtx(), tmpfile)
-	require.NoError(t, err)
-	assert.Empty(t, errs)
-	assert.NotNil(t, structure)
-	assert.Equal(t, "ignoreme", structure.PackageID)
-	assert.Empty(t, structure.Requirements)
-	assert.Empty(t, structure.CoverageFootnotes)
 }

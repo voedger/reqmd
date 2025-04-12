@@ -4,12 +4,8 @@
 package internal
 
 import (
-	"bufio"
-	"fmt"
 	"net/url"
-	"os"
 	"regexp"
-	"strings"
 )
 
 // Regular expressions for parsing markdown elements
@@ -26,98 +22,6 @@ type MarkdownContext struct {
 // isCodeBlockMarker checks if a line is a code block marker, handling indentation
 func isCodeBlockMarker(line string) bool {
 	return codeBlockMarkerRegex.MatchString(line)
-}
-
-func ParseMarkdownFile(mctx *MarkdownContext, filePath string) (*FileStructure, []ProcessingError, error) {
-
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("ParseMarkdownFile: failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	var errors []ProcessingError
-	structure := &FileStructure{
-		Path: filePath,
-		Type: FileTypeMarkdown,
-	}
-
-	// Parse header and content
-	scanner := bufio.NewScanner(file)
-	lineNum := 0
-	inHeader := false
-	inCodeBlock := false
-	var lastFenceLine int // Track the line number of the last opening fence
-
-	for scanner.Scan() {
-		lineNum++
-		line := scanner.Text()
-
-		// Check for code block markers, handling indentation
-		if isCodeBlockMarker(line) {
-			if !inCodeBlock {
-				lastFenceLine = lineNum
-				inCodeBlock = true
-			} else {
-				inCodeBlock = false
-			}
-			continue
-		}
-
-		// Handle header section
-		if line == "---" {
-			if lineNum == 1 {
-				inHeader = true
-				continue
-			} else {
-				inHeader = false
-				continue
-			}
-		}
-
-		if inHeader {
-			if matches := headerRegex.FindStringSubmatch(line); len(matches) > 1 {
-				pkgID := strings.TrimSpace(matches[1])
-				if !identifierRegex.MatchString(pkgID) {
-					errors = append(errors, NewErrPkgIdent(filePath, lineNum, pkgID))
-				}
-				structure.PackageID = pkgID
-				// Ignore files with package "ignoreme"
-
-				if strings.HasPrefix(pkgID, "ignoreme") {
-					return structure, nil, nil
-				}
-			}
-			continue
-		}
-
-		// Only parse requirements and footnotes when not in a code block
-		if !inCodeBlock {
-			// Parse requirements
-			requirements := ParseRequirements(filePath, line, lineNum, &errors)
-			structure.Requirements = append(structure.Requirements, requirements...)
-
-			// Parse coverage footnotes
-			footnote := ParseCoverageFootnote(mctx, filePath, line, lineNum, &errors)
-			if footnote != nil {
-				structure.CoverageFootnotes = append(structure.CoverageFootnotes, *footnote)
-			}
-		}
-	}
-
-	// Check for unmatched fence at end of file
-	if inCodeBlock {
-		errors = append(errors, NewErrUnmatchedFence(filePath, lastFenceLine))
-	}
-
-	if err := scanner.Err(); err != nil {
-		errors = append(errors, ProcessingError{
-			FilePath: filePath,
-			Message:  "Error reading file: " + err.Error(),
-		})
-	}
-
-	return structure, errors, nil
 }
 
 func ParseRequirements(filePath string, line string, lineNum int, errors *[]ProcessingError) []RequirementSite {

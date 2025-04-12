@@ -48,21 +48,27 @@ func newTraceCmd() *cobra.Command {
 	var dryRun bool
 
 	cmd := &cobra.Command{
-		Use:           "trace [flags] <path-to-markdowns> [source-paths...]",
+		Use:           "trace [flags] <paths>...",
 		Short:         "Trace requirements in markdown files",
 		Args:          cobra.MinimumNArgs(1),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			reqPath := args[0]
-			srcPaths := args[1:]
+			paths := args
+
+			// Validate all paths exist
+			for _, path := range paths {
+				if _, err := os.Stat(path); os.IsNotExist(err) {
+					return fmt.Errorf("path does not exist: %s", path)
+				}
+			}
 
 			scanner := NewScanner(extensions)
 			analyzer := NewAnalyzer()
 			applier := NewApplier(dryRun)
 
-			tracer := NewTracer(scanner, analyzer, applier, reqPath, srcPaths)
+			tracer := NewTracer(scanner, analyzer, applier, paths)
 
 			return tracer.Trace()
 		},

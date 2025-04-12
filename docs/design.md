@@ -9,7 +9,8 @@ The solution is split into a CLI entry point (`main.go`) and an internal package
 The tool follows a three-stage pipeline architecture:
 
 1. **Scan** – Build the Domain Model
-   - Recursively discovers Markdown and source files
+   - Recursively discovers Markdown and source files from multiple root paths
+   - Each path can contain both markdown and source files
    - Extracts requirement references from Markdown files
    - Identifies coverage tags in source code
    - Builds file structures with Git metadata
@@ -61,28 +62,35 @@ The system is designed using SOLID principles:
     ├── models.go
     ├── tracer.go
     ├── scanner.go
-    ├── fscanner.go
+    ├── fprocessor.go
+    ├── fileparser.go
+    ├── fileparser_md.go
+    ├── fileparser_src.go
     ├── analyzer.go
     ├── applier.go
-    ├── mdparser.go
-    ├── srccoverparser.go
-    ├── filehash.go
-    └── utils.go
+    ├── errors.go
+    ├── utils.go
+    ├── gogit.go
+    └── main.go
 ```
 
 Summary of responsibilities
 
-- **main.go**: CLI orchestration, argument parsing, creation of `Tracer`, top-level error handling.  
-- **interfaces.go**: All high-level contracts (`ITracer`, `IScanner`, `IAnalyzer`, `IApplier`, etc.).  
-- **models.go**: Domain entities and data structures (`FileStructure`, `Action`, errors, coverage descriptors...).  
-- **tracer.go**: Implement `ITracer`, coordinate scanning, analyzing, and applying.  
-- **scanner.go**: Implement `IScanner`, discover and parse files into structured data.  
-- **fscanner.go**: Provides concurrent file system scanning functionality with worker pools, breadth-first directory traversal, and error handling.  
-- **mdparser.go / srccoverparser.go**: Specialized parsing logic for Markdown / source coverage tags.  
-- **analyzer.go**: Implement `IAnalyzer`, checks for semantic errors, determine required transformations.  
-- **applier.go**: Implement `IApplier`, apply transformations to markdown and `reqmd.json`.  
-- **utils.go**: Common helper functions.
-- **gogit.go**: Implement IGit interface using `go-git` library.
+- **main.go** (root): CLI entry point, argument parsing, package initialization
+- **internal/main.go**: Internal CLI orchestration, implementation details for commands
+- **interfaces.go**: All high-level contracts (`ITracer`, `IScanner`, `IAnalyzer`, `IApplier`, etc.)
+- **models.go**: Domain entities and data structures (`FileStructure`, `Action`, coverage descriptors...)
+- **errors.go**: Error types, constructors and handlers for both syntax and semantic errors
+- **tracer.go**: Implement `ITracer`, coordinate scanning, analyzing, and applying
+- **scanner.go**: Implement `IScanner`, discover and parse files from multiple root paths into structured data
+- **fprocessor.go**: Provides concurrent file system scanning functionality with worker pools, breadth-first directory traversal, and error handling
+- **fileparser.go**: Handles general file parsing operations for both markdown and source files
+- **fileparser_md.go**: Specialized parsing logic for Markdown files
+- **fileparser_src.go**: Specialized parsing for source files
+- **analyzer.go**: Implement `IAnalyzer`, checks for semantic errors, determine required transformations
+- **applier.go**: Implement `IApplier`, apply transformations to markdown and `reqmd.json`
+- **utils.go**: Common helper functions
+- **gogit.go**: Implement IGit interface using `go-git` library
 
 ---
 
@@ -158,7 +166,7 @@ Principles:
 - As a result reqmd.json can be empty, in this case applier shall make an attempt to delete it, if exists
 - FileUrl() helper function is used to strip line numbers from CoverageURLs
 
-### Apply Markdown actions
+### Apply markdown actions
 
 #### Load file
 
@@ -202,35 +210,22 @@ Process ActionFootnotes:
 
 ### Apply Regmdjson actions
 
-- func applyReqmdjsons(reqmdjsons map[FilePath]*Reqmdjson) error
 - If Reqmdjson is empty and the file specified by FilePath exists then it is deleted
 - Else Reqmdjson is jsonized with indentation and written to the file specified by FilePath
 
-### Error Handling
+### Error handling
 
-**Processing Errors**:
+**Processing errors**:
 
 - Processing stops immediately on first error
 - Remaining actions are not processed and the caller receives an error
 
-**Non-atomic Changes**:
+**Non-atomic changes**:
 
 - Files may be left in inconsistent state if error occurs, e.g.:
   - Partially updated footnotes
   - Missing coverage annotations
 - No rollback mechanism required
-
-### Action Structure
-
-```go
-type Action struct {
-    Type            ActionType
-    FileStruct      *FileStructure 
-    Line            int           
-    Data            string        // New content for the line
-    RequirementId   string        // Line is expected to contain this RequirementId
-}
-```
 
 ---
 

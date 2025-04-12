@@ -12,6 +12,7 @@
 - Generates and updates coverage footnotes in Markdown
 - Maintains a reqmd.json file for tracking file hashes
 - Fast & scalable – uses Go concurrency to process files efficiently
+- Supports multiple paths with mixed markdown and source files
 
 ## Installation
 
@@ -31,20 +32,53 @@ go build -o reqmd .
 
 ## Usage
 
-### Tracing Requirements
+### Tracing requirements
 
-Scan Markdown files and source repositories to generate coverage mapping:
+Scan directories containing both Markdown files and source code to generate coverage mapping:
 
 ```sh
-reqmd trace <path-to-markdowns> [<path-to-cloned-repo>...]
+reqmd [-v] trace [ (-e | --extensions) <extensions>] [--dry-run | -n] <paths>...
 ```
+
+#### Options
+
+- `-v`: Enable verbose output showing detailed processing information
+- `-e`, `--extensions`: Comma-separated list of source file extensions to process (e.g., ".go,.ts,.js")
+- `-n`, `--dry-run`: Perform a dry run without modifying files
 
 #### Arguments
 
-- `<path-to-markdowns>` (Required) – Directory containing Markdown files
-- `<path-to-cloned-repo>` (Optional) – Directory containing cloned source repositories
+- `<paths>`: One or more paths to process. Each path can contain both markdown requirement files and source code with coverage tags
+  - At least one path must be provided
+  - When multiple paths are provided, they are processed in sequence
 
 ### Examples
+
+Process a single directory containing both markdown and source files:
+
+```sh
+reqmd trace project/
+```
+
+Process multiple directories with mixed content:
+
+```sh
+reqmd trace docs/ src/ tests/
+```
+
+Process only Go and TypeScript files in multiple directories:
+
+```sh
+reqmd trace -e .go,.ts docs/ src/ tests/
+```
+
+Process with verbose output:
+
+```sh
+reqmd trace -v docs/ src/ tests/
+```
+
+### Example files
 
 `requirements.md`
 
@@ -67,11 +101,24 @@ Generated coverage footnote for `requirements.md`:
 [^~Post.handler~]: `[~server.api.v2~impl]`[pkg/http/handler.go:42:impl](https://github.com/repo/pkg/http/handler.go#L42)
 ```
 
+## Output files
+
+### reqmdfiles.json
+
+This file is created or updated in each directory containing markdown files when FileURLs are present. It maps FileURLs to their git hashes.
+
+### Markdown files
+
+Markdown files are updated with:
+
+- Coverage annotations for requirement sites
+- Coverage footnotes linking requirements to implementations
+
 ## Design
 
-Refer to [design.md](design.md) for detailed design decisions and architecture.
+Refer to [design.md](docs/design.md) for detailed design decisions and architecture.
 
-## Requirements & Dependencies
+## Requirements & dependencies
 
 - Go 1.23+
 

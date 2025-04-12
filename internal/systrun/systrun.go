@@ -1,7 +1,7 @@
 // Copyright (c) 2025-present unTill Software Development Group B. V. and Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-package systest
+package systrun
 
 import (
 	"bytes"
@@ -27,61 +27,88 @@ type T interface {
 	Errorf(format string, args ...interface{})
 	FailNow()
 	TempDir() string
+	Helper()
 }
 
 // ExecRootCmdFunc defines the signature for the main execRootCmd function
 type ExecRootCmdFunc func(args []string, version string) error
 
 // RunSysTest executes a system test with the given parameters
+// If testID contains no subfoldersthen a single git repo is created and reqmd receives a single folder as an argument
+// Otherwise, each subfolder is treated as a separate path and separate git repos are created for each subfolder
 func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, args []string, version string) {
+
+	t.Helper()
+
 	// Find sysTestData Dir using testID
 	sysTestDataDir, err := findSysTestDataDir(testsDir, testID)
 	require.NoError(t, err, "Failed to find sysTestData Dir for testID: %s", testID)
 
-	// Validate sysTestData Dir (MUST contain req and src Dirs)
-	validateSysTestDataDir(t, sysTestDataDir)
+	testFolderAbsPaths := []string{}
+	{
+		// Check if sysTestDataDir contains subdirectories
+		entries, err := os.ReadDir(sysTestDataDir)
+		require.NoError(t, err, "Failed to read sysTestData Dir: %s", sysTestDataDir)
 
-	// Create temporary directories for req (tempReqs) and src (tempSrc)
-	tempReqs := t.TempDir()
-	tempSrc := t.TempDir()
+		for _, entry := range entries {
+			if entry.IsDir() {
+				absPath := filepathJoin(sysTestDataDir, entry.Name())
+				testFolderAbsPaths = append(testFolderAbsPaths, absPath)
+			}
+		}
+		if len(testFolderAbsPaths) == 0 {
+			testFolderAbsPaths = append(testFolderAbsPaths, sysTestDataDir)
+		}
+	}
 
-	// Copy sysTestData.req to tempReqs and sysTestData.src to tempSrc
-	copyDir(t, filepathJoin(sysTestDataDir, "req"), tempReqs)
-	copyDir(t, filepathJoin(sysTestDataDir, "src"), tempSrc)
+	// Parse golden data from all requirement directories
+	goldenData, err := parseGoldenData(testFolderAbsPaths)
+	require.NoError(t, err, "Failed to parse golden data")
 
-	// parseReqGoldenData
-	goldenData, err := parseGoldenData(tempReqs)
-	require.NoError(t, err, "Failed to parse req golden data")
+	var allTempFolders []string
+	var testArgs []string = []string{"reqmd", "trace"}
 
-	// Create git repos for tempReqs and tempSrc
-	createGitRepo(t, tempReqs)
-	createGitRepo(t, tempSrc)
+	commitHashes := make(map[string]string)
 
-	// Commit all files in tempSrc
-	commitAllFiles(t, tempSrc)
+	for _, testFolderAbsPath := range testFolderAbsPaths {
+		tempFolder := t.TempDir()
+		tempFolderAlias := ""
+		if len(testFolderAbsPaths) > 1 {
+			tempFolderAlias = filepath.Base(testFolderAbsPath)
+		}
 
-	// Find commitHash for tempSrc
-	commitHash := getCommitHash(t, tempSrc)
+		allTempFolders = append(allTempFolders, tempFolder)
 
-	// Replace placeholders in all files in the tempReqs Dir with commitHash
-	replacePlaceholders(t, goldenData, commitHash)
+		// Copy root req and src to temp dirs
+		copyDir(t, testFolderAbsPath, tempFolder)
 
-	// Prepare args to include tempReqs and tempSrc
-	testArgs := append([]string{"reqmd"}, args...)
-	testArgs = append(testArgs, tempReqs, tempSrc)
+		createGitRepo(t, tempFolder)
+		commitAllFiles(t, tempFolder)
+		commitHash := getCommitHash(t, tempFolder)
+		commitHashes[tempFolderAlias] = commitHash
+
+		// Prepare args
+		testArgs = append(testArgs, tempFolder)
+	}
+
+	// Replace placeholders in tempReqs
+	replacePlaceholders(t, goldenData, commitHashes)
 
 	// Run main.execRootCmd using args and version
-	// Using a buffer to capture stdout and stderr
 	var stdout, stderr bytes.Buffer
 	_ = execRootCmd(rootCmd, testArgs, version, &stdout, &stderr)
 
-	// Check errors
-	validateErrors(t, &stderr, tempReqs, goldenData)
+	// Check errors against all requirement directories
+	validateErrors(t, &stderr, allTempFolders, goldenData)
 
-	validateGoldenLines(t, goldenData, tempReqs)
+	// Validate golden lines against all requirement directories
+	validateGoldenLines(t, goldenData, allTempFolders)
 }
 
-func validateGoldenLines(t T, goldenData *goldenData, tempReqs string) {
+func validateGoldenLines(t T, goldenData *goldenData, paths []string) {
+
+	t.Helper()
+
 	// Skip validation if no golden lines are defined
 	if len(goldenData.lines) == 0 {
 		return
@@ -89,34 +116,48 @@ func validateGoldenLines(t T, goldenData *goldenData, tempReqs string) {
 
 	// For each file path in goldenData.lines
 	for goldenPath, expectedLines := range goldenData.lines {
-		// Construct full path to the actual file
-		actualPath := filepathJoin(tempReqs, goldenPath)
+		// Try each tempReq directory to find the file
+		found := false
 
-		// Read the actual file content using loadFileLines
-		actualLines, err := loadFileLines(actualPath)
-		if err != nil {
-			t.Errorf("Failed to read file %s: %v", actualPath, err)
-			continue
-		}
+		for _, tempReq := range paths {
+			// Construct full path to the actual file
+			actualPath := filepathJoin(tempReq, goldenPath)
 
-		// Compare number of lines
-		if len(actualLines) != len(expectedLines) {
-			t.Errorf("Line count mismatch in %s: expected %d lines, got %d lines\n%s",
-				goldenPath, len(expectedLines), len(actualLines), strings.Join(actualLines, "\n"))
-			continue
-		}
-
-		// Compare each line
-		for i, expectedLine := range expectedLines {
-			if i >= len(actualLines) {
-				t.Errorf("Missing line %d in %s", i+1, goldenPath)
+			// Read the actual file content using loadFileLines
+			actualLines, err := loadFileLines(actualPath)
+			if err != nil {
+				// Try the next tempReq if file not found in this one
 				continue
 			}
 
-			if actualLines[i] != expectedLine {
-				t.Errorf("Line mismatch in %s at line %d:\nexpected: %s\ngot: %s",
-					goldenPath, i+1, expectedLine, actualLines[i])
+			found = true
+
+			// Compare number of lines
+			if len(actualLines) != len(expectedLines) {
+				t.Errorf("Line count mismatch in %s: expected %d lines, got %d lines\n%s",
+					goldenPath, len(expectedLines), len(actualLines), strings.Join(actualLines, "\n"))
+				break
 			}
+
+			// Compare each line
+			for i, expectedLine := range expectedLines {
+				if i >= len(actualLines) {
+					t.Errorf("Missing line %d in %s", i+1, goldenPath)
+					continue
+				}
+
+				if actualLines[i] != expectedLine {
+					t.Errorf("Line mismatch in %s at line %d:\nexpected: %s\ngot: %s",
+						goldenPath, i+1, expectedLine, actualLines[i])
+				}
+			}
+
+			// File was found and processed, no need to check other tempReqs
+			break
+		}
+
+		if !found {
+			t.Errorf("Failed to find file %s in any of the provided directories", goldenPath)
 		}
 	}
 }
@@ -124,15 +165,6 @@ func validateGoldenLines(t T, goldenData *goldenData, tempReqs string) {
 // findSysTestDataDir locates the test data Dir for the given testID
 func findSysTestDataDir(testsDir string, testID string) (string, error) {
 	return filepathJoin(testsDir, testID), nil
-}
-
-// validateSysTestDataDir ensures the test data Dir has the required structure
-func validateSysTestDataDir(t T, Dir string) {
-	reqDir := filepath.ToSlash(filepathJoin(Dir, "req"))
-	_, err := os.Stat(reqDir)
-	require.NoError(t, err, "Failed to read `req` dir")
-
-	// Removed src directory check as requested
 }
 
 // createGitRepo initializes a git repository in the given directory
@@ -238,11 +270,14 @@ func getCommitHash(t T, dir string) string {
 }
 
 // replacePlaceholders replaces {{.CommitHash}} in all goldenData.lines with the actual commit hash
-func replacePlaceholders(_ T, goldenData *goldenData, commitHash string) {
+func replacePlaceholders(_ T, goldenData *goldenData, commitHashes map[string]string) {
 	// Replace in goldenData.lines
 	for filePath, lines := range goldenData.lines {
 		for i, line := range lines {
-			goldenData.lines[filePath][i] = strings.ReplaceAll(line, "{{.CommitHash}}", commitHash)
+			for k, v := range commitHashes {
+				placeholder := fmt.Sprintf("{{.CommitHash.%s}}", k)
+				goldenData.lines[filePath][i] = strings.ReplaceAll(line, placeholder, v)
+			}
 		}
 	}
 }
@@ -296,10 +331,14 @@ func execRootCmd(rootCmd ExecRootCmdFunc, args []string, version string, stdout,
 
 // validateErrors checks if the stderr output matches expected error patterns from goldenReqData
 // stderr lines are parsed into `path`, `line` and `message` parts according to the formatting: `fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message)`
+// Is a stderr line starts with `\t` it is appended to the previous line
 // All lines in stderr must match at least one item in grd.errors
 // All grd.errors items must match at least one line in stderr
 // stderr lines and grd.errors items are matched using all parts of the stderr lines: `path`, `line` and `message`
-func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenData) {
+func validateErrors(t T, stderr *bytes.Buffer, tempReqs []string, grd *goldenData) {
+
+	t.Helper()
+
 	// If no errors are expected and none occurred, return successfully
 	if len(grd.errors) == 0 && stderr.Len() == 0 {
 		return
@@ -312,11 +351,39 @@ func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenData)
 	// Regular expression to match error lines in format "path:line: message"
 	errRegex := regexp.MustCompile(`^(.+):(\d+): (.+)$`)
 
+	// Process lines, handling indented lines (starting with \t)
+	var processedLines []string
+	var currentLine string
+
 	for _, line := range stderrLines {
 		if line == "" {
+			if currentLine != "" {
+				processedLines = append(processedLines, currentLine)
+				currentLine = ""
+			}
 			continue
 		}
 
+		if strings.HasPrefix(line, "\t") {
+			// If line starts with \t, append it to the previous line
+			if currentLine != "" {
+				currentLine += " " + strings.TrimSpace(line)
+			}
+		} else {
+			// If it's a new line, add the previous completed line to processedLines
+			if currentLine != "" {
+				processedLines = append(processedLines, currentLine)
+			}
+			currentLine = line
+		}
+	}
+
+	// Add the last line if it exists
+	if currentLine != "" {
+		processedLines = append(processedLines, currentLine)
+	}
+
+	for _, line := range processedLines {
 		matches := errRegex.FindStringSubmatch(line)
 		if len(matches) != 4 {
 			// This line doesn't match our expected format
@@ -328,45 +395,66 @@ func validateErrors(t T, stderr *bytes.Buffer, tempReqs string, grd *goldenData)
 		lineNum, _ := strconv.Atoi(matches[2])
 		message := matches[3]
 
-		// Make path relative to tempReqs for comparison with golden data
-		relPath, err := filepath.Rel(tempReqs, filePath)
-		if err != nil {
-			t.Errorf("Failed to get relative path for %s: %v", filePath, err)
-			continue
-		}
-
-		// Normalize path for comparison
-		relPath = filepath.ToSlash(relPath)
-
-		// Check if this error matches any expected errors
+		// Try to make path relative to each tempReq directory
 		errorFound := false
+		relPathFound := false
 
-		// Iterate through all expected errors in goldenReqData
-		for goldFilePath, lineErrors := range grd.errors {
-			// Get base filename for comparison
-			goldFileName := filepath.Base(goldFilePath)
-			errFileName := filepath.Base(filePath)
+		for _, tempReq := range tempReqs {
+			// Make path relative to tempReqs for comparison with golden data
+			relPath, err := filepath.Rel(tempReq, filePath)
+			if err != nil {
+				continue
+			}
 
-			// Check if filenames match
-			if strings.EqualFold(goldFileName, errFileName) {
-				// For each line number in the golden errors
-				for goldLineNum, regexps := range lineErrors {
-					// For each regex pattern for this line number
-					for _, regexp := range regexps {
-						// Create a test string that combines the elements for matching
-						testString := fmt.Sprintf("%s:%d: %s", relPath, lineNum, message)
+			relPathFound = true
 
-						// Check if the regex matches
-						if regexp.MatchString(testString) {
-							errorFound = true
-							// Mark this expected error as found
-							key := fmt.Sprintf("%s:%d:%s", goldFilePath, goldLineNum, regexp.String())
-							parsedErrors[key] = true
+			// Normalize path for comparison
+			relPath = filepath.ToSlash(relPath)
+
+			// Check if this error matches any expected errors
+			// Iterate through all expected errors in goldenReqData
+			for goldFilePath, lineErrors := range grd.errors {
+				// Get base filename for comparison
+				goldFileName := filepath.Base(goldFilePath)
+				errFileName := filepath.Base(filePath)
+
+				// Check if filenames match
+				if strings.EqualFold(goldFileName, errFileName) {
+					// For each line number in the golden errors
+					for goldLineNum, regexps := range lineErrors {
+						// For each regex pattern for this line number
+						for _, regexp := range regexps {
+							// Create a test string that combines the elements for matching
+							testString := fmt.Sprintf("%s:%d: %s", relPath, lineNum, message)
+
+							// Check if the regex matches
+							if regexp.MatchString(testString) {
+								errorFound = true
+								// Mark this expected error as found
+								key := fmt.Sprintf("%s:%d:%s", goldFilePath, goldLineNum, regexp.String())
+								parsedErrors[key] = true
+								break
+							}
+						}
+						if errorFound {
 							break
 						}
 					}
 				}
+				if errorFound {
+					break
+				}
 			}
+
+			if errorFound {
+				break
+			}
+		}
+
+		// If we couldn't make a relative path from any tempReq directory
+		if !relPathFound {
+			t.Errorf("Failed to get relative path for %s from any tempReqs directory", filePath)
+			continue
 		}
 
 		// If error doesn't match any expected errors, fail the test

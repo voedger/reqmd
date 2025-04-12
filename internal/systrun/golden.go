@@ -1,7 +1,7 @@
 // Copyright (c) 2025-present unTill Software Development Group B. V. and Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-package systest
+package systrun
 
 import (
 	"fmt"
@@ -23,54 +23,56 @@ type goldenData struct {
 
 // parseGoldenData
 // Ref. design.md, the "System tests" section
-func parseGoldenData(reqFolderPath string) (*goldenData, error) {
+func parseGoldenData(reqFolderPaths []string) (*goldenData, error) {
 	gd := &goldenData{
 		errors: make(map[Path]map[int][]*regexp.Regexp),
 		lines:  make(map[Path][]string),
 	}
 
-	err := filepath.Walk(reqFolderPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-
-		// Get path relative to reqFolderPath
-		relPath, err := filepath.Rel(reqFolderPath, path)
-		if err != nil {
-			return fmt.Errorf("getting relative path for %s: %v", path, err)
-		}
-
-		// Convert path to slash format for consistency
-		relPath = filepath.ToSlash(relPath)
-		normalizedPath := getNormalizedPath(relPath)
-
-		// Load file contents
-		lines, err := loadFileLines(path)
-		if err != nil {
-			return fmt.Errorf("loading file %s: %v", path, err)
-		}
-
-		// Only store lines for markdown files we need to check for errors
-		// and golden files we need to compare against
-		if isGoldenFile(path) || !hasGoldenCounterpart(path) {
-			gd.lines[normalizedPath] = lines
-		}
-
-		// Process markdown files for golden errors
-		if strings.HasSuffix(strings.ToLower(path), ".md") && !isGoldenFile(path) {
-			if err := extractGoldenErrors(relPath, lines, gd); err != nil {
-				return fmt.Errorf("extracting golden errors from %s: %v", relPath, err)
+	for _, reqFolderPath := range reqFolderPaths {
+		err := filepath.Walk(reqFolderPath, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
 			}
+			if info.IsDir() {
+				return nil
+			}
+
+			// Get path relative to reqFolderPath
+			relPath, err := filepath.Rel(reqFolderPath, path)
+			if err != nil {
+				return fmt.Errorf("getting relative path for %s: %v", path, err)
+			}
+
+			// Convert path to slash format for consistency
+			relPath = filepath.ToSlash(relPath)
+			normalizedPath := getNormalizedPath(relPath)
+
+			// Load file contents
+			lines, err := loadFileLines(path)
+			if err != nil {
+				return fmt.Errorf("loading file %s: %v", path, err)
+			}
+
+			// Only store lines for markdown files we need to check for errors
+			// and golden files we need to compare against
+			if isGoldenFile(path) || !hasGoldenCounterpart(path) {
+				gd.lines[normalizedPath] = lines
+			}
+
+			// Process markdown files for golden errors
+			if strings.HasSuffix(strings.ToLower(path), ".md") && !isGoldenFile(path) {
+				if err := extractGoldenErrors(relPath, lines, gd); err != nil {
+					return fmt.Errorf("extracting golden errors from %s: %v", relPath, err)
+				}
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return nil, fmt.Errorf("walking directory %s: %v", reqFolderPath, err)
 		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("walking directory %s: %v", reqFolderPath, err)
 	}
 
 	return gd, nil
