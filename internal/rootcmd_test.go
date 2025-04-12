@@ -28,15 +28,11 @@ func Test_RootCmd_Draft(t *testing.T) {
 
 	err := ExecRootCmd([]string{"reqmd", "-v", "trace", "--dry-run", "C:/workspaces/work/voedger-internals", "C:/workspaces/work/voedger"}, "0.0.1")
 	require.Nil(err)
-
-	require.NotNil(t)
 }
 
 func Test_RootCmd_RelativePathsDry(t *testing.T) {
 	skipIfNoRootCmdMarker(t)
 
-	// err := os.Chdir("C:/workspaces/work/voedger-internals/reqman")
-	// require.Nil(t, err)
 	err := ExecRootCmd([]string{"reqmd", "-v", "trace", "--dry-run", "../../voedger-internals", "../../voedger"}, "0.0.1")
 	require.Nil(t, err)
 }

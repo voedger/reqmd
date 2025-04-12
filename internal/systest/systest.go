@@ -136,8 +136,6 @@ func validateSysTestDataDir(t T, Dir string) {
 	reqDir := filepath.ToSlash(filepathJoin(Dir, "req"))
 	_, err := os.Stat(reqDir)
 	require.NoError(t, err, "Failed to read `req` dir")
-
-	// Removed src directory check as requested
 }
 
 // createGitRepo initializes a git repository in the given directory
