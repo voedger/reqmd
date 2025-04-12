@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strings"
 )
 
 // Global regex for parsing source file coverage tags.
@@ -40,7 +39,7 @@ func ParseSourceFile(filePath string) (*FileStructure, []ProcessingError, error)
 		line := scanner.Text()
 
 		// Parse coverage tags in the source line.
-		tags := ParseCoverageTags(filePath, line, lineNum)
+		tags := parseCoverageTags(filePath, line, lineNum)
 		structure.CoverageTags = append(structure.CoverageTags, tags...)
 	}
 
@@ -52,24 +51,4 @@ func ParseSourceFile(filePath string) (*FileStructure, []ProcessingError, error)
 	}
 
 	return structure, errors, nil
-}
-
-// ParseCoverageTags finds and returns all coverage tags in a given line.
-func ParseCoverageTags(filePath, line string, lineNum int) []CoverageTag {
-	var tags []CoverageTag
-	var matches [][]string
-	if strings.Contains(line, "[~") { // TODO remove this check
-		matches = coverageTagRegex.FindAllStringSubmatch(line, -1)
-	}
-	for _, match := range matches {
-		if len(match) == 4 {
-			tag := CoverageTag{
-				RequirementId: RequirementId(match[1] + "/" + match[2]),
-				CoverageType:  match[3],
-				Line:          lineNum,
-			}
-			tags = append(tags, tag)
-		}
-	}
-	return tags
 }

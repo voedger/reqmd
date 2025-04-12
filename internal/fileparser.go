@@ -10,7 +10,7 @@ import (
 
 // ParseFile processes a file as both markdown and source file
 // It combines the logic of ParseMarkdownFile and ParseSourceFile into a single pass
-func ParseFile(mctx *MarkdownContext,filePath string) (*FileStructure, []ProcessingError, error) {
+func ParseFile(mctx *MarkdownContext, filePath string) (*FileStructure, []ProcessingError, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("ParseFile: failed to open file: %w", err)
@@ -43,7 +43,7 @@ func ParseFile(mctx *MarkdownContext,filePath string) (*FileStructure, []Process
 		line := scanner.Text()
 
 		// Source file parsing - always parse coverage tags regardless of file type
-		tags := ParseCoverageTags(filePath, line, lineNum)
+		tags := parseCoverageTags(filePath, line, lineNum)
 		structure.CoverageTags = append(structure.CoverageTags, tags...)
 
 		// Markdown specific parsing - only if file is markdown
@@ -114,4 +114,21 @@ func ParseFile(mctx *MarkdownContext,filePath string) (*FileStructure, []Process
 	}
 
 	return structure, errors, nil
+}
+
+// parseCoverageTags finds and returns all coverage tags in a given line.
+func parseCoverageTags(_ string, line string, lineNum int) []CoverageTag {
+	var tags []CoverageTag
+	matches := coverageTagRegex.FindAllStringSubmatch(line, -1)
+	for _, match := range matches {
+		if len(match) == 4 {
+			tag := CoverageTag{
+				RequirementId: RequirementId(match[1] + "/" + match[2]),
+				CoverageType:  match[3],
+				Line:          lineNum,
+			}
+			tags = append(tags, tag)
+		}
+	}
+	return tags
 }
