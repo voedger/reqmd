@@ -293,16 +293,14 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 
 	// Then collect all coverage tags
 	for _, file := range files {
-		if file.Type == FileTypeSource {
-			for _, tag := range file.CoverageTags {
-				if coverage, exists := a.coverages[tag.RequirementId]; exists {
-					coverer := &Coverer{
-						CoverageLabel: file.RelativePath + ":" + fmt.Sprint(tag.Line) + ":" + tag.CoverageType,
-						CoverageUrL:   file.FileURL() + "#L" + strconv.Itoa(tag.Line),
-						FileHash:      file.FileHash,
-					}
-					coverage.NewCoverers = append(coverage.NewCoverers, coverer)
+		for _, tag := range file.CoverageTags {
+			if coverage, exists := a.coverages[tag.RequirementId]; exists {
+				coverer := &Coverer{
+					CoverageLabel: file.RelativePath + ":" + fmt.Sprint(tag.Line) + ":" + tag.CoverageType,
+					CoverageUrL:   file.FileURL() + "#L" + strconv.Itoa(tag.Line),
+					FileHash:      file.FileHash,
 				}
+				coverage.NewCoverers = append(coverage.NewCoverers, coverer)
 			}
 		}
 	}
