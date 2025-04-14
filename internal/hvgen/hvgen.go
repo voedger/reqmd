@@ -423,7 +423,7 @@ func generateRandomParagraph() string {
 		"The system must notify administrators of critical failures.",
 		"Documentation should be maintained with each code update.",
 		"All public interfaces must be thoroughly tested.",
-		"User data must be anonymized before being used for analytics."
+		"User data must be anonymized before being used for analytics.",
 	}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
