@@ -4,12 +4,14 @@
 package hvgen
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 )
@@ -86,492 +88,342 @@ func DefaultHVGeneratorConfig() *HVGeneratorConfig {
 
 // HVGenerator generates test files with configurable parameters for high-volume testing
 func HVGenerator(config *HVGeneratorConfig) error {
-	if config == nil {
-		config = DefaultHVGeneratorConfig()
-	}
-
-	// Validate config
-	if config.NumMarkdownFiles < 1 {
-		return fmt.Errorf("number of markdown files must be at least 1")
-	}
-	if config.NumSourceFiles < 1 {
-		return fmt.Errorf("number of source files must be at least 1")
-	}
-	if config.ReqsPerMarkdownFile < 1 {
-		return fmt.Errorf("requirements per markdown file must be at least 1")
-	}
-	if config.ImplsPerRequirement < 1 {
-		return fmt.Errorf("implementations per requirement must be at least 1")
-	}
-	if len(config.CoverageTypes) == 0 {
-		return fmt.Errorf("at least one coverage type must be specified")
-	}
-
-	// Initialize random number generator (Go 1.20+ approach)
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	// Generate requirement file descriptions
-	reqFileDescrs := generateReqFileDescrs(config, rng)
-
-	// Generate source file descriptions
-	srcFileDescrs := generateSrcFileDescrs(config, reqFileDescrs, rng, config.CoverageTypes)
-
-	// Generate actual files
-	if err := generateFiles(config, reqFileDescrs, srcFileDescrs, config.GenerateGoldenFiles); err != nil {
-		return fmt.Errorf("failed to generate files: %w", err)
-	}
-
-	return nil
-}
-
-// generateReqFileDescrs creates requirement file descriptors according to parameters
-func generateReqFileDescrs(config *HVGeneratorConfig, _ *rand.Rand) []ReqFileDescr {
-	reqFileDescrs := make([]ReqFileDescr, config.NumMarkdownFiles)
-
-	for i := 0; i < config.NumMarkdownFiles; i++ {
-		packageName := fmt.Sprintf("%s.module%d", config.PackageIDPrefix, i+1)
-		filename := fmt.Sprintf("req_%d.md", i+1)
-
-		reqSites := make([]string, config.ReqsPerMarkdownFile)
-		for j := 0; j < config.ReqsPerMarkdownFile; j++ {
-			reqSites[j] = fmt.Sprintf("REQ%03d", j+1)
-		}
-
-		reqFileDescrs[i] = ReqFileDescr{
-			RelDir:   filepath.Join("req"),
-			Name:     filename,
-			Package:  packageName,
-			ReqSites: reqSites,
-			Coverers: []Coverer{}, // Will be populated later
-		}
-	}
-
-	return reqFileDescrs
-}
-
-// generateSrcFileDescrs creates source file descriptors and links them to requirements
-func generateSrcFileDescrs(config *HVGeneratorConfig, reqFileDescrs []ReqFileDescr, rng *rand.Rand, coverageTypes []string) []SrcFileDescr {
-	srcFileDescrs := make([]SrcFileDescr, config.NumSourceFiles)
-
-	// Create source file descriptors
-	for i := 0; i < config.NumSourceFiles; i++ {
-		subdir := fmt.Sprintf("pkg%d", i/1000)
-		filename := fmt.Sprintf("file_%d.go", i+1)
-
-		tags := []string{
-			fmt.Sprintf("tag%d", rng.Intn(20)+1),
-			fmt.Sprintf("tag%d", rng.Intn(20)+21),
-		}
-
-		srcFileDescrs[i] = SrcFileDescr{
-			RelDir: filepath.Join("src", subdir),
-			Name:   filename,
-			Tags:   tags,
-		}
-	}
-
-	// For each requirement, distribute implementations across source files
-	for reqFileIdx, reqFile := range reqFileDescrs {
-		for _, reqSite := range reqFile.ReqSites {
-			// Determine how many implementations this requirement will have
-			numImpls := rng.Intn(config.ImplsPerRequirement) + 1
-
-			// Create implementations in random source files
-			for i := 0; i < numImpls; i++ {
-				srcFileIdx := rng.Intn(len(srcFileDescrs))
-				srcFile := srcFileDescrs[srcFileIdx]
-				coverageType := coverageTypes[rng.Intn(len(coverageTypes))]
-
-				// Create a coverer and add it to the requirement
-				coverer := Coverer{
-					RelPath:      filepath.Join(srcFile.RelDir, srcFile.Name),
-					Package:      filepath.Base(srcFile.RelDir),
-					ReqSite:      reqSite,
-					Line:         rng.Intn(100) + 10, // Random line number between 10-110
-					CoverageType: coverageType,
-				}
-
-				reqFileDescrs[reqFileIdx].Coverers = append(reqFileDescrs[reqFileIdx].Coverers, coverer)
-			}
-		}
-	}
-
-	return srcFileDescrs
-}
-
-// generateFiles creates actual files based on the descriptors
-func generateFiles(config *HVGeneratorConfig, reqFileDescrs []ReqFileDescr, srcFileDescrs []SrcFileDescr, generateGolden bool) error {
-	// Create base directory structure
+	// Create base directory if it doesn't exist
 	if err := os.MkdirAll(config.BaseDir, 0755); err != nil {
 		return fmt.Errorf("failed to create base directory: %w", err)
 	}
 
-	// Generate markdown files and reqmd.json files
-	reqmdJsonMap := make(map[string]*ReqmdJson)
-
-	for _, reqFile := range reqFileDescrs {
-		dirPath := filepath.Join(config.BaseDir, reqFile.RelDir)
-		if err := os.MkdirAll(dirPath, 0755); err != nil {
-			return fmt.Errorf("failed to create directory %s: %w", dirPath, err)
-		}
-
-		filePath := filepath.Join(dirPath, reqFile.Name)
-		if err := generateMarkdownFile(config, filePath, reqFile); err != nil {
-			return fmt.Errorf("failed to generate markdown file %s: %w", filePath, err)
-		}
-
-		// Add entries to reqmd.json for this directory
-		if _, exists := reqmdJsonMap[dirPath]; !exists {
-			reqmdJsonMap[dirPath] = &ReqmdJson{
-				FileHashes: make(map[string]string),
-			}
-		}
-
-		// Add file hashes for coverers of this requirement file
-		for _, coverer := range reqFile.Coverers {
-			fileURL := constructFileURL(config.RepoURL, config.CommitHash, coverer.RelPath)
-			reqmdJsonMap[dirPath].FileHashes[fileURL] = config.CommitHash
-		}
+	// Generate requirement file descriptors
+	reqFileDescrs, err := generateReqFileDescrs(config)
+	if err != nil {
+		return fmt.Errorf("failed to generate requirement file descriptors: %w", err)
 	}
 
-	// Write reqmd.json files
-	for dirPath, reqmdJson := range reqmdJsonMap {
-		if err := generateReqmdJson(filepath.Join(dirPath, "reqmd.json"), reqmdJson); err != nil {
-			return fmt.Errorf("failed to generate reqmd.json in %s: %w", dirPath, err)
-		}
+	// Generate source file descriptors and link them to requirements
+	srcFileDescrs, err := generateSrcFileDescrs(config, reqFileDescrs)
+	if err != nil {
+		return fmt.Errorf("failed to generate source file descriptors: %w", err)
 	}
 
-	// Generate source files
-	for _, srcFile := range srcFileDescrs {
-		dirPath := filepath.Join(config.BaseDir, srcFile.RelDir)
-		if err := os.MkdirAll(dirPath, 0755); err != nil {
-			return fmt.Errorf("failed to create directory %s: %w", dirPath, err)
-		}
-
-		filePath := filepath.Join(dirPath, srcFile.Name)
-
-		// Find all requirements covered by this source file
-		var coveringReqs []struct {
-			Package      string
-			ReqSite      string
-			Line         int
-			CoverageType string
-		}
-
-		for _, reqFile := range reqFileDescrs {
-			for _, coverer := range reqFile.Coverers {
-				relPath := filepath.Join(srcFile.RelDir, srcFile.Name)
-				if coverer.RelPath == relPath {
-					coveringReqs = append(coveringReqs, struct {
-						Package      string
-						ReqSite      string
-						Line         int
-						CoverageType string
-					}{
-						Package:      reqFile.Package,
-						ReqSite:      coverer.ReqSite,
-						Line:         coverer.Line,
-						CoverageType: coverer.CoverageType,
-					})
-				}
-			}
-		}
-
-		if err := generateSourceFile(filePath, srcFile, coveringReqs); err != nil {
-			return fmt.Errorf("failed to generate source file %s: %w", filePath, err)
-		}
+	// Generate actual files based on the descriptors
+	if err := generateFiles(config, reqFileDescrs, srcFileDescrs); err != nil {
+		return fmt.Errorf("failed to generate files: %w", err)
 	}
 
-	// Generate golden files if requested
-	if generateGolden {
-		if err := generateGoldenFiles(config.BaseDir, reqFileDescrs, srcFileDescrs, config); err != nil {
-			return fmt.Errorf("failed to generate golden files: %w", err)
+	// Generate reqmd.json if golden files are requested
+	if config.GenerateGoldenFiles {
+		if err := generateReqmdJson(config, reqFileDescrs); err != nil {
+			return fmt.Errorf("failed to generate reqmd.json: %w", err)
 		}
 	}
 
 	return nil
 }
 
-// constructFileURL creates a FileURL according to the design
-func constructFileURL(repoURL string, commitHash string, relPath string) string {
-	if strings.Contains(repoURL, "github.com") {
-		return fmt.Sprintf("%s/blob/%s/%s", repoURL, commitHash, relPath)
-	} else if strings.Contains(repoURL, "gitlab.com") {
-		return fmt.Sprintf("%s/-/blob/%s/%s", repoURL, commitHash, relPath)
+// generateReqFileDescrs creates descriptors for requirement markdown files
+func generateReqFileDescrs(config *HVGeneratorConfig) ([]ReqFileDescr, error) {
+	result := make([]ReqFileDescr, config.NumMarkdownFiles)
+
+	// Create subdirectories for better file organization
+	numSubDirs := int(math.Sqrt(float64(config.NumMarkdownFiles)))
+	if numSubDirs < 1 {
+		numSubDirs = 1
 	}
-	// Default to GitHub format
-	return fmt.Sprintf("%s/blob/%s/%s", repoURL, commitHash, relPath)
+
+	for i := 0; i < config.NumMarkdownFiles; i++ {
+		// Organize files into subdirectories
+		subDirIndex := i % numSubDirs
+		relDir := filepath.Join("req", fmt.Sprintf("subdir_%03d", subDirIndex))
+
+		// Create package ID based on the file index
+		packageID := fmt.Sprintf("%s.req.%04d", config.PackageIDPrefix, i)
+
+		// Generate requirement sites
+		reqSites := make([]string, config.ReqsPerMarkdownFile)
+		for j := 0; j < config.ReqsPerMarkdownFile; j++ {
+			reqID := fmt.Sprintf("%s.REQ-%04d-%03d", packageID, i, j)
+			reqSites[j] = reqID
+		}
+
+		result[i] = ReqFileDescr{
+			RelDir:   relDir,
+			Name:     fmt.Sprintf("req_%04d.md", i),
+			Package:  packageID,
+			ReqSites: reqSites,
+			Coverers: []Coverer{}, // Will be populated later when generating source files
+		}
+	}
+
+	return result, nil
 }
 
-// generateMarkdownFile creates a markdown file with requirements following the design format
-func generateMarkdownFile(config *HVGeneratorConfig, filePath string, reqFile ReqFileDescr) error {
+// generateSrcFileDescrs creates descriptors for source code files and links them to requirements
+func generateSrcFileDescrs(config *HVGeneratorConfig, reqFileDescrs []ReqFileDescr) ([]SrcFileDescr, error) {
+	result := make([]SrcFileDescr, config.NumSourceFiles)
+
+	// Create subdirectories for better file organization
+	numSubDirs := int(math.Sqrt(float64(config.NumSourceFiles)))
+	if numSubDirs < 1 {
+		numSubDirs = 1
+	}
+
+	// Calculate requirements distribution across source files
+	// Each requirement should have approximately config.ImplsPerRequirement implementations
+	totalReqs := config.NumMarkdownFiles * config.ReqsPerMarkdownFile
+	implsPerSourceFile := (totalReqs * config.ImplsPerRequirement) / config.NumSourceFiles
+	if implsPerSourceFile < 1 {
+		implsPerSourceFile = 1
+	}
+
+	// Random source for more realistic distribution
+	r := rand.New(rand.NewSource(42)) // Use fixed seed for reproducibility
+
+	for i := 0; i < config.NumSourceFiles; i++ {
+		// Organize files into subdirectories
+		subDirIndex := i % numSubDirs
+		relDir := filepath.Join("src", fmt.Sprintf("subdir_%03d", subDirIndex))
+
+		// Generate tags for this source file
+		tags := []string{}
+
+		// Randomly select requirements to implement in this file
+		for j := 0; j < implsPerSourceFile; j++ {
+			// Select random requirement file and requirement
+			reqFileIndex := r.Intn(len(reqFileDescrs))
+			reqFile := &reqFileDescrs[reqFileIndex]
+
+			if len(reqFile.ReqSites) == 0 {
+				continue
+			}
+
+			reqIndex := r.Intn(len(reqFile.ReqSites))
+			reqSite := reqFile.ReqSites[reqIndex]
+
+			// Select random coverage type
+			coverageType := config.CoverageTypes[r.Intn(len(config.CoverageTypes))]
+
+			// Add tag in format REQ:requirement-id
+			tag := fmt.Sprintf("REQ:%s", reqSite)
+			tags = append(tags, tag)
+
+			// Add this file as coverer for the requirement
+			coverer := Coverer{
+				RelPath:      filepath.Join(relDir, fmt.Sprintf("src_%04d.go", i)),
+				Package:      fmt.Sprintf("%s.src.%04d", config.PackageIDPrefix, i),
+				ReqSite:      reqSite,
+				Line:         r.Intn(500) + 1, // Random line number between 1-500
+				CoverageType: coverageType,
+			}
+
+			reqFile.Coverers = append(reqFile.Coverers, coverer)
+		}
+
+		result[i] = SrcFileDescr{
+			RelDir: relDir,
+			Name:   fmt.Sprintf("src_%04d.go", i),
+			Tags:   tags,
+		}
+	}
+
+	return result, nil
+}
+
+// generateFiles creates actual files based on the descriptors
+func generateFiles(config *HVGeneratorConfig, reqFileDescrs []ReqFileDescr, srcFileDescrs []SrcFileDescr) error {
+	// Generate requirement markdown files
+	for _, reqFile := range reqFileDescrs {
+		if err := generateReqFile(config, reqFile); err != nil {
+			return err
+		}
+	}
+
+	// Generate source code files
+	for _, srcFile := range srcFileDescrs {
+		if err := generateSrcFile(config, srcFile); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// generateReqFile creates a markdown file with requirements and coverage
+func generateReqFile(config *HVGeneratorConfig, reqFile ReqFileDescr) error {
+	// Create directory if it doesn't exist
+	dirPath := filepath.Join(config.BaseDir, reqFile.RelDir)
+	if err := os.MkdirAll(dirPath, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dirPath, err)
+	}
+
+	// Prepare the file content
 	var content strings.Builder
 
 	// Add header
-	content.WriteString("---\n")
-	content.WriteString(fmt.Sprintf("reqmd.package: %s\n", reqFile.Package))
-	content.WriteString("---\n\n")
-	content.WriteString(fmt.Sprintf("# Module %s\n\n", reqFile.Package))
+	content.WriteString(fmt.Sprintf("# %s\n\n", reqFile.Package))
 	content.WriteString("## Requirements\n\n")
 
-	// Add requirements
-	for _, reqSite := range reqFile.ReqSites {
+	// Add requirements with IDs
+	for i, reqSite := range reqFile.ReqSites {
 		content.WriteString(fmt.Sprintf("### %s\n\n", reqSite))
+		content.WriteString(fmt.Sprintf("This is requirement %d in file %s\n\n", i+1, reqFile.Name))
 
-		// Find coverers for this requirement
-		var coverersForReq []Coverer
-		for _, coverer := range reqFile.Coverers {
-			if coverer.ReqSite == reqSite {
-				coverersForReq = append(coverersForReq, coverer)
-			}
+		// Add some random content for realism
+		paragraphCount := rand.Intn(3) + 1
+		for p := 0; p < paragraphCount; p++ {
+			content.WriteString(generateRandomParagraph())
+			content.WriteString("\n\n")
 		}
-
-		// Determine if we have coverage
-		hasCoverage := len(coverersForReq) > 0
-
-		if hasCoverage {
-			// Covered requirement
-			content.WriteString(fmt.Sprintf("The system shall support `~%s~`covered[^~%s~]✅\n\n", reqSite, reqSite))
-		} else {
-			// Uncovered requirement
-			content.WriteString(fmt.Sprintf("The system shall support `~%s~`uncvrd[^~%s~]❓\n\n", reqSite, reqSite))
-		}
-
-		// Add simple description
-		content.WriteString("This requirement defines core functionality needed for system operations.\n\n")
 	}
 
 	// Add coverage footnotes
-	footnoteAdded := false
-
-	// Group coverers by requirementSite
-	coverageFootnotes := make(map[string][]Coverer)
+	coverageByReq := make(map[string][]Coverer)
 	for _, coverer := range reqFile.Coverers {
-		coverageFootnotes[coverer.ReqSite] = append(coverageFootnotes[coverer.ReqSite], coverer)
+		coverageByReq[coverer.ReqSite] = append(coverageByReq[coverer.ReqSite], coverer)
 	}
 
-	// Process each requirement site that has coverage
-	for reqSite, coverers := range coverageFootnotes {
-		if len(coverers) > 0 {
-			if !footnoteAdded {
-				content.WriteString("\n") // Add empty line before first footnote
-				footnoteAdded = true
-			}
+	// Only add footnotes section if we have coverage
+	if len(reqFile.Coverers) > 0 {
+		content.WriteString("\n")
 
-			// Sort coverers by coverage type, then by path, then by line
-			sort.Slice(coverers, func(i, j int) bool {
-				if coverers[i].CoverageType != coverers[j].CoverageType {
-					return coverers[i].CoverageType < coverers[j].CoverageType
-				}
-				if coverers[i].RelPath != coverers[j].RelPath {
-					return coverers[i].RelPath < coverers[j].RelPath
-				}
-				return coverers[i].Line < coverers[j].Line
-			})
+		// Add footnotes for each requirement that has coverage
+		for reqSite, coverers := range coverageByReq {
+			footnote := fmt.Sprintf("[%s]: ", reqSite)
 
-			// Create footnote hint
-			footnoteLine := fmt.Sprintf("[^~%s~]: `[~%s/%s~%s]`",
-				reqSite,
-				reqFile.Package,
-				reqSite,
-				coverers[0].CoverageType) // Use the type of the first coverer
-
-			// Add coverers
 			for i, coverer := range coverers {
-				fileURL := constructFileURL(config.RepoURL, config.CommitHash, coverer.RelPath)
-				coverageURL := fmt.Sprintf("%s#L%d", fileURL, coverer.Line)
-				coverageLabel := fmt.Sprintf("%s:%d:%s", coverer.RelPath, coverer.Line, coverer.CoverageType)
-
 				if i > 0 {
-					footnoteLine += ","
+					footnote += ", "
 				}
 
-				footnoteLine += fmt.Sprintf(" [%s](%s)", coverageLabel, coverageURL)
+				fileURL := fmt.Sprintf("%s/%s#L%d", config.RepoURL, coverer.RelPath, coverer.Line)
+				footnote += fmt.Sprintf("%s:%s", coverer.CoverageType, fileURL)
 			}
 
-			content.WriteString(footnoteLine + "\n")
+			content.WriteString(footnote + "\n")
 		}
 	}
 
-	// Write to file
+	// Write the file
+	filePath := filepath.Join(dirPath, reqFile.Name)
 	return os.WriteFile(filePath, []byte(content.String()), 0644)
 }
 
-// generateReqmdJson creates a reqmd.json file with the specified content
-func generateReqmdJson(filePath string, reqmdJson *ReqmdJson) error {
-	// Sort FileURLs lexically to avoid unnecessary changes
-	var fileURLs []string
-	for fileURL := range reqmdJson.FileHashes {
-		fileURLs = append(fileURLs, fileURL)
-	}
-	sort.Strings(fileURLs)
-
-	// Create ordered map
-	orderedFileHashes := make(map[string]string)
-	for _, fileURL := range fileURLs {
-		orderedFileHashes[fileURL] = reqmdJson.FileHashes[fileURL]
-	}
-	reqmdJson.FileHashes = orderedFileHashes
-
-	// Check if the file would be empty
-	if len(reqmdJson.FileHashes) == 0 {
-		// Delete the file if it exists (no need to create empty file)
-		_ = os.Remove(filePath)
-		return nil
+// generateSrcFile creates a source code file with coverage tags
+func generateSrcFile(config *HVGeneratorConfig, srcFile SrcFileDescr) error {
+	// Create directory if it doesn't exist
+	dirPath := filepath.Join(config.BaseDir, srcFile.RelDir)
+	if err := os.MkdirAll(dirPath, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dirPath, err)
 	}
 
-	// Marshal to JSON with indentation
-	data, err := json.MarshalIndent(reqmdJson, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal reqmd.json: %w", err)
-	}
-
-	// Write to file
-	return os.WriteFile(filePath, data, 0644)
-}
-
-// generateSourceFile creates a source file that implements requirements with proper coverage tags
-func generateSourceFile(filePath string, srcFile SrcFileDescr, coveringReqs []struct {
-	Package      string
-	ReqSite      string
-	Line         int
-	CoverageType string
-}) error {
+	// Prepare the file content
 	var content strings.Builder
 
-	// Add package declaration and imports
-	packageName := filepath.Base(srcFile.RelDir)
-	content.WriteString("// Copyright (c) 2025-present unTill Software Development Group B. V. and Contributors\n")
-	content.WriteString("// SPDX-License-Identifier: Apache-2.0\n\n")
-	content.WriteString(fmt.Sprintf("package %s\n\n", packageName))
-	content.WriteString("import (\n")
-	content.WriteString("\t\"fmt\"\n")
-	content.WriteString(")\n\n")
+	// Add header
+	content.WriteString(fmt.Sprintf("// Auto-generated file: %s\n", srcFile.Name))
+	content.WriteString(fmt.Sprintf("// Package %s\n", strings.ReplaceAll(srcFile.RelDir, "/", "_")))
+	content.WriteString("package main\n\n")
 
-	// Add file tags as comments
-	content.WriteString("// Tags: " + strings.Join(srcFile.Tags, ", ") + "\n\n")
+	// Add some random functions
+	funcCount := rand.Intn(5) + 3
 
-	// Add functions implementing requirements
-	lineCount := 1 + 8 // Account for header, imports, and tags comments
+	for i := 0; i < funcCount; i++ {
+		funcName := fmt.Sprintf("Function%d", i+1)
+		content.WriteString(fmt.Sprintf("func %s() {\n", funcName))
 
-	for _, req := range coveringReqs {
-		// Add padding lines if needed to reach the target line
-		for lineCount < req.Line {
-			content.WriteString("\n")
-			lineCount++
+		// Add tags as comments for some functions
+		if i < len(srcFile.Tags) {
+			content.WriteString(fmt.Sprintf("\t// %s\n", srcFile.Tags[i]))
 		}
 
-		funcName := fmt.Sprintf("Implement%s_%s", req.ReqSite, req.CoverageType)
+		// Add some random content
+		lineCount := rand.Intn(10) + 5
+		for j := 0; j < lineCount; j++ {
+			content.WriteString("\t// Some code here\n")
+		}
 
-		// Add coverage tag with proper format according to the design
-		content.WriteString(fmt.Sprintf("// [~%s/%s~%s]\n", req.Package, req.ReqSite, req.CoverageType))
-		lineCount++
-
-		// Add function
-		content.WriteString(fmt.Sprintf("func %s() {\n", funcName))
-		lineCount++
-		content.WriteString(fmt.Sprintf("\tfmt.Println(\"Implementation for %s/%s (%s)\")\n",
-			req.Package, req.ReqSite, req.CoverageType))
-		lineCount++
 		content.WriteString("}\n\n")
-		lineCount += 2
 	}
 
-	// Write to file
+	// Write the file
+	filePath := filepath.Join(dirPath, srcFile.Name)
 	return os.WriteFile(filePath, []byte(content.String()), 0644)
 }
 
-// generateGoldenFiles creates golden files for testing
-func generateGoldenFiles(baseDir string, reqFileDescrs []ReqFileDescr, srcFileDescrs []SrcFileDescr, config *HVGeneratorConfig) error {
-	goldenDir := filepath.Join(baseDir, "golden")
-	if err := os.MkdirAll(goldenDir, 0755); err != nil {
-		return fmt.Errorf("failed to create golden directory: %w", err)
-	}
+// generateReqmdJson creates the reqmd.json file for tracking file hashes
+func generateReqmdJson(config *HVGeneratorConfig, reqFileDescrs []ReqFileDescr) error {
+	// Gather all files that need to be tracked
+	fileHashes := make(map[string]string)
 
-	// Create a golden file with coverage information
-	coverageFile := filepath.Join(goldenDir, "coverage.txt")
-	var coverage strings.Builder
-
-	// List requirements and their implementations
+	// Create reqmd.json in each requirement directory
+	reqDirs := make(map[string]bool)
 	for _, reqFile := range reqFileDescrs {
-		coverage.WriteString(fmt.Sprintf("# %s\n", reqFile.Package))
+		dirPath := filepath.Join(config.BaseDir, reqFile.RelDir)
+		reqDirs[dirPath] = true
 
-		for _, reqSite := range reqFile.ReqSites {
-			coverage.WriteString(fmt.Sprintf("## %s\n", reqSite))
-
-			// Find coverers for this requirement
-			var coverers []Coverer
-			for _, coverer := range reqFile.Coverers {
-				if coverer.ReqSite == reqSite {
-					coverers = append(coverers, coverer)
-				}
-			}
-
-			// Write coverage information
-			coverage.WriteString(fmt.Sprintf("Implementations: %d\n", len(coverers)))
-			for _, coverer := range coverers {
-				fileURL := constructFileURL(config.RepoURL, config.CommitHash, coverer.RelPath)
-				coverage.WriteString(fmt.Sprintf("- %s (line %d, type %s): %s#L%d\n",
-					coverer.RelPath, coverer.Line, coverer.CoverageType, fileURL, coverer.Line))
-			}
-			coverage.WriteString("\n")
+		// Add markdown file hash
+		filePath := filepath.Join(dirPath, reqFile.Name)
+		hash, err := calculateFileHash(filePath)
+		if err != nil {
+			return err
 		}
-		coverage.WriteString("\n")
+		relativePath := filepath.Join(reqFile.RelDir, reqFile.Name)
+		fileHashes[relativePath] = hash
 	}
 
-	// Write coverage file
-	if err := os.WriteFile(coverageFile, []byte(coverage.String()), 0644); err != nil {
-		return fmt.Errorf("failed to write coverage file: %w", err)
-	}
-
-	// Create a summary golden file
-	summaryFile := filepath.Join(goldenDir, "summary.txt")
-	var summary strings.Builder
-
-	summary.WriteString("# High volume test summary\n\n")
-	summary.WriteString(fmt.Sprintf("Requirement files: %d\n", len(reqFileDescrs)))
-	summary.WriteString(fmt.Sprintf("Source files: %d\n", len(srcFileDescrs)))
-
-	// Count total requirements and implementations
-	totalReqs := 0
-	totalImpls := 0
-	implsByType := make(map[string]int)
-
-	for _, reqFile := range reqFileDescrs {
-		totalReqs += len(reqFile.ReqSites)
-		totalImpls += len(reqFile.Coverers)
-
-		for _, coverer := range reqFile.Coverers {
-			implsByType[coverer.CoverageType]++
+	// Create reqmd.json in each directory
+	for dirPath := range reqDirs {
+		reqmdJson := ReqmdJson{
+			FileHashes: fileHashes,
 		}
-	}
 
-	// Count how many requirements have coverage
-	coveredReqs := 0
-	for _, reqFile := range reqFileDescrs {
-		coveredReqsMap := make(map[string]bool)
-		for _, coverer := range reqFile.Coverers {
-			coveredReqsMap[coverer.ReqSite] = true
+		jsonData, err := json.MarshalIndent(reqmdJson, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal reqmd.json: %w", err)
 		}
-		coveredReqs += len(coveredReqsMap)
-	}
 
-	summary.WriteString(fmt.Sprintf("Total requirements: %d\n", totalReqs))
-	summary.WriteString(fmt.Sprintf("Requirements with coverage: %d\n", coveredReqs))
-	summary.WriteString(fmt.Sprintf("Requirements without coverage: %d\n", totalReqs-coveredReqs))
-	summary.WriteString(fmt.Sprintf("Total implementations: %d\n", totalImpls))
-	summary.WriteString(fmt.Sprintf("Average implementations per requirement: %.2f\n", float64(totalImpls)/float64(totalReqs)))
-
-	// Implementations by type
-	summary.WriteString("\nImplementations by type:\n")
-	for coverageType, count := range implsByType {
-		summary.WriteString(fmt.Sprintf("- %s: %d\n", coverageType, count))
-	}
-
-	// Write summary file
-	if err := os.WriteFile(summaryFile, []byte(summary.String()), 0644); err != nil {
-		return fmt.Errorf("failed to write summary file: %w", err)
+		reqmdPath := filepath.Join(dirPath, "reqmd.json")
+		if err := os.WriteFile(reqmdPath, jsonData, 0644); err != nil {
+			return fmt.Errorf("failed to write reqmd.json: %w", err)
+		}
 	}
 
 	return nil
+}
+
+// calculateFileHash computes SHA256 hash for a file
+func calculateFileHash(filePath string) (string, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file %s: %w", filePath, err)
+	}
+
+	hash := sha256.Sum256(data)
+	return hex.EncodeToString(hash[:]), nil
+}
+
+// generateRandomParagraph creates random text for requirements
+func generateRandomParagraph() string {
+	sentences := []string{
+		"The system shall process input data according to the specification.",
+		"All error conditions must be properly handled and reported.",
+		"Performance requirements specify that response time should not exceed 100ms.",
+		"Authentication must be performed using the approved security protocols.",
+		"The component shall maintain backward compatibility with previous versions.",
+		"Data persistence must ensure that no information is lost during system failures.",
+		"User interface elements should follow the design system guidelines.",
+		"The API must provide appropriate error codes and messages.",
+		"Configuration options should be externalized for environment-specific settings.",
+		"All communications must be encrypted using TLS 1.3 or later.",
+	}
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	sentenceCount := r.Intn(4) + 2 // 2-5 sentences
+
+	var paragraph strings.Builder
+	for i := 0; i < sentenceCount; i++ {
+		paragraph.WriteString(sentences[r.Intn(len(sentences))])
+		paragraph.WriteString(" ")
+	}
+
+	return strings.TrimSpace(paragraph.String())
 }
