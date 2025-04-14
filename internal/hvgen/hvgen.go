@@ -414,10 +414,20 @@ func generateRandomParagraph() string {
 		"The API must provide appropriate error codes and messages.",
 		"Configuration options should be externalized for environment-specific settings.",
 		"All communications must be encrypted using TLS 1.3 or later.",
+		"Logging functionality should capture relevant diagnostic information.",
+		"The system must handle concurrent requests without data corruption.",
+		"Memory usage should not exceed predefined thresholds during normal operation.",
+		"Internationalization support is required for all user-facing content.",
+		"The application must gracefully degrade when services are unavailable.",
+		"Regular automated backups should be performed according to the schedule.",
+		"The system must notify administrators of critical failures.",
+		"Documentation should be maintained with each code update.",
+		"All public interfaces must be thoroughly tested.",
+		"User data must be anonymized before being used for analytics."
 	}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	sentenceCount := r.Intn(4) + 2 // 2-5 sentences
+	sentenceCount := (r.Intn(4) + 2) * 2 // Double the 2-5 sentences to 4-10 sentences
 
 	var paragraph strings.Builder
 	for i := 0; i < sentenceCount; i++ {
