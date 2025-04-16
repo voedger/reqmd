@@ -152,26 +152,12 @@ func (s *scanner) scanFile(filePath string, mctx *MarkdownContext, gitRepos map[
 		return fmt.Errorf("no git repository found for file: %s", filePath)
 	}
 
-	// Get relative path for the file
-	relPath, err := filepath.Rel(git.PathToRoot(), filePath)
-	if IsVerbose {
-		Verbose("scanFile: relPath=" + relPath + " PathToRoot=" + git.PathToRoot())
-	}
-	if err != nil {
-		return fmt.Errorf("failed to get relative path: %w", err)
-	}
-	relPath = filepath.ToSlash(relPath)
-
-	if IsVerbose {
-		Verbose("scanFile: before git.FileHash: " + filePath)
-	}
-
 	// Try to get file hash - this will fail for untracked files
-	hash, err := git.FileHash(relPath)
+	relPath, hash, err := git.FileHash(filePath)
 	if err != nil {
 		// Skip untracked files
 		if IsVerbose {
-			Verbose("scanFile: skipping untracked file: " + relPath + ", error: " + err.Error())
+			Verbose("scanFile: skipping untracked file: " + filePath + ", error: " + err.Error())
 		}
 		return nil
 	}
@@ -275,5 +261,5 @@ func (s *scanner) scanPaths(paths []string) (err error) {
 		}
 	}
 
-	return  nil
+	return nil
 }
