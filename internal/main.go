@@ -6,6 +6,7 @@ package internal
 import (
 	"fmt"
 	"os"
+	"runtime/debug"
 
 	_ "embed"
 
@@ -22,6 +23,7 @@ func ExecRootCmd(args []string, ver string) error {
 		args,
 		ver,
 		newTraceCmd(),
+		newVersionCmd(),
 	)
 
 	err := rootCmd.Execute()
@@ -29,6 +31,22 @@ func ExecRootCmd(args []string, ver string) error {
 		fmt.Fprintln(os.Stderr, err)
 	}
 	return err
+}
+
+func newVersionCmd() *cobra.Command {
+
+	info, _ := debug.ReadBuildInfo()
+
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "Print the version number",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Version: %s\n", Version)
+			fmt.Printf("info.Main.Version: %s\n", info.Main.Version)
+		},
+	}
+	return cmd
+
 }
 
 func prepareRootCmd(use, short string, args []string, ver string, cmds ...*cobra.Command) *cobra.Command {
