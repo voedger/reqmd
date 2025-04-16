@@ -26,8 +26,9 @@ type IApplier interface {
 }
 
 type IGit interface {
-	PathToRoot() string
-	FileHash(relativeFilePath string) (string, error)
+	// Slashed, absolute path to the root of the git repository
+	PathToRoot() string // TODO: do we need this?
+	FileHash(absoluteFilePath string) (relPath, hash string, err error)
 	RepoRootFolderURL() string
 }
 
