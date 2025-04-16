@@ -46,13 +46,16 @@ func NewScanner(extensions string) IScanner {
 	return s
 }
 
-type scanCtx struct {
-	my     sync.Mutex
-	result *ScannerResult
-}
-
 // Scan scans multiple paths that can each contain both markdown and source files
-func (s *scanner) Scan(paths []string) (res *ScannerResult, err error) {
+func (s *scanner) Scan(paths []string) (*ScannerResult, error) {
+
+	// Reset result
+	res := &ScannerResult{
+		Files:            []FileStructure{},
+		ProcessingErrors: []ProcessingError{},
+	}
+	s.result = res
+
 	// Reset statistics
 	start := time.Now()
 	s.stats.processedFiles.Store(0)
@@ -60,7 +63,7 @@ func (s *scanner) Scan(paths []string) (res *ScannerResult, err error) {
 	s.stats.skippedFiles.Store(0)
 	s.stats.skippedBytes.Store(0)
 
-	res, err = s.scanPaths(paths)
+	err := s.scanPaths(paths)
 
 	if err != nil {
 		return nil, err
@@ -75,7 +78,7 @@ func (s *scanner) Scan(paths []string) (res *ScannerResult, err error) {
 		"duration", time.Since(start),
 	)
 
-	return res, nil
+	return s.result, nil
 }
 
 type scanner struct {
@@ -86,6 +89,8 @@ type scanner struct {
 		skippedFiles   atomic.Int64
 		skippedBytes   atomic.Int64
 	}
+	mu     sync.Mutex
+	result *ScannerResult
 }
 
 // ByteCountSI converts bytes to human readable string using SI (decimal) units
@@ -103,7 +108,7 @@ func ByteCountSI(b int64) string {
 }
 
 // scanFile handles both markdown and source files in a unified way
-func (s *scanner) scanFile(mu *sync.Mutex, filePath string, mctx *MarkdownContext, gitRepos map[string]IGit, files *[]FileStructure, syntaxErrors *[]ProcessingError) error {
+func (s *scanner) scanFile(filePath string, mctx *MarkdownContext, gitRepos map[string]IGit) error {
 	filePath = filepath.ToSlash(filePath)
 	ext := strings.ToLower(filepath.Ext(filePath))
 
@@ -191,25 +196,23 @@ func (s *scanner) scanFile(mu *sync.Mutex, filePath string, mctx *MarkdownContex
 		// Add to files list if it has requirements or coverage tags
 		if (ext == markdownExtension && len(structure.Requirements) > 0) ||
 			(ext != markdownExtension && len(structure.CoverageTags) > 0) {
-			mu.Lock()
-			*files = append(*files, *structure)
-			mu.Unlock()
+			s.mu.Lock()
+			s.result.Files = append(s.result.Files, *structure)
+			s.mu.Unlock()
 		}
 	}
 
 	// Add any errors found during parsing
 	if len(errs) > 0 {
-		mu.Lock()
-		*syntaxErrors = append(*syntaxErrors, errs...)
-		mu.Unlock()
+		s.mu.Lock()
+		s.result.ProcessingErrors = append(s.result.ProcessingErrors, errs...)
+		s.mu.Unlock()
 	}
 
 	return nil
 }
 
-func (s *scanner) scanPaths(paths []string) (res *ScannerResult, error) {
-	var files []FileStructure
-	var syntaxErrors []ProcessingError
+func (s *scanner) scanPaths(paths []string) (err error) {
 
 	// Initialize git repositories for all paths
 	gitRepos := make(map[string]IGit)
@@ -224,19 +227,17 @@ func (s *scanner) scanPaths(paths []string) (res *ScannerResult, error) {
 			}
 			parent := filepath.Dir(currentPath)
 			if parent == currentPath {
-				return nil, nil, fmt.Errorf("no git repository found for path: %s", path)
+				return fmt.Errorf("no git repository found for path: %s", path)
 			}
 			currentPath = parent
 		}
 
 		git, err := NewIGit(gitPath)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to initialize git for path %s: %w", path, err)
+			return fmt.Errorf("failed to initialize git for path %s: %w", path, err)
 		}
 		gitRepos[path] = git
 	}
-
-	var mu sync.Mutex
 
 	// Create a unified file processor that handles both markdown and source files
 	folderProcessor := func(folderPath string) (FileProcessor, error) {
@@ -263,16 +264,16 @@ func (s *scanner) scanPaths(paths []string) (res *ScannerResult, error) {
 		}
 
 		return func(filePath string) error {
-			return s.scanFile(&mu, filePath, mctx, gitRepos, &files, &syntaxErrors)
+			return s.scanFile(filePath, mctx, gitRepos)
 		}, nil
 	}
 
 	// Process all paths
 	for _, path := range paths {
 		if errs := FoldersScanner(defaultMaxWorkers, defaultMaxErrQueueSize, path, folderProcessor); len(errs) > 0 {
-			return nil, nil, fmt.Errorf("error scanning files in %s: %v", path, errs[0])
+			return fmt.Errorf("error scanning files in %s: %v", path, errs[0])
 		}
 	}
 
-	return files, syntaxErrors, nil
+	return  nil
 }
