@@ -223,7 +223,28 @@ func (a *analyzer) analyzeReqmdjsons(result *AnalyzerResult) {
 }
 
 func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]ProcessingError) error {
-	// First collect all requirements and their locations
+
+	// Processes files to analyze and manage requirements and their coverage.
+	// - Iterates through the provided files and processes only Markdown files.
+	// - Validates that Markdown files with requirements have a valid PackageID.
+	//   If not, it logs an error and skips further processing for that file.
+	// - Tracks the maximum integer value of footnote IDs in c.maxFootnoteIntIds
+	//   for each file by analyzing both RequirementSites and CoverageFootnotes.
+	// - Builds `a.coverages`, map[RequirementId]*requirementCoverage:
+	//   - For each requirement in the file:
+	//     - Generates a unique RequirementId by combining the PackageID and the
+	//       requirement name.
+	//     - Checks for duplicate RequirementIds in the `coverages` map. If a
+	//       duplicate is found, it logs an error and skips the requirement.
+	//     - Initializes a `requirementCoverage` object and adds it to the
+	//       `coverages` map.
+	// - Processes existing coverage footnotes for each requirement and populates
+	//   the `CurrentCoverers` field of the `requirementCoverage` object if a
+	//   matching CoverageFootnoteId is found.
+	// This code is part of a larger system that tracks and validates requirements
+	// in Markdown files, ensuring they are uniquely identified and properly
+	// annotated with coverage information.
+
 	for _, file := range files {
 		if file.Type == FileTypeMarkdown {
 			if len(file.Requirements) > 0 && file.PackageID == "" {

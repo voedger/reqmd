@@ -276,7 +276,8 @@ func replacePlaceholders(_ T, goldenData *goldenData, commitHashes map[string]st
 		for i, line := range lines {
 			for k, v := range commitHashes {
 				placeholder := fmt.Sprintf("{{.CommitHash.%s}}", k)
-				goldenData.lines[filePath][i] = strings.ReplaceAll(line, placeholder, v)
+				line = strings.ReplaceAll(line, placeholder, v)
+				goldenData.lines[filePath][i] = line
 			}
 		}
 	}
