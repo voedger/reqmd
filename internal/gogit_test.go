@@ -1,4 +1,4 @@
-package internal
+package internal_test
 
 import (
 	"os"
@@ -10,11 +10,10 @@ import (
 	cfg "github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/require"
+	"github.com/voedger/reqmd/internal"
 )
 
-// Abstract: It is not possible to open a git repo from a subfolder using go-git PlainOpen
-//
-// Uses .testdata/gogit_test as a TestFolder
+// Uses .testdata/Test_gogit as a TestFolder
 // Removes TestFolder before running this test
 // Creates a git repo TestFolder
 // Creates a subfolder TestFolder/subfolder1/subfolder2/
@@ -24,9 +23,9 @@ import (
 // Opens repo using NewIGit
 // Checks that Hash can be obtained for all files in TestFolder and its subfolders
 // Checks that TestFolder can be obtained as a root folder of the Repository
-func Test_gogit(t *testing.T) {
+func Test_IGit(t *testing.T) {
 	// Use .testdata/gogit_test as TestFolder
-	testFolder := ".testdata/gogit_test"
+	testFolder := ".testdata/Test_IGit"
 
 	// Create path for subfolders
 	subfolder1 := filepath.Join(testFolder, "subfolder1")
@@ -99,8 +98,8 @@ func Test_gogit(t *testing.T) {
 	require.NoError(t, err)
 
 	// Opens repo using NewIGit
-	var igit IGit
-	igit, err = NewIGit(testFolder)
+	var igit internal.IGit
+	igit, err = internal.NewIGit(testFolder)
 	require.NoError(t, err)
 
 	// Checks that Hash can be obtained for all files in TestFolder and its subfolders
@@ -134,7 +133,7 @@ func Test_gogit(t *testing.T) {
 		relPath, hash, err := igit.FileHash(filePath)
 		require.NoError(t, err, "Should get hash for file %s", f)
 		require.NotEmpty(t, hash, "Hash should not be empty for file %s", f)
-		require.Equal(t, "subfolder1/subfolder2/" + f, relPath, "Relative path should match for %s", f)
+		require.Equal(t, "subfolder1/subfolder2/"+f, relPath, "Relative path should match for %s", f)
 	}
 
 	// Checks that TestFolder can be obtained as a root folder of the Repository
