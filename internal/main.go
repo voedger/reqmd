@@ -19,7 +19,7 @@ var Version string
 func ExecRootCmd(args []string, ver string) error {
 	rootCmd := prepareRootCmd(
 		"reqmd",
-		"Requirements markdown processor",
+		"Requirements processor",
 		args,
 		ver,
 		newTraceCmd(),
@@ -39,7 +39,7 @@ func newVersionCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "version",
-		Short: "Print the version number",
+		Short: "Print reqmd version",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("Version: %s\n", Version)
 			fmt.Printf("info.Main.Version: %s\n", info.Main.Version)
