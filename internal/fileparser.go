@@ -48,7 +48,9 @@ func ParseFile(mctx *MarkdownContext, filePath string) (*FileStructure, []Proces
 		// Source file parsing - always parse coverage tags regardless of file type
 		if !inCodeBlock {
 			tags := parseCoverageTags(filePath, line, lineNum)
-			structure.CoverageTags = append(structure.CoverageTags, tags...)
+			if len(tags) > 0 {
+				structure.CoverageTags = append(structure.CoverageTags, tags...)
+			}
 		}
 
 		// Markdown specific parsing - only if file is markdown

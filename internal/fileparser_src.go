@@ -9,4 +9,4 @@ import (
 
 // Global regex for parsing source file coverage tags.
 // A CoverageTag is expected in the form: [~PackageID/RequirementName~CoverageType]
-var coverageTagRegex = regexp.MustCompile(`\[\~([^/]+)/([^~]+)\~([^\]]+)\]`)
+var coverageTagRegex = regexp.MustCompile(`(?:[^` + "`" + `])\[\~([^/]+)/([^~]+)\~([^\]]+)\]`)

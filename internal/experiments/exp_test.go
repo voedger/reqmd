@@ -1,7 +1,7 @@
 // Copyright (c) 2025-present unTill Software Development Group B. V. and Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-package internal
+package experiments
 
 import (
 	"fmt"
@@ -10,11 +10,12 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"github.com/voedger/reqmd/internal"
 )
 
 // skipIfNoRootCmdMarker skips the test if no .rootcmdYYMMDD file exists
 func skipIfNoRootCmdMarker(t *testing.T) {
-	pattern := fmt.Sprintf(".rootcmd%s", time.Now().Format("060102"))
+	pattern := fmt.Sprintf(".exp%s", time.Now().Format("060102"))
 	matches, err := filepath.Glob(".rootcmd*")
 	if err != nil || len(matches) == 0 {
 		t.Skipf("skipping test, no %s or other .rootcmd* file found", pattern)
@@ -26,14 +27,14 @@ func Test_RootCmd_Draft(t *testing.T) {
 
 	require := require.New(t)
 
-	err := ExecRootCmd([]string{"reqmd", "-v", "trace", "--dry-run", "C:/workspaces/work/voedger-internals", "C:/workspaces/work/voedger"}, "0.0.1")
+	err := internal.ExecRootCmd([]string{"reqmd", "-v", "trace", "--dry-run", ".bugC:/workspaces/work/voedger-internals", "C:/workspaces/work/voedger"}, "0.0.1")
 	require.Nil(err)
 }
 
 func Test_RootCmd_RelativePathsDry(t *testing.T) {
 	skipIfNoRootCmdMarker(t)
 
-	err := ExecRootCmd([]string{"reqmd", "-v", "trace", "--dry-run", "../../voedger-internals", "../../voedger"}, "0.0.1")
+	err := internal.ExecRootCmd([]string{"reqmd", "-v", "trace", "--dry-run", "../../../voedger-internals", "../../../voedger"}, "0.0.1")
 	require.Nil(t, err)
 }
 
@@ -43,6 +44,13 @@ func Test_RootCmd__Draft_RelativePathsApply(t *testing.T) {
 
 	// err := os.Chdir("C:/workspaces/work/voedger-internals/reqman")
 	// require.Nil(t, err)
-	err := ExecRootCmd([]string{"reqmd", "-v", "trace", "../../voedger-internals", "../../voedger"}, "0.0.1")
+	err := internal.ExecRootCmd([]string{"reqmd", "-v", "trace", "../../../voedger-internals", "../../../voedger"}, "0.0.1")
+	require.Nil(t, err)
+}
+
+func Test_RootCmd_Data(t *testing.T) {
+	skipIfNoRootCmdMarker(t)
+
+	err := internal.ExecRootCmd([]string{"reqmd", "-v", "trace", "--dry-run", ".data/voedger-internals/server/apiv2", "../../../voedger"}, "0.0.1")
 	require.Nil(t, err)
 }
