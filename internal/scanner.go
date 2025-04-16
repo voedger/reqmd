@@ -46,8 +46,13 @@ func NewScanner(extensions string) IScanner {
 	return s
 }
 
+type scanCtx struct {
+	my     sync.Mutex
+	result *ScannerResult
+}
+
 // Scan scans multiple paths that can each contain both markdown and source files
-func (s *scanner) Scan(paths []string) (*ScannerResult, error) {
+func (s *scanner) Scan(paths []string) (res *ScannerResult, err error) {
 	// Reset statistics
 	start := time.Now()
 	s.stats.processedFiles.Store(0)
@@ -55,14 +60,10 @@ func (s *scanner) Scan(paths []string) (*ScannerResult, error) {
 	s.stats.skippedFiles.Store(0)
 	s.stats.skippedBytes.Store(0)
 
-	files, errs, err := s.scanPaths(paths)
+	res, err = s.scanPaths(paths)
+
 	if err != nil {
 		return nil, err
-	}
-
-	result := &ScannerResult{
-		Files:            files,
-		ProcessingErrors: errs,
 	}
 
 	// Report statistics after scanning is complete
@@ -74,7 +75,7 @@ func (s *scanner) Scan(paths []string) (*ScannerResult, error) {
 		"duration", time.Since(start),
 	)
 
-	return result, nil
+	return res, nil
 }
 
 type scanner struct {
@@ -206,7 +207,7 @@ func (s *scanner) scanFile(mu *sync.Mutex, filePath string, mctx *MarkdownContex
 	return nil
 }
 
-func (s *scanner) scanPaths(paths []string) ([]FileStructure, []ProcessingError, error) {
+func (s *scanner) scanPaths(paths []string) (res *ScannerResult, error) {
 	var files []FileStructure
 	var syntaxErrors []ProcessingError
 
