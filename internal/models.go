@@ -101,6 +101,10 @@ type CoverageTag struct {
 	Line          int           // line number where the coverage tag was found
 }
 
+func (c *CoverageTag) String() string {
+	return fmt.Sprintf("%s/%s:%d", c.RequirementId, c.CoverageType, c.Line)
+}
+
 // CoverageFootnote represents the footnote in Markdown that references coverage tags.
 type CoverageFootnote struct {
 	FilePath           string

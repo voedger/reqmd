@@ -55,8 +55,7 @@ func (s *scanner) Scan(paths []string) (*ScannerResult, error) {
 	s.stats.skippedFiles.Store(0)
 	s.stats.skippedBytes.Store(0)
 
-	// Use the unified scanFiles method to process all paths
-	files, errs, err := s.scanFiles(paths)
+	files, errs, err := s.scanPaths(paths)
 	if err != nil {
 		return nil, err
 	}
@@ -107,6 +106,10 @@ func (s *scanner) scanFile(mu *sync.Mutex, filePath string, mctx *MarkdownContex
 	filePath = filepath.ToSlash(filePath)
 	ext := strings.ToLower(filepath.Ext(filePath))
 
+	if IsVerbose {
+		Verbose("scanFile: filePath=" + filePath)
+	}
+
 	// Get file info to check size
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
@@ -127,6 +130,7 @@ func (s *scanner) scanFile(mu *sync.Mutex, filePath string, mctx *MarkdownContex
 
 	// Skip files with unsupported extensions
 	if ext != markdownExtension && !s.sourceExtensions[ext] {
+		Verbose("Skipping unsupported file", "path", filePath, "extension", ext)
 		return nil
 	}
 
@@ -144,19 +148,34 @@ func (s *scanner) scanFile(mu *sync.Mutex, filePath string, mctx *MarkdownContex
 
 	// Get relative path for the file
 	relPath, err := filepath.Rel(git.PathToRoot(), filePath)
+	if IsVerbose {
+		Verbose("scanFile: relPath=" + relPath + " PathToRoot=" + git.PathToRoot())
+	}
 	if err != nil {
 		return fmt.Errorf("failed to get relative path: %w", err)
 	}
 	relPath = filepath.ToSlash(relPath)
 
+	if IsVerbose {
+		Verbose("scanFile: before git.FileHash: " + filePath)
+	}
+
 	// Try to get file hash - this will fail for untracked files
 	hash, err := git.FileHash(relPath)
 	if err != nil {
 		// Skip untracked files
+		if IsVerbose {
+			Verbose("scanFile: skipping untracked file: " + relPath + ", error: " + err.Error())
+		}
 		return nil
 	}
 
 	// Parse the file once
+
+	if IsVerbose {
+		Verbose("scanFile: before ParseFile: " + filePath)
+	}
+
 	structure, errs, err := ParseFile(mctx, filePath)
 	if err != nil {
 		return err
@@ -187,7 +206,7 @@ func (s *scanner) scanFile(mu *sync.Mutex, filePath string, mctx *MarkdownContex
 	return nil
 }
 
-func (s *scanner) scanFiles(paths []string) ([]FileStructure, []ProcessingError, error) {
+func (s *scanner) scanPaths(paths []string) ([]FileStructure, []ProcessingError, error) {
 	var files []FileStructure
 	var syntaxErrors []ProcessingError
 

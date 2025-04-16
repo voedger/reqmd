@@ -14,6 +14,10 @@ import (
 // ParseFile processes a file as both markdown and source file
 // It combines the logic of ParseMarkdownFile and ParseSourceFile into a single pass
 func ParseFile(mctx *MarkdownContext, filePath string) (*FileStructure, []ProcessingError, error) {
+	if IsVerbose {
+		Verbose("File", "file", filePath)
+	}
+
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("ParseFile: failed to open file: %w", err)
@@ -124,7 +128,7 @@ func ParseFile(mctx *MarkdownContext, filePath string) (*FileStructure, []Proces
 }
 
 // parseCoverageTags finds and returns all coverage tags in a given line.
-func parseCoverageTags(_ string, line string, lineNum int) []CoverageTag {
+func parseCoverageTags(filePath string, line string, lineNum int) []CoverageTag {
 	var tags []CoverageTag
 	matches := coverageTagRegex.FindAllStringSubmatch(line, -1)
 	for _, match := range matches {
@@ -135,6 +139,9 @@ func parseCoverageTags(_ string, line string, lineNum int) []CoverageTag {
 				Line:          lineNum,
 			}
 			tags = append(tags, tag)
+			if IsVerbose {
+				Verbose("CoverageTag", "tag", tag.String(), "file", filePath)
+			}
 		}
 	}
 	return tags
