@@ -150,14 +150,14 @@ Where:
 An example of CoverageURL:
 
 ```text
-https://github.com/voedger/voedger/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/pkg/sys/sys.vsql#L4
+https://github.com/voedger/voedger/blob/main/pkg/sys/sys.vsql#L4
 ```
 
 Where:
 
-- `https://github.com/voedger/voedger/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/pkg/sys/sys.vsql` - FileURL
+- `https://github.com/voedger/voedger/blob/main/pkg/sys/sys.vsql` - FileURL
 - `pkg/sys/sys.vsql` - FilePath
-- `979d75b2c7da961f94396ce2b286e7389eb73d75` - CommitHash
+- `main` - CommitRef
 - `L4` - CoverageArea  
 
 Syntax:
@@ -172,15 +172,18 @@ Syntax:
   CoverageURL  = FileURL [?plain=1] "#" CoverageArea .
   FileURL = GitHubURL | GitLabURL .
 
-  GitHubURL      = GitHubBaseURL "/blob/" CommitHash "/" FilePath .
+  GitHubURL      = GitHubBaseURL "/blob/" CommitRef "/" FilePath .
   GitHubBaseURL  = "https://github.com/" Owner "/" Repository .
 
-  GitLabURL      = GitLabBaseURL "/-/blob/" CommitHash "/" FilePath .
+  GitLabURL      = GitLabBaseURL "/-/blob/" CommitRef "/" FilePath .
   GitLabBaseURL  = "https://gitlab.com/" Owner "/" Repository .
 
   Owner          = Identifier .
   Repository     = Identifier .
+  CommitRef      = "main" | "master" | BranchName | CommitHash .
+  BranchName     = Name { Name | Digit | "-" | "_" | "/" } .
   CommitHash     = HexDigit { HexDigit } .
+  HexDigit       = Digit | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F" .
   FilePath       = { AnyCharacter - ("?" | "#") } .
   CoverageArea   = "L" Number .
 ```
@@ -234,29 +237,4 @@ Breakdown of the `[~server.api.v2/Post.handler~test]`:
   SourceFile   = { SourceElement } ;
   SourceElement = CoverageTag | PlainText ;
   CoverageTag  = "[" "~" PackageID "/" RequirementName "~" CoverageType "]";
-```
-
-## reqmd.json
-
-- reqmd.json contains information necessary for the tool to process the requirements
-- reqmd.json files are updated by the tool during the processing of the requirements and shall be committed to the repository
-- This file is create per folder if markdown files are present and contains RequirementSites
-- Processing shall survive the deletion of the reqmd.json file and missing FileURLs
-
-Structure
-
-- FileURL2FileHash
-  - Maps FileURL to FileHash
-  - FileURLs shall be ordered lexically to avoid unnecessary changes and merge conflicts
-
-Example:
-
-```json
-{
-  "FileHashes" : {
-    "https://github.com/voedger/voedger/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/pkg/api/handler.go": "979d75b2c7da961f94396ce2b286e7389eb73d75",
-    "https://github.com/voedger/voedger/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/pkg/api/handler_test.go", "845a23c8f9d6a8b7e9c2d4f5a6b7c8d9e0f1a2b3", 
-    "https://gitlab.com/myorg/project/-/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/src/core/processor.ts", "123f45e6c7d8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
-  }
-}
 ```
