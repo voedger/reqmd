@@ -28,24 +28,24 @@ Cons:
 
 ### 1. Update EBNF definitions
 
-- Modify the EBNF grammar in [docs/ebnf.md](c:/workspaces/work/reqmd/docs/ebnf.md) to replace CommitHash with CommitRef
+- Modify the EBNF grammar in [docs/ebnf.md](../docs/ebnf.md) to replace CommitHash with CommitRef
 - Update related EBNF definitions for CoverageFootnote, CoverageURL, and other affected elements
 
 ### 2. Update data models
 
-- Modify the models in [internal/models.go](c:/workspaces/work/reqmd/internal/models.go):
+- Modify the models in [internal/models.go](../internal/models.go):
   - Replace CommitHash field with CommitRef in relevant structs
   - Update FileURL construction to use CommitRef instead of CommitHash
 
 ### 3. Update GitHash retrieval
 
-- Modify [internal/gogit.go](c:/workspaces/work/reqmd/internal/gogit.go) to:
+- Modify [internal/gogit.go](../internal/gogit.go) to:
   - Add GetDefaultBranch() function that returns "main" by default
   - Update interface and implementation methods to work with CommitRef instead of CommitHash
 
 ### 4. Update Analyzer logic
 
-- Modify [internal/analyzer.go](c:/workspaces/work/reqmd/internal/analyzer.go):
+- Modify [internal/analyzer.go](../internal/analyzer.go):
   - Remove hash comparison logic since it's no longer needed
   - Update action generation to use CommitRef instead of CommitHash
 
@@ -57,7 +57,7 @@ Cons:
 ### 6. Remove reqmdfiles.json handling
 
 - Remove code that reads/writes reqmdfiles.json since we don't need to track file hashes anymore
-- Update [internal/applier.go](c:/workspaces/work/reqmd/internal/applier.go) to remove ApplyReqmdjsonAction function
+- Update [internal/applier.go](../internal/applier.go) to remove ApplyReqmdjsonAction function
 - Update tests to reflect the removal of this functionality
 
 ### 7. Update tests
@@ -68,11 +68,11 @@ Cons:
 
 ### 8. Documentation updates
 
-- Update [docs/design.md](c:/workspaces/work/reqmd/docs/design.md) to reflect the new approach
-- Update [README.md](c:/workspaces/work/reqmd/README.md) to explain the changes
+- Update [docs/design.md](../docs/design.md) to reflect the new approach
+- Update [README.md](../README.md) to explain the changes
 - Add explanation that line numbers may change if files are modified
 
 ### 9. System tests
 
-- Update [docs/design-systests.md](c:/workspaces/work/reqmd/docs/design-systests.md) test cases to reflect these changes
+- Update [docs/design-systests.md](../docs/design-systests.md) test cases to reflect these changes
 - Add tests that verify correct behavior with different branch names
