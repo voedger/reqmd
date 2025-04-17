@@ -17,6 +17,7 @@
 # Working files and folders
 .*
 .*/
+!.github/
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
