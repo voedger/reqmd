@@ -24,7 +24,7 @@ func isCodeBlockMarker(line string) bool {
 	return codeBlockMarkerRegex.MatchString(line)
 }
 
-func ParseRequirements(filePath string, line string, lineNum int, errors *[]ProcessingError) []RequirementSite {
+func parseRequirements(filePath string, line string, lineNum int, errors *[]ProcessingError) []RequirementSite {
 	var requirements []RequirementSite
 
 	matches := RequirementSiteRegex.FindAllStringSubmatch(line, -1)
@@ -34,6 +34,9 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 	}
 
 	for _, match := range matches {
+		if IsVerbose {
+			Verbose("parseRequirements: RequirementSite", match[0])
+		}
 		reqName := match[1]
 		if !identifierRegex.MatchString(reqName) {
 			*errors = append(*errors, NewErrReqIdent(filePath, lineNum))

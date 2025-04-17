@@ -70,18 +70,12 @@ func FoldersScanner(nroutines int, nerrors int, root string, fp FolderProcessor)
 		go func() {
 			defer wg.Done()
 			for task := range fileProcessors {
-				if IsVerbose {
-					Verbose("FoldersScanner", "fileProcessor.path.started", task.path)
-				}
 				if err := task.processor(task.path); err != nil {
 					select {
 					case errorsChan <- err:
 					default:
 						// Channel is full, log or handle accordingly
 					}
-				}
-				if IsVerbose {
-					Verbose("FoldersScanner", "fileProcessor.path.done", task.path)
 				}
 			}
 		}()
@@ -122,14 +116,14 @@ func FoldersScanner(nroutines int, nerrors int, root string, fp FolderProcessor)
 
 		// Process entries
 		for _, entry := range entries {
-			path := filepath.Join(currentFolder, entry.Name())
+			path := filepath.ToSlash(filepath.Join(currentFolder, entry.Name()))
 
 			if entry.IsDir() {
 				// Add subfolder to the queue
 				folders = append(folders, path)
 			} else {
 				if IsVerbose {
-					Verbose("FileEntry", "entry", path)
+					Verbose("FoldersScanner: entry", path)
 				}
 				// Send file to processing pool
 				fileProcessors <- struct {

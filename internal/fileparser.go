@@ -11,11 +11,11 @@ import (
 	"strings"
 )
 
-// ParseFile processes a file as both markdown and source file
+// parseFile processes a file as both markdown and source file
 // It combines the logic of ParseMarkdownFile and ParseSourceFile into a single pass
-func ParseFile(mctx *MarkdownContext, filePath string) (*FileStructure, []ProcessingError, error) {
+func parseFile(mctx *MarkdownContext, filePath string) (*FileStructure, []ProcessingError, error) {
 	if IsVerbose {
-		Verbose("File", "file", filePath)
+		Verbose("parseFile", filePath)
 	}
 
 	file, err := os.Open(filePath)
@@ -100,7 +100,7 @@ func ParseFile(mctx *MarkdownContext, filePath string) (*FileStructure, []Proces
 			// Only parse requirements and footnotes when not in a code block
 			if !inCodeBlock {
 				// Parse requirements
-				requirements := ParseRequirements(filePath, line, lineNum, &errors)
+				requirements := parseRequirements(filePath, line, lineNum, &errors)
 				structure.Requirements = append(structure.Requirements, requirements...)
 
 				// Parse coverage footnotes
@@ -140,7 +140,7 @@ func parseCoverageTags(filePath string, line string, lineNum int) []CoverageTag 
 			}
 			tags = append(tags, tag)
 			if IsVerbose {
-				Verbose("CoverageTag", "tag", tag.String(), "file", filePath)
+				Verbose("parseCoverageTags: CoverageTag:", "tag", tag.String(), "file", filePath)
 			}
 		}
 	}

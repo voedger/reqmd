@@ -16,7 +16,7 @@ import (
 func TestFileParser_md(t *testing.T) {
 	testDataFile := filepath.Join("testdata", "mdparser-1.md")
 
-	basicFile, _, err := ParseFile(newMdCtx(), testDataFile)
+	basicFile, _, err := parseFile(newMdCtx(), testDataFile)
 	require.NoError(t, err)
 
 	// Test package ID and requirements count
@@ -58,7 +58,7 @@ func TestFileParser_md(t *testing.T) {
 
 func TestFileParser_md_error_pkgident(t *testing.T) {
 	testData := filepath.Join("testdata", "systest", "errors", "err_pkgident.md")
-	_, errors, err := ParseFile(newMdCtx(), testData)
+	_, errors, err := parseFile(newMdCtx(), testData)
 	require.NoError(t, err)
 	require.Len(t, errors, 1, "expected exactly 1 syntax error")
 }
@@ -74,7 +74,7 @@ This content should be ignored. ` + "`~REQ001~`" + `
 	require.NoError(t, os.WriteFile(tmpfile, content, 0644))
 
 	// Parse the file
-	structure, errs, err := ParseFile(newMdCtx(), tmpfile)
+	structure, errs, err := parseFile(newMdCtx(), tmpfile)
 	require.NoError(t, err)
 	assert.Empty(t, errs)
 	assert.NotNil(t, structure)
@@ -86,7 +86,7 @@ This content should be ignored. ` + "`~REQ001~`" + `
 func TestFileParser_src(t *testing.T) {
 	// Test data file contains a line with: [~server.api.v2/Post.handler~test]
 	testDataFile := filepath.Join("testdata", "srccoverparser-1.go")
-	srcFile, syntaxErrors, err := ParseFile(newMdCtx(), testDataFile)
+	srcFile, syntaxErrors, err := parseFile(newMdCtx(), testDataFile)
 	require.NoError(t, err)
 	assert.Len(t, syntaxErrors, 0)
 
@@ -127,7 +127,7 @@ func newMdCtx() *MarkdownContext {
 
 func TestParseRequirements_invalid_coverage_status(t *testing.T) {
 	var errors []ProcessingError
-	res := ParseRequirements("test.md", "`~Post.handler~`covrd[^~Post.handler~]", 1, &errors)
+	res := parseRequirements("test.md", "`~Post.handler~`covrd[^~Post.handler~]", 1, &errors)
 	require.Len(t, res, 0)
 }
 
@@ -187,7 +187,7 @@ func TestParseRequirements_table(t *testing.T) {
 	for tidx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var errors []ProcessingError
-			got := ParseRequirements("test.md", tt.input, 1, &errors)
+			got := parseRequirements("test.md", tt.input, 1, &errors)
 
 			require.Equal(t, len(tt.expected), len(got), "number of requirements mismatch: %d: %s: %s", tidx, tt.name, tt.input)
 			for i, exp := range tt.expected {
@@ -329,7 +329,7 @@ func TestParseRequirements_errors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var errors []ProcessingError
 			line := tt.line
-			requirements := ParseRequirements("test.md", line, tt.wantErr.Line, &errors)
+			requirements := parseRequirements("test.md", line, tt.wantErr.Line, &errors)
 
 			// Check that no requirements were returned
 			assert.Nil(t, requirements, "%d: should return nil requirements", tidx)

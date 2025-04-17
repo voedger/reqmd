@@ -113,7 +113,7 @@ func (s *scanner) scanFile(filePath string, mctx *MarkdownContext, igit IGit) er
 	ext := strings.ToLower(filepath.Ext(filePath))
 
 	if IsVerbose {
-		Verbose("scanFile: filePath=" + filePath)
+		Verbose("scanFile: filePath", filePath)
 	}
 
 	// Get file info to check size
@@ -136,7 +136,7 @@ func (s *scanner) scanFile(filePath string, mctx *MarkdownContext, igit IGit) er
 
 	// Skip files with unsupported extensions
 	if ext != markdownExtension && !s.sourceExtensions[ext] {
-		Verbose("Skipping unsupported file", "path", filePath, "extension", ext)
+		Verbose("scanFile: skipping unsupported file", "extension", ext, "path", filePath)
 		return nil
 	}
 
@@ -145,18 +145,14 @@ func (s *scanner) scanFile(filePath string, mctx *MarkdownContext, igit IGit) er
 	if err != nil {
 		// Skip untracked files
 		if IsVerbose {
-			Verbose("scanFile: skipping untracked file: " + filePath + ", error: " + err.Error())
+			Verbose("scanFile: skipping untracked file" + filePath + ", error: " + err.Error())
 		}
 		return nil
 	}
 
 	// Parse the file once
 
-	if IsVerbose {
-		Verbose("scanFile: before ParseFile: " + filePath)
-	}
-
-	structure, errs, err := ParseFile(mctx, filePath)
+	structure, errs, err := parseFile(mctx, filePath)
 	if err != nil {
 		return err
 	}
@@ -212,7 +208,7 @@ func (s *scanner) folderProcessor(folderPath string, igit IGit) (FileProcessor, 
 
 	// If folder name starts with a dot, skip it
 	if strings.HasPrefix(filepath.Base(folderPath), ".") {
-		Verbose("Skipping folder", "path", folderPath)
+		Verbose("folderProcessor: skipping folder", "path", folderPath)
 		return nil, nil
 	}
 
