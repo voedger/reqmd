@@ -35,7 +35,7 @@ func parseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 
 	for _, match := range matches {
 		if IsVerbose {
-			Verbose("parseRequirements: RequirementSite", match[0])
+			Verbose("parseRequirements: RequirementSite", "site", match[0], "line", lineNum, "file", filePath)
 		}
 		reqName := match[1]
 		if !identifierRegex.MatchString(reqName) {

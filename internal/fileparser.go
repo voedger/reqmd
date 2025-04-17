@@ -140,7 +140,7 @@ func parseCoverageTags(filePath string, line string, lineNum int) []CoverageTag 
 			}
 			tags = append(tags, tag)
 			if IsVerbose {
-				Verbose("parseCoverageTags: CoverageTag:", "tag", tag.String(), "file", filePath)
+				Verbose("parseCoverageTags: CoverageTag", "tag", match[0], "line", lineNum, "file", filePath)
 			}
 		}
 	}
