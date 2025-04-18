@@ -64,7 +64,7 @@ func (t *tracer) trace() error {
 			return fmt.Errorf("failed to get absolute path for %s: %w", path, err)
 		}
 		absolutePaths[i] = absolutePath
-		Verbose("Absolute path: " + absolutePath)
+		Verbose("trace: absolute path: " + absolutePath)
 	}
 
 	// Pass all paths to scanner

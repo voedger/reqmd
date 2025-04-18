@@ -23,15 +23,15 @@ func NewApplier(dryRun bool) IApplier {
 
 func (a *applier) Apply(ar *AnalyzerResult) error {
 	if a.dryRun || IsVerbose {
-		Verbose("Actions that would be applied:")
 		for _, actions := range ar.MdActions {
 			for _, action := range actions {
-				Verbose("Action\n\t" + action.String())
+				fmt.Println("Action\n\t" + action.String())
 			}
 		}
-		if a.dryRun {
-			return nil
-		}
+	}
+	if len(ar.MdActions) == 0 {
+		fmt.Println("reqmd: Nothing to do")
+		return nil
 	}
 	if a.dryRun {
 		return nil

@@ -4,7 +4,6 @@
 package internal
 
 import (
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -101,6 +100,10 @@ type CoverageTag struct {
 	Line          int           // line number where the coverage tag was found
 }
 
+func (c *CoverageTag) String() string {
+	return fmt.Sprintf("%s/%s:%d", c.RequirementId, c.CoverageType, c.Line)
+}
+
 // CoverageFootnote represents the footnote in Markdown that references coverage tags.
 type CoverageFootnote struct {
 	FilePath           string
@@ -153,7 +156,7 @@ func sortCoverers(coverers []Coverer) {
 		}
 
 		// Finally compare by CoverageURL
-		return coverers[i].CoverageUrL < coverers[j].CoverageUrL
+		return coverers[i].CoverageURL < coverers[j].CoverageURL
 	})
 }
 
@@ -164,7 +167,7 @@ func FormatCoverageFootnote(cf *CoverageFootnote) string {
 
 	var refs []string
 	for _, coverer := range cf.Coverers {
-		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageUrL))
+		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageURL))
 	}
 	hint := fmt.Sprintf("`[~%s/%s~impl]`", cf.PackageID, cf.RequirementName)
 	if len(refs) > 0 {
@@ -178,11 +181,11 @@ func FormatCoverageFootnote(cf *CoverageFootnote) string {
 // Coverer represents one coverage reference within a footnote, e.g., [folder/file:line:impl](URL)
 type Coverer struct {
 	CoverageLabel string // e.g., "folder/file.go:42:impl"
-	CoverageUrL   string // full URL including commit hash
-	FileHash      string // git hash of the file specified in CoverageURL
+	CoverageURL   string // full URL including commit hash
+	fileHash      string // git hash of the file specified in CoverageURL, not used currently
 }
 
-func FileUrl(coverageURL string) string {
+func FileURL(coverageURL string) string {
 	idx := strings.LastIndex(coverageURL, "#L")
 	if idx == -1 {
 		return coverageURL
@@ -191,64 +194,6 @@ func FileUrl(coverageURL string) string {
 }
 
 const ReqmdjsonFileName = "reqmd.json"
-
-// Reqmdjson models the structure of the reqmd.json file.
-type Reqmdjson struct {
-	FileUrl2FileHash map[string]string //
-}
-
-// MarshalJSON implements custom JSON serialization for Reqmdjson
-// to ensure FileURLs are ordered lexically
-func (r *Reqmdjson) MarshalJSON() ([]byte, error) {
-	// Get all keys and sort them
-	keys := make([]string, 0, len(r.FileUrl2FileHash))
-	for k := range r.FileUrl2FileHash {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	// Build ordered map manually
-	var b strings.Builder
-	b.WriteString(`{"FileUrl2FileHash":{`)
-	for i, k := range keys {
-		if i > 0 {
-			b.WriteString(",")
-		}
-		// Marshal key and value properly to handle special characters
-		keyJSON, err := json.Marshal(k)
-		if err != nil {
-			return nil, err
-		}
-		valueJSON, err := json.Marshal(r.FileUrl2FileHash[k])
-		if err != nil {
-			return nil, err
-		}
-		b.Write(keyJSON)
-		b.WriteString(":")
-		b.Write(valueJSON)
-	}
-	b.WriteString("}}")
-	return []byte(b.String()), nil
-}
-
-// UnmarshalJSON implements custom JSON deserialization for Reqmdjson, in fact it would work without it.
-// Reasons to keep the custom `UnmarshalJSON`:
-// 1. **Symmetry** - We have a custom `MarshalJSON` that ensures lexical ordering of keys. It's good practice to have matching marshal/unmarshal methods for consistency.
-// 2. **Future-proofing** - If we later add validation or transformation logic during unmarshaling, having the method already in place makes it easier.
-// 3. **Explicit contract** - The custom method makes it clear how the JSON deserialization should behave, even if it currently matches the default behavior.
-// So while removing it would work technically, we keep it for maintainability and clarity.
-func (r *Reqmdjson) UnmarshalJSON(data []byte) error {
-	// Use a temporary type to avoid infinite recursion
-	type TempReqmdjson struct {
-		FileHashes map[string]string `json:"FileURL2FileHash"`
-	}
-	var temp TempReqmdjson
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
-	r.FileUrl2FileHash = temp.FileHashes
-	return nil
-}
 
 type ProcessingError struct {
 	Code     string // error code (e.g., "pkgident")
@@ -270,7 +215,7 @@ func (e *ProcessingErrors) Error() string {
 
 	var msgs []string
 	for _, err := range e.Errors {
-		msgs = append(msgs, fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message))
+		msgs = append(msgs, fmt.Sprintf("%s:%d: %s: %s", err.FilePath, err.Line, err.Code, err.Message))
 	}
 	return strings.Join(msgs, "\n")
 }
@@ -306,6 +251,5 @@ func (a *MdAction) String() string {
 // AnalyzerResult contains results from the analysis phase
 type AnalyzerResult struct {
 	MdActions        map[FilePath][]MdAction
-	Reqmdjsons       map[FolderPath]*Reqmdjson
 	ProcessingErrors []ProcessingError
 }

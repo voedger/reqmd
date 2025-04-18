@@ -5,6 +5,8 @@ package internal
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -13,6 +15,30 @@ import (
 )
 
 func NewIGit(path string) (IGit, error) {
+
+	// Find path to the root of the git repository
+	{
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get absolute path: %w", err)
+		}
+		absPath = filepath.ToSlash(absPath)
+		var gitPath string
+		currentPath := absPath
+		for {
+			if _, err := os.Stat(filepath.Join(currentPath, gitFolderName)); err == nil {
+				gitPath = currentPath
+				break
+			}
+			parent := filepath.Dir(currentPath)
+			if parent == currentPath {
+				return nil, fmt.Errorf("no git repository found for path: %s", path)
+			}
+			currentPath = parent
+		}
+		path = gitPath
+	}
+
 	repo, err := gog.PlainOpen(path)
 	if err != nil {
 		return nil, err
@@ -55,24 +81,23 @@ type git struct {
 
 // Returns the hash of a file in the git repository.
 // filePath is not necessary relative to the repository root.
-func (g *git) FileHash(filePath string) (string, error) {
+func (g *git) FileHash(filePath string) (relPath, hash string, err error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	file, err := g.tree.FindEntry(filePath)
+	relPath, err = filepath.Rel(g.PathToRoot(), filePath)
+	relPath = filepath.ToSlash(relPath)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	return file.Hash.String(), nil
+	file, err := g.tree.FindEntry(relPath)
+	if err != nil {
+		return "", "", err
+	}
+	return relPath, file.Hash.String(), nil
 }
 
 func (g *git) PathToRoot() string {
 	return g.pathToRoot
-}
-
-func (g *git) CommitHash() string {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-	return g.commit.Hash.String()
 }
 
 func (g *git) constructRepoRootFolderURL() error {
@@ -91,14 +116,31 @@ func (g *git) constructRepoRootFolderURL() error {
 	}
 	remoteURL := urls[0]
 
-	branchName := g.commit.Hash.String()
+	// Determine which branch to use
+	var commitRef string
+
+	// Check if main branch exists
+	_, err = g.repo.Reference("refs/heads/main", false)
+	if err == nil {
+		// Main branch exists
+		commitRef = "main"
+	} else {
+		// Check if master branch exists
+		_, err = g.repo.Reference("refs/heads/master", false)
+		if err == nil {
+			// Master branch exists
+			commitRef = "master"
+		} else {
+			return fmt.Errorf("neither main nor master branch exists")
+		}
+	}
 
 	// Detect provider and construct URL
 	switch {
 	case strings.Contains(remoteURL, "github.com"):
-		g.repoRootFolderURL = fmt.Sprintf("%s/blob/%s", remoteURL, branchName)
+		g.repoRootFolderURL = fmt.Sprintf("%s/blob/%s", remoteURL, commitRef)
 	case strings.Contains(remoteURL, "gitlab.com"):
-		g.repoRootFolderURL = fmt.Sprintf("%s/-/blob/%s", remoteURL, branchName)
+		g.repoRootFolderURL = fmt.Sprintf("%s/-/blob/%s", remoteURL, commitRef)
 	default:
 		return fmt.Errorf("unsupported git provider: %s", remoteURL)
 	}

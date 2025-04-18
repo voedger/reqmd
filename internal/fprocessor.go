@@ -116,12 +116,15 @@ func FoldersScanner(nroutines int, nerrors int, root string, fp FolderProcessor)
 
 		// Process entries
 		for _, entry := range entries {
-			path := filepath.Join(currentFolder, entry.Name())
+			path := filepath.ToSlash(filepath.Join(currentFolder, entry.Name()))
 
 			if entry.IsDir() {
 				// Add subfolder to the queue
 				folders = append(folders, path)
 			} else {
+				if IsVerbose {
+					Verbose("FoldersScanner: entry", path)
+				}
 				// Send file to processing pool
 				fileProcessors <- struct {
 					processor FileProcessor

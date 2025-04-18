@@ -36,12 +36,12 @@ func NewErrCoverageStatusWord(filePath string, line int, CoverageStatusWord stri
 }
 
 // URL shall adhere to a valid syntax
-func NewErrURLSyntax(filePath string, line int, URL string) ProcessingError {
+func NewErrURLSyntax(filePath string, line int, URL string, err error) ProcessingError {
 	return ProcessingError{
 		Code:     "urlsyntax",
 		FilePath: filePath,
 		Line:     line,
-		Message:  "URL shall adhere to a valid syntax: " + URL,
+		Message:  "the URL provided is invalid: " + err.Error() + ": " + URL,
 	}
 }
 

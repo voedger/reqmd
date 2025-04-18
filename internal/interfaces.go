@@ -26,19 +26,8 @@ type IApplier interface {
 }
 
 type IGit interface {
-	PathToRoot() string
-	FileHash(relativeFilePath string) (string, error)
+	// Slashed, absolute path to the root of the git repository
+	PathToRoot() string // TODO: do we need this?
+	FileHash(absoluteFilePath string) (relPath, hash string, err error)
 	RepoRootFolderURL() string
 }
-
-// Optional specialized parsers, if you want to keep them separate:
-// IMarkdownParser could parse only Markdown files.
-// ISourceCoverageParser could parse only source files.
-//
-// type IMarkdownParser interface {
-// 	ParseMarkdown(path string) (FileStructure, []ProcessingError)
-// }
-//
-// type ISourceCoverageParser interface {
-// 	ParseSourceCoverage(path string) (FileStructure, []ProcessingError)
-// }

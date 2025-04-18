@@ -16,7 +16,6 @@ var (
 )
 
 type MarkdownContext struct {
-	rfiles *Reqmdjson
 }
 
 // isCodeBlockMarker checks if a line is a code block marker, handling indentation
@@ -24,7 +23,7 @@ func isCodeBlockMarker(line string) bool {
 	return codeBlockMarkerRegex.MatchString(line)
 }
 
-func ParseRequirements(filePath string, line string, lineNum int, errors *[]ProcessingError) []RequirementSite {
+func parseRequirements(filePath string, line string, lineNum int, errors *[]ProcessingError) []RequirementSite {
 	var requirements []RequirementSite
 
 	matches := RequirementSiteRegex.FindAllStringSubmatch(line, -1)
@@ -34,6 +33,9 @@ func ParseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 	}
 
 	for _, match := range matches {
+		if IsVerbose {
+			Verbose("parseRequirements: RequirementSite", "site", match[0], "line", lineNum, "file", filePath)
+		}
 		reqName := match[1]
 		if !identifierRegex.MatchString(reqName) {
 			*errors = append(*errors, NewErrReqIdent(filePath, lineNum))
@@ -84,22 +86,18 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 			covererMatches := CovererRegex.FindAllStringSubmatch(matches[5], -1)
 			for _, covMatch := range covererMatches {
 				if len(covMatch) > 2 {
-					parsedURL, err := url.Parse(covMatch[2])
-
+					_, err := url.Parse(covMatch[2])
 					// Add NewErrURLSyntax to errs
 					if err != nil {
-						*errs = append(*errs, NewErrURLSyntax(filePath, lineNum, covMatch[2]))
+						*errs = append(*errs, NewErrURLSyntax(filePath, lineNum, covMatch[2], err))
 						continue
 					}
 
 					coverer := Coverer{
 						CoverageLabel: covMatch[1],
-						CoverageUrL:   covMatch[2],
+						CoverageURL:   covMatch[2],
 					}
-					fileURL := parsedURL.Scheme + "://" + parsedURL.Host + parsedURL.Path
-					if mctx != nil && mctx.rfiles != nil {
-						coverer.FileHash = mctx.rfiles.FileUrl2FileHash[fileURL]
-					}
+
 					footnote.Coverers = append(footnote.Coverers, coverer)
 				}
 			}

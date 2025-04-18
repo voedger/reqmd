@@ -9,13 +9,13 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
-	cfg "github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/require"
 )
@@ -71,12 +71,28 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ve
 
 	commitHashes := make(map[string]string)
 
+	// tempTestFolder keeps all test data for the current testID
+	tempTestBaseFolder, err := filepath.Abs(filepath.Join(".testdata", testID))
+	require.NoError(t, err, "Failed to get absolute path for tempTestBaseFolder: %s", tempTestBaseFolder)
+	{
+		// Remove tempTestFolder if it exists
+		err = os.RemoveAll(tempTestBaseFolder)
+		require.NoError(t, err, "Failed to remove tempTestFolder: %s", tempTestBaseFolder)
+
+		// Create tempTestFolder
+		err = os.MkdirAll(tempTestBaseFolder, 0755)
+		require.NoError(t, err, "Failed to create tempTestFolder: %s", tempTestBaseFolder)
+	}
+
+	// Copy all test data to tempTestFolder and create git repos
 	for _, testFolderAbsPath := range testFolderAbsPaths {
-		tempFolder := t.TempDir()
 		tempFolderAlias := ""
 		if len(testFolderAbsPaths) > 1 {
 			tempFolderAlias = filepath.Base(testFolderAbsPath)
 		}
+		tempFolder := filepath.Join(tempTestBaseFolder, tempFolderAlias)
+		err = os.MkdirAll(tempFolder, 0755)
+		require.NoError(t, err, "Failed to create tempFolder: %s", tempFolder)
 
 		allTempFolders = append(allTempFolders, tempFolder)
 
@@ -173,25 +189,33 @@ func findSysTestDataDir(testsDir string, testID string) (string, error) {
 // createGitRepo initializes a git repository in the given directory
 func createGitRepo(t T, dir string) {
 	// Initialize repository
-	repo, err := git.PlainInit(dir, false)
+	err := runGitCommand(dir, "init", "-b", "main")
 	require.NoError(t, err, "Failed to initialize git repo in %s", dir)
 
 	// Configure git user for commit
-	config, err := repo.Config()
-	require.NoError(t, err, "Failed to get git config")
-
-	config.User.Name = "Test User"
-	config.User.Email = "test@example.com"
-
-	err = repo.SetConfig(config)
-	require.NoError(t, err, "Failed to set git config")
+	err = runGitCommand(dir, "config", "user.name", "Test User")
+	require.NoError(t, err, "Failed to set git user name")
+	err = runGitCommand(dir, "config", "user.email", "test@example.com")
+	require.NoError(t, err, "Failed to set git user Email")
 
 	// Add a remote origin for test purposes
-	_, err = repo.CreateRemote(&cfg.RemoteConfig{
-		Name: "origin",
-		URLs: []string{RemoteOrigin},
-	})
+	err = runGitCommand(dir, "remote", "add", "origin", RemoteOrigin)
 	require.NoError(t, err, "Failed to create origin remote")
+}
+
+// runGitCommand executes a git command with the given arguments in the specified directory
+func runGitCommand(dir string, args ...string) error {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("git", args...)
+	cmd.Dir = dir
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("git command failed: %v\nStderr: %s", err, stderr.String())
+	}
+	return nil
 }
 
 // copyDir copies files from source directory to target directory

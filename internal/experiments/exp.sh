@@ -1,0 +1,1 @@
+go.exe test -timeout 10s -run Test_RootCmd_LocalVoedger_Dry github.com/voedger/reqmd/internal/experiments -v -count=1

@@ -5,7 +5,6 @@ package internal
 
 import (
 	"fmt"
-	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
@@ -39,8 +38,7 @@ func NewAnalyzer() IAnalyzer {
 
 func (a *analyzer) Analyze(files []FileStructure) (*AnalyzerResult, error) {
 	result := &AnalyzerResult{
-		MdActions:  make(map[FilePath][]MdAction),
-		Reqmdjsons: make(map[FilePath]*Reqmdjson),
+		MdActions: make(map[FilePath][]MdAction),
 	}
 
 	// Build RequirementCoverages from all FileStructures
@@ -51,7 +49,6 @@ func (a *analyzer) Analyze(files []FileStructure) (*AnalyzerResult, error) {
 	a.buildIdsSortedByPos()
 
 	a.analyzeMdActions(result)
-	a.analyzeReqmdjsons(result)
 
 	return result, nil
 }
@@ -83,8 +80,8 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 	for _, requirementId := range a.idsSortedByPos {
 		coverage := a.coverages[requirementId]
 		// Sort both lists by FileHash for comparison
-		sortCoverersByFileHash(coverage.CurrentCoverers)
-		sortCoverersByFileHash(coverage.NewCoverers)
+		sortCoverersByCoverageURL(coverage.CurrentCoverers)
+		sortCoverersByCoverageURL(coverage.NewCoverers)
 
 		// coverageStatus is "covered" if there are new coverers
 		coverageStatus := CoverageStatusWordUncvrd
@@ -116,7 +113,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 		}
 
 		// Footnote action is needed if coverers are different or site is not annotated
-		if !areCoverersEqualByHashes(coverage.CurrentCoverers, coverage.NewCoverers) || coverage.CurrentCoverers == nil {
+		if !areCoverersEqualByURLs(coverage.CurrentCoverers, coverage.NewCoverers) || coverage.CurrentCoverers == nil {
 
 			a.changedFootnotes[requirementId] = true
 
@@ -151,73 +148,6 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 				result.MdActions[coverage.FileStructure.Path],
 				footnoteAction,
 			)
-		}
-	}
-}
-
-/*
-Principles:
-
-- If a folder has any requirement with changed footnotes, the whole folder's reqmd.json needs updating
-- FileUrl() helper function is used to strip line numbers from CoverageURLs
-*/
-func (a *analyzer) analyzeReqmdjsons(result *AnalyzerResult) {
-	// Map to track json files per folder
-	allJsons := make(map[FolderPath]*Reqmdjson) // folder -> Reqmdjson
-	changedJsons := make(map[FolderPath]bool)   // folder -> isChanged
-
-	// Process coverages in two passes:
-	// 1. Non-changed footnotes
-	// 2. Changed footnotes
-
-	// First pass: Process coverages with non-changed footnotes
-	for requirementID, coverage := range a.coverages {
-		if !a.changedFootnotes[requirementID] {
-			folder := filepath.Dir(coverage.FileStructure.Path)
-
-			// Initialize Reqmdjson for this folder if not exists
-			if _, exists := allJsons[folder]; !exists {
-				allJsons[folder] = &Reqmdjson{
-					FileUrl2FileHash: make(map[string]string),
-				}
-			}
-
-			// Add FileURLs and hashes from current coverers
-			for _, c := range coverage.CurrentCoverers {
-				fileURL := FileUrl(c.CoverageUrL)
-				allJsons[folder].FileUrl2FileHash[fileURL] = c.FileHash
-			}
-		}
-	}
-
-	// Second pass: Process coverages with changed footnotes
-	for requirementID, coverage := range a.coverages {
-		if a.changedFootnotes[requirementID] {
-			folder := filepath.Dir(coverage.FileStructure.Path)
-
-			// Initialize Reqmdjson for this folder if not exists
-			if _, exists := allJsons[folder]; !exists {
-				allJsons[folder] = &Reqmdjson{
-					FileUrl2FileHash: make(map[string]string),
-				}
-			}
-
-			// Mark folder as changed
-			changedJsons[folder] = true
-
-			// Add FileURLs and hashes from new coverers
-			for _, c := range coverage.NewCoverers {
-				fileURL := FileUrl(c.CoverageUrL)
-				allJsons[folder].FileUrl2FileHash[fileURL] = c.FileHash
-			}
-		}
-	}
-
-	// Add changed jsons to result
-	for folder, json := range allJsons {
-		if changedJsons[folder] {
-			folder := filepath.ToSlash(folder)
-			result.Reqmdjsons[folder] = json
 		}
 	}
 }
@@ -318,8 +248,8 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 			if coverage, exists := a.coverages[tag.RequirementId]; exists {
 				coverer := &Coverer{
 					CoverageLabel: file.RelativePath + ":" + fmt.Sprint(tag.Line) + ":" + tag.CoverageType,
-					CoverageUrL:   file.FileURL() + "#L" + strconv.Itoa(tag.Line),
-					FileHash:      file.FileHash,
+					CoverageURL:   file.FileURL() + "#L" + strconv.Itoa(tag.Line),
+					fileHash:      file.FileHash,
 				}
 				coverage.NewCoverers = append(coverage.NewCoverers, coverer)
 			}
@@ -341,18 +271,18 @@ func (a *analyzer) nextFootnoteId(filePath FilePath) CoverageFootnoteId {
 	return CoverageFootnoteId(strconv.Itoa(nextId))
 }
 
-func sortCoverersByFileHash(coverers []*Coverer) {
+func sortCoverersByCoverageURL(coverers []*Coverer) {
 	sort.Slice(coverers, func(i, j int) bool {
-		return coverers[i].FileHash < coverers[j].FileHash
+		return coverers[i].CoverageURL < coverers[j].CoverageURL
 	})
 }
 
-func areCoverersEqualByHashes(a []*Coverer, b []*Coverer) bool {
+func areCoverersEqualByURLs(a []*Coverer, b []*Coverer) bool {
 	comparator := func(c1, c2 *Coverer) int {
 		switch {
-		case c1.FileHash < c2.FileHash:
+		case c1.CoverageURL < c2.CoverageURL:
 			return -1
-		case c1.FileHash > c2.FileHash:
+		case c1.CoverageURL > c2.CoverageURL:
 			return 1
 		default:
 			return 0

@@ -16,7 +16,7 @@ import (
 func TestFileParser_md(t *testing.T) {
 	testDataFile := filepath.Join("testdata", "mdparser-1.md")
 
-	basicFile, _, err := ParseFile(newMdCtx(), testDataFile)
+	basicFile, _, err := parseFile(newMdCtx(), testDataFile)
 	require.NoError(t, err)
 
 	// Test package ID and requirements count
@@ -49,16 +49,16 @@ func TestFileParser_md(t *testing.T) {
 
 			require.Len(t, footnote.Coverers, 2, "should have 2 coverage references")
 			assert.Equal(t, "folder1/filename1:line1:impl", footnote.Coverers[0].CoverageLabel)
-			assert.Equal(t, "https://example.com/pkg1/filename1#L11", footnote.Coverers[0].CoverageUrL)
+			assert.Equal(t, "https://example.com/pkg1/filename1#L11", footnote.Coverers[0].CoverageURL)
 			assert.Equal(t, "folder2/filename2:line2:test", footnote.Coverers[1].CoverageLabel)
-			assert.Equal(t, "https://example.com/pkg2/filename2#L22", footnote.Coverers[1].CoverageUrL)
+			assert.Equal(t, "https://example.com/pkg2/filename2#L22", footnote.Coverers[1].CoverageURL)
 		}
 	}
 }
 
 func TestFileParser_md_error_pkgident(t *testing.T) {
 	testData := filepath.Join("testdata", "systest", "errors", "err_pkgident.md")
-	_, errors, err := ParseFile(newMdCtx(), testData)
+	_, errors, err := parseFile(newMdCtx(), testData)
 	require.NoError(t, err)
 	require.Len(t, errors, 1, "expected exactly 1 syntax error")
 }
@@ -74,7 +74,7 @@ This content should be ignored. ` + "`~REQ001~`" + `
 	require.NoError(t, os.WriteFile(tmpfile, content, 0644))
 
 	// Parse the file
-	structure, errs, err := ParseFile(newMdCtx(), tmpfile)
+	structure, errs, err := parseFile(newMdCtx(), tmpfile)
 	require.NoError(t, err)
 	assert.Empty(t, errs)
 	assert.NotNil(t, structure)
@@ -86,7 +86,7 @@ This content should be ignored. ` + "`~REQ001~`" + `
 func TestFileParser_src(t *testing.T) {
 	// Test data file contains a line with: [~server.api.v2/Post.handler~test]
 	testDataFile := filepath.Join("testdata", "srccoverparser-1.go")
-	srcFile, syntaxErrors, err := ParseFile(newMdCtx(), testDataFile)
+	srcFile, syntaxErrors, err := parseFile(newMdCtx(), testDataFile)
 	require.NoError(t, err)
 	assert.Len(t, syntaxErrors, 0)
 
@@ -127,7 +127,7 @@ func newMdCtx() *MarkdownContext {
 
 func TestParseRequirements_invalid_coverage_status(t *testing.T) {
 	var errors []ProcessingError
-	res := ParseRequirements("test.md", "`~Post.handler~`covrd[^~Post.handler~]", 1, &errors)
+	res := parseRequirements("test.md", "`~Post.handler~`covrd[^~Post.handler~]", 1, &errors)
 	require.Len(t, res, 0)
 }
 
@@ -187,7 +187,7 @@ func TestParseRequirements_table(t *testing.T) {
 	for tidx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var errors []ProcessingError
-			got := ParseRequirements("test.md", tt.input, 1, &errors)
+			got := parseRequirements("test.md", tt.input, 1, &errors)
 
 			require.Equal(t, len(tt.expected), len(got), "number of requirements mismatch: %d: %s: %s", tidx, tt.name, tt.input)
 			for i, exp := range tt.expected {
@@ -202,14 +202,7 @@ func TestParseRequirements_table(t *testing.T) {
 
 func TestParseCoverageFootnote(t *testing.T) {
 	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L11), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#L22)"
-	ctx := &MarkdownContext{
-		rfiles: &Reqmdjson{
-			FileUrl2FileHash: map[string]string{
-				"https://example.com/pkg1/filename1": "hash1",
-				"https://example.com/pkg2/filename2": "hash2",
-			},
-		},
-	}
+	ctx := &MarkdownContext{}
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 
@@ -218,22 +211,14 @@ func TestParseCoverageFootnote(t *testing.T) {
 
 	require.Len(t, note.Coverers, 2, "should have 2 coverage references")
 	assert.Equal(t, "folder1/filename1:line1:impl", note.Coverers[0].CoverageLabel)
-	assert.Equal(t, "https://example.com/pkg1/filename1#L11", note.Coverers[0].CoverageUrL)
-	assert.Equal(t, "hash1", note.Coverers[0].FileHash)
+	assert.Equal(t, "https://example.com/pkg1/filename1#L11", note.Coverers[0].CoverageURL)
 	assert.Equal(t, "folder2/filename2:line2:test", note.Coverers[1].CoverageLabel)
-	assert.Equal(t, "https://example.com/pkg2/filename2#L22", note.Coverers[1].CoverageUrL)
-	assert.Equal(t, "hash2", note.Coverers[1].FileHash)
+	assert.Equal(t, "https://example.com/pkg2/filename2#L22", note.Coverers[1].CoverageURL)
 }
 
 func TestParseCoverageFootnote2(t *testing.T) {
 	line := "[^~VVMLeader.def~]: `[~server.design.orch/VVMLeader.def~]` [apps/app.go:80:impl](https://example.com/pkg1/filename1#L80)"
-	ctx := &MarkdownContext{
-		rfiles: &Reqmdjson{
-			FileUrl2FileHash: map[string]string{
-				"https://example.com/pkg1/filename1": "hash1",
-			},
-		},
-	}
+	ctx := &MarkdownContext{}
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 
@@ -246,13 +231,7 @@ func TestParseCoverageFootnote2(t *testing.T) {
 
 func TestParseCoverageFootnote_JustFootnote(t *testing.T) {
 	line := "[^12]:"
-	ctx := &MarkdownContext{
-		rfiles: &Reqmdjson{
-			FileUrl2FileHash: map[string]string{
-				"https://example.com/pkg1/filename1": "hash1",
-			},
-		},
-	}
+	ctx := &MarkdownContext{}
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 	assert.Equal(t, CoverageFootnoteId("12"), note.CoverageFootnoteId)
@@ -329,7 +308,7 @@ func TestParseRequirements_errors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var errors []ProcessingError
 			line := tt.line
-			requirements := ParseRequirements("test.md", line, tt.wantErr.Line, &errors)
+			requirements := parseRequirements("test.md", line, tt.wantErr.Line, &errors)
 
 			// Check that no requirements were returned
 			assert.Nil(t, requirements, "%d: should return nil requirements", tidx)
