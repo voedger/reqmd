@@ -324,13 +324,13 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 			Coverers: []Coverer{
 				{
 					CoverageLabel: "old/file.go:15:impl",
-					CoverageUrL:   OldCoverageURL,
+					CoverageURL:   OldCoverageURL,
 				},
 			},
 		},
 	}
 
-	// Source file with the same Url but new hash
+	// Source file with the same URL but new hash
 	srcFile := createSourceFileStructure(
 		"src/impl.go",
 		NewCoverageURL,
@@ -388,7 +388,7 @@ func createMdStructureA(path, pkgID string, line int, reqName_ string, cw Covera
 				Coverers: []Coverer{
 					{
 						CoverageLabel: "somefolder/somefile.go:15:impl",
-						CoverageUrL:   "someurl",
+						CoverageURL:   "someurl",
 					},
 				},
 			},

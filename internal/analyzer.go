@@ -80,8 +80,8 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 	for _, requirementId := range a.idsSortedByPos {
 		coverage := a.coverages[requirementId]
 		// Sort both lists by FileHash for comparison
-		sortCoverersByCoverageUrL(coverage.CurrentCoverers)
-		sortCoverersByCoverageUrL(coverage.NewCoverers)
+		sortCoverersByCoverageURL(coverage.CurrentCoverers)
+		sortCoverersByCoverageURL(coverage.NewCoverers)
 
 		// coverageStatus is "covered" if there are new coverers
 		coverageStatus := CoverageStatusWordUncvrd
@@ -248,7 +248,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 			if coverage, exists := a.coverages[tag.RequirementId]; exists {
 				coverer := &Coverer{
 					CoverageLabel: file.RelativePath + ":" + fmt.Sprint(tag.Line) + ":" + tag.CoverageType,
-					CoverageUrL:   file.FileURL() + "#L" + strconv.Itoa(tag.Line),
+					CoverageURL:   file.FileURL() + "#L" + strconv.Itoa(tag.Line),
 					fileHash:      file.FileHash,
 				}
 				coverage.NewCoverers = append(coverage.NewCoverers, coverer)
@@ -271,18 +271,18 @@ func (a *analyzer) nextFootnoteId(filePath FilePath) CoverageFootnoteId {
 	return CoverageFootnoteId(strconv.Itoa(nextId))
 }
 
-func sortCoverersByCoverageUrL(coverers []*Coverer) {
+func sortCoverersByCoverageURL(coverers []*Coverer) {
 	sort.Slice(coverers, func(i, j int) bool {
-		return coverers[i].CoverageUrL < coverers[j].CoverageUrL
+		return coverers[i].CoverageURL < coverers[j].CoverageURL
 	})
 }
 
 func areCoverersEqualByURLs(a []*Coverer, b []*Coverer) bool {
 	comparator := func(c1, c2 *Coverer) int {
 		switch {
-		case c1.CoverageUrL < c2.CoverageUrL:
+		case c1.CoverageURL < c2.CoverageURL:
 			return -1
-		case c1.CoverageUrL > c2.CoverageUrL:
+		case c1.CoverageURL > c2.CoverageURL:
 			return 1
 		default:
 			return 0

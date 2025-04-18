@@ -156,7 +156,7 @@ The following files may require changes:
 
 Principles:
 
-- FileUrl() helper function is used to strip line numbers from CoverageURLs
+- FileURL() helper function is used to strip line numbers from CoverageURLs
 
 ### Apply markdown actions
 

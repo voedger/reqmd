@@ -95,7 +95,7 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 
 					coverer := Coverer{
 						CoverageLabel: covMatch[1],
-						CoverageUrL:   covMatch[2],
+						CoverageURL:   covMatch[2],
 					}
 
 					footnote.Coverers = append(footnote.Coverers, coverer)

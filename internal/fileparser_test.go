@@ -49,9 +49,9 @@ func TestFileParser_md(t *testing.T) {
 
 			require.Len(t, footnote.Coverers, 2, "should have 2 coverage references")
 			assert.Equal(t, "folder1/filename1:line1:impl", footnote.Coverers[0].CoverageLabel)
-			assert.Equal(t, "https://example.com/pkg1/filename1#L11", footnote.Coverers[0].CoverageUrL)
+			assert.Equal(t, "https://example.com/pkg1/filename1#L11", footnote.Coverers[0].CoverageURL)
 			assert.Equal(t, "folder2/filename2:line2:test", footnote.Coverers[1].CoverageLabel)
-			assert.Equal(t, "https://example.com/pkg2/filename2#L22", footnote.Coverers[1].CoverageUrL)
+			assert.Equal(t, "https://example.com/pkg2/filename2#L22", footnote.Coverers[1].CoverageURL)
 		}
 	}
 }
@@ -211,9 +211,9 @@ func TestParseCoverageFootnote(t *testing.T) {
 
 	require.Len(t, note.Coverers, 2, "should have 2 coverage references")
 	assert.Equal(t, "folder1/filename1:line1:impl", note.Coverers[0].CoverageLabel)
-	assert.Equal(t, "https://example.com/pkg1/filename1#L11", note.Coverers[0].CoverageUrL)
+	assert.Equal(t, "https://example.com/pkg1/filename1#L11", note.Coverers[0].CoverageURL)
 	assert.Equal(t, "folder2/filename2:line2:test", note.Coverers[1].CoverageLabel)
-	assert.Equal(t, "https://example.com/pkg2/filename2#L22", note.Coverers[1].CoverageUrL)
+	assert.Equal(t, "https://example.com/pkg2/filename2#L22", note.Coverers[1].CoverageURL)
 }
 
 func TestParseCoverageFootnote2(t *testing.T) {

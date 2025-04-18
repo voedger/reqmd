@@ -156,7 +156,7 @@ func sortCoverers(coverers []Coverer) {
 		}
 
 		// Finally compare by CoverageURL
-		return coverers[i].CoverageUrL < coverers[j].CoverageUrL
+		return coverers[i].CoverageURL < coverers[j].CoverageURL
 	})
 }
 
@@ -167,7 +167,7 @@ func FormatCoverageFootnote(cf *CoverageFootnote) string {
 
 	var refs []string
 	for _, coverer := range cf.Coverers {
-		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageUrL))
+		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageURL))
 	}
 	hint := fmt.Sprintf("`[~%s/%s~impl]`", cf.PackageID, cf.RequirementName)
 	if len(refs) > 0 {
@@ -181,11 +181,11 @@ func FormatCoverageFootnote(cf *CoverageFootnote) string {
 // Coverer represents one coverage reference within a footnote, e.g., [folder/file:line:impl](URL)
 type Coverer struct {
 	CoverageLabel string // e.g., "folder/file.go:42:impl"
-	CoverageUrL   string // full URL including commit hash
+	CoverageURL   string // full URL including commit hash
 	fileHash      string // git hash of the file specified in CoverageURL, not used currently
 }
 
-func FileUrl(coverageURL string) string {
+func FileURL(coverageURL string) string {
 	idx := strings.LastIndex(coverageURL, "#L")
 	if idx == -1 {
 		return coverageURL
