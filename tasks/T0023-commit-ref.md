@@ -38,10 +38,15 @@ Cons:
 
 ### Step 2: Update IGit interface and implementation
 
-- Modify the `IGit` interface in `internal/interfaces.go` to add a `CommitRef()` method
+
+#### 2.1
+
 - Update the `git` implementation in `internal/gogit.go`:
-  1. Add `CommitRef()` method to return branch name or "main" as default
-  2. Modify `constructRepoRootFolderURL()` to use commit ref instead of hash
+  - constructRepoRootFolderURL
+    - commitRef is calculated as follows:
+      - If main branch exists then `main` is usued
+      - If master branch exists then `master` is usued
+      - Otherwise error is returned
 
 ### Step 3: Update URL construction in analyzer
 
