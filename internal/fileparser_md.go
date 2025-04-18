@@ -88,8 +88,8 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 				if len(covMatch) > 2 {
 					_, err := url.Parse(covMatch[2])
 					// Add NewErrURLSyntax to errs
-					if err != nil { // TODO test
-						*errs = append(*errs, NewErrURLSyntax(filePath, lineNum, covMatch[2]))
+					if err != nil {
+						*errs = append(*errs, NewErrURLSyntax(filePath, lineNum, covMatch[2], err))
 						continue
 					}
 

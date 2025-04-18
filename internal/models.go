@@ -215,7 +215,7 @@ func (e *ProcessingErrors) Error() string {
 
 	var msgs []string
 	for _, err := range e.Errors {
-		msgs = append(msgs, fmt.Sprintf("%s:%d: %s", err.FilePath, err.Line, err.Message))
+		msgs = append(msgs, fmt.Sprintf("%s:%d: %s: %s", err.FilePath, err.Line, err.Code, err.Message))
 	}
 	return strings.Join(msgs, "\n")
 }
