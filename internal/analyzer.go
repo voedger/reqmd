@@ -249,7 +249,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 				coverer := &Coverer{
 					CoverageLabel: file.RelativePath + ":" + fmt.Sprint(tag.Line) + ":" + tag.CoverageType,
 					CoverageUrL:   file.FileURL() + "#L" + strconv.Itoa(tag.Line),
-					_FileHash:     file.FileHash,
+					fileHash:      file.FileHash,
 				}
 				coverage.NewCoverers = append(coverage.NewCoverers, coverer)
 			}

@@ -182,7 +182,7 @@ func FormatCoverageFootnote(cf *CoverageFootnote) string {
 type Coverer struct {
 	CoverageLabel string // e.g., "folder/file.go:42:impl"
 	CoverageUrL   string // full URL including commit hash
-	_FileHash     string // git hash of the file specified in CoverageURL, not used currently
+	fileHash      string // git hash of the file specified in CoverageURL, not used currently
 }
 
 func FileUrl(coverageURL string) string {
