@@ -17,7 +17,7 @@ func TestAnalyzer_error_Duplicates(t *testing.T) {
 		{
 			Path:      "file1.md",
 			Type:      FileTypeMarkdown,
-			PackageID: "pkg1",
+			PackageId: "pkg1",
 			Requirements: []RequirementSite{
 				{
 					FilePath:        "file1.md",
@@ -29,7 +29,7 @@ func TestAnalyzer_error_Duplicates(t *testing.T) {
 		{
 			Path:      "file2.md",
 			Type:      FileTypeMarkdown,
-			PackageID: "pkg1",
+			PackageId: "pkg1",
 			Requirements: []RequirementSite{
 				{
 					FilePath:        "file2.md",
@@ -55,7 +55,7 @@ func TestAnalyzer_error_Duplicates(t *testing.T) {
 	}
 }
 
-func TestAnalyzer_error_MissingPackageID(t *testing.T) {
+func TestAnalyzer_error_MissingPackageId(t *testing.T) {
 	analyzer := NewAnalyzer()
 
 	files := []FileStructure{
@@ -366,7 +366,7 @@ func createMdStructureA(path, pkgID string, line int, reqName_ string, cw Covera
 	fs := FileStructure{
 		Path:      path,
 		Type:      FileTypeMarkdown,
-		PackageID: pkgID,
+		PackageId: pkgID,
 		Requirements: []RequirementSite{
 			{
 				FilePath:            path,

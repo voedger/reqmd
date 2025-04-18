@@ -12,7 +12,7 @@ func NewErrPkgIdent(filePath string, line int, pkgID string) ProcessingError {
 		Code:     "pkgident",
 		FilePath: filePath,
 		Line:     line,
-		Message:  "PackageID shall be an identifier: " + pkgID,
+		Message:  "PackageId shall be an identifier: " + pkgID,
 	}
 }
 
@@ -77,7 +77,7 @@ func NewErrDuplicateRequirementId(filePath1 string, line1 int, filePath2 string,
 	}
 }
 
-func NewErrMissingPackageIDWithReqs(filePath string, lineOfTheFirstReqSite int) ProcessingError {
+func NewErrMissingPackageIdWithReqs(filePath string, lineOfTheFirstReqSite int) ProcessingError {
 	return ProcessingError{
 		Code:     "nopkgidreqs",
 		FilePath: filePath,

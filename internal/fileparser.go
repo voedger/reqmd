@@ -87,7 +87,7 @@ func parseFile(mctx *MarkdownContext, filePath string) (*FileStructure, []Proces
 					if !identifierRegex.MatchString(pkgID) {
 						errors = append(errors, NewErrPkgIdent(filePath, lineNum, pkgID))
 					}
-					structure.PackageID = pkgID
+					structure.PackageId = pkgID
 
 					// Ignore files with package "ignoreme"
 					if strings.HasPrefix(pkgID, "ignoreme") {

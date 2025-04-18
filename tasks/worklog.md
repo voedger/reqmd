@@ -474,7 +474,7 @@ line := "[^~REQ002~]: [~com.example.basic~impl][folder1/filename1:line1:impl](ht
 		if len(basicFile.CoverageFootnotes) > 0 {
 			footnote := basicFile.CoverageFootnotes[0]
 			assert.Equal(t, "REQ002", footnote.RequirementId, "incorrect requirement ID in footnote")
-			assert.Equal(t, "com.example.basic", footnote.PackageID, "incorrect package ID in footnote")
+			assert.Equal(t, "com.example.basic", footnote.PackageId, "incorrect package ID in footnote")
 
 			require.Len(t, footnote.Coverers, 2, "should have 2 coverage references")
 			assert.Equal(t, "folder1/filename1:line1:impl", footnote.Coverers[0].CoverageLabel)
