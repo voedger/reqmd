@@ -116,7 +116,24 @@ func (g *git) constructRepoRootFolderURL() error {
 	}
 	remoteURL := urls[0]
 
-	commitRef := g.commit.Hash.String()
+	// Determine which branch to use
+	var commitRef string
+
+	// Check if main branch exists
+	_, err = g.repo.Reference("refs/heads/main", false)
+	if err == nil {
+		// Main branch exists
+		commitRef = "main"
+	} else {
+		// Check if master branch exists
+		_, err = g.repo.Reference("refs/heads/master", false)
+		if err == nil {
+			// Master branch exists
+			commitRef = "master"
+		} else {
+			return fmt.Errorf("neither main nor master branch exists")
+		}
+	}
 
 	// Detect provider and construct URL
 	switch {

@@ -15,7 +15,7 @@ type Path = string
 
 // goldenData holds the parsed golden data from TestMarkdown files
 type goldenData struct {
-	// Maps file paths to line numbers to goldenReqItem slices
+	// Maps relativefile paths to line numbers to goldenReqItem slices
 	errors map[Path]map[int][]*regexp.Regexp
 	// Golden file lines, per file
 	lines map[Path][]string
