@@ -208,7 +208,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 			}
 
 			for _, req := range file.Requirements {
-				var reqId RequirementId = RequirementId(file.PackageId + "/" + string(req.RequirementName)) // FIXME make NewRequirementId
+				var reqId RequirementId = NewReqId(file.PackageId, req.RequirementName) // FIXME make NewRequirementId
 
 				// Check for duplicates using coverages map
 				if existing, exists := a.coverages[reqId]; exists {

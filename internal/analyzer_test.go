@@ -221,7 +221,7 @@ func TestAnalyzer_ActionFootnote_Bare_NewCoverer(t *testing.T) {
 		"src/impl.go",
 		"https://github.com/org/repo/blob/main/src/impl.go",
 		[]CoverageTag{
-			createCoverageTag("pkg1/REQ001", "impl1", 20),
+			createCoverageTag(StrToReqId("pkg1/REQ001"), "impl1", 20),
 		},
 	)
 
@@ -257,7 +257,7 @@ func TestAnalyzer_ActionStatusUpdate_AnUncov_NewCoverer(t *testing.T) {
 		"src/impl.go",
 		"https://github.com/org/repo/blob/main/src/impl.go#L20",
 		[]CoverageTag{
-			createCoverageTag("pkg1/REQ002", "impl", 20),
+			createCoverageTag(StrToReqId("pkg1/REQ002"), "impl", 20),
 		},
 	)
 
@@ -335,7 +335,7 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 		"src/impl.go",
 		NewCoverageURL,
 		[]CoverageTag{
-			createCoverageTag("pkg1/REQ001", "impl", 20),
+			createCoverageTag(StrToReqId("pkg1/REQ001"), "impl", 20),
 		},
 	)
 
@@ -353,7 +353,7 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 }
 
 // Helper function to create a simple FileStructure with one annotated requirement that has cw coverage
-func createMdStructureA(path, pkgId string, line int, reqName_ string, cw CoverageStatusWord) FileStructure {
+func createMdStructureA(path string, pkgId PackageId, line int, reqName_ string, cw CoverageStatusWord) FileStructure {
 
 	var reqName RequirementName = RequirementName(reqName_)
 	var footnoteId CoverageFootnoteId = CoverageFootnoteId(reqName_)

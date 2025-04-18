@@ -87,7 +87,7 @@ func parseFile(mctx *MarkdownContext, filePath string) (*FileStructure, []Proces
 					if !identifierRegex.MatchString(pkgId) {
 						errors = append(errors, NewErrPkgIdent(filePath, lineNum, pkgId))
 					}
-					structure.PackageId = pkgId
+					structure.PackageId = PackageId(pkgId)
 
 					// Ignore files with package "ignoreme"
 					if strings.HasPrefix(pkgId, "ignoreme") {
@@ -134,7 +134,7 @@ func parseCoverageTags(filePath string, line string, lineNum int) []CoverageTag 
 	for _, match := range matches {
 		if len(match) == 4 {
 			tag := CoverageTag{
-				RequirementId: RequirementId(match[1] + "/" + match[2]),
+				RequirementId: StrToReqId(match[1] + "/" + match[2]),
 				CoverageType:  match[3],
 				Line:          lineNum,
 			}

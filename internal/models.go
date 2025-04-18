@@ -21,7 +21,36 @@ const (
 )
 
 type RequirementName string
-type RequirementId string
+type PackageId string
+
+// RequirementId
+type RequirementId struct {
+	PackageId       PackageId
+	RequirementName RequirementName
+}
+
+func (r RequirementId) String() string {
+	return fmt.Sprintf("%s/%s", r.PackageId, r.RequirementName)
+}
+
+func NewReqId(pkgId PackageId, reqName RequirementName) RequirementId {
+	return RequirementId{
+		PackageId:       pkgId,
+		RequirementName: reqName,
+	}
+}
+
+func StrToReqId(reqStr string) RequirementId {
+	parts := strings.Split(reqStr, "/")
+	if len(parts) != 2 {
+		return RequirementId{}
+	}
+	return RequirementId{
+		PackageId:       PackageId(parts[0]),
+		RequirementName: RequirementName(parts[1]),
+	}
+}
+
 type CoverageFootnoteId string
 type FilePath = string
 type FolderPath = string
@@ -48,7 +77,7 @@ const (
 type FileStructure struct {
 	Path              string
 	Type              FileType           // indicates if it's Markdown or source
-	PackageId         string             // parsed from Markdown header (if markdown)
+	PackageId         PackageId          // parsed from Markdown header (if markdown)
 	Requirements      []RequirementSite  // for Markdown: discovered requirements (bare or annotated)
 	CoverageFootnotes []CoverageFootnote // for Markdown: discovered coverage footnotes
 	CoverageTags      []CoverageTag      // for source: discovered coverage tags
@@ -108,7 +137,7 @@ func (c *CoverageTag) String() string {
 type CoverageFootnote struct {
 	FilePath           string
 	Line               int
-	PackageId          string
+	PackageId          PackageId
 	RequirementName    RequirementName
 	CoverageFootnoteId CoverageFootnoteId
 	Coverers           []Coverer

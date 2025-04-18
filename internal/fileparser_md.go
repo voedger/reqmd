@@ -77,7 +77,7 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 		footnote = &CoverageFootnote{
 			FilePath:           filePath,
 			CoverageFootnoteId: CoverageFootnoteId(matches[1]),
-			PackageId:          matches[2],
+			PackageId:          PackageId(matches[2]),
 			Line:               lineNum,
 		}
 

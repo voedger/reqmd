@@ -20,7 +20,7 @@ func TestFileParser_md(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test package Id and requirements count
-	assert.Equal(t, "com.example.basic", basicFile.PackageId, "incorrect package id")
+	assert.Equal(t, "com.example.basic", string(basicFile.PackageId), "incorrect package id")
 	assert.Len(t, basicFile.Requirements, 2, "incorrect number of requirements")
 
 	// Find and verify REQ001
@@ -45,7 +45,7 @@ func TestFileParser_md(t *testing.T) {
 		if len(basicFile.CoverageFootnotes) > 0 {
 			footnote := basicFile.CoverageFootnotes[0]
 			assert.Equal(t, CoverageFootnoteId("~REQ002~"), footnote.CoverageFootnoteId, "incorrect CoverageFootnoteId in footnote")
-			assert.Equal(t, "com.example.basic", footnote.PackageId, "incorrect package Id in footnote")
+			assert.Equal(t, "com.example.basic", string(footnote.PackageId), "incorrect package Id in footnote")
 
 			require.Len(t, footnote.Coverers, 2, "should have 2 coverage references")
 			assert.Equal(t, "folder1/filename1:line1:impl", footnote.Coverers[0].CoverageLabel)
@@ -78,7 +78,7 @@ This content should be ignored. ` + "`~REQ001~`" + `
 	require.NoError(t, err)
 	assert.Empty(t, errs)
 	assert.NotNil(t, structure)
-	assert.Equal(t, "ignoreme", structure.PackageId)
+	assert.Equal(t, "ignoreme", string(structure.PackageId))
 	assert.Empty(t, structure.Requirements)
 	assert.Empty(t, structure.CoverageFootnotes)
 }
@@ -96,7 +96,7 @@ func TestFileParser_src(t *testing.T) {
 
 	{
 		tag := srcFile.CoverageTags[0]
-		assert.Equal(t, RequirementId("server.api.v2/Post.handler"), tag.RequirementId)
+		assert.Equal(t, StrToReqId("server.api.v2/Post.handler"), tag.RequirementId)
 		assert.Equal(t, "impl", tag.CoverageType)
 		// Adjust expected line number according to your test file content
 		assert.Equal(t, 11, tag.Line)
@@ -104,7 +104,7 @@ func TestFileParser_src(t *testing.T) {
 
 	{
 		tag := srcFile.CoverageTags[1]
-		assert.Equal(t, RequirementId("server.api.v2/Post.handler"), tag.RequirementId)
+		assert.Equal(t, StrToReqId("server.api.v2/Post.handler"), tag.RequirementId)
 		assert.Equal(t, "test", tag.CoverageType)
 		// Adjust expected line number according to your test file content
 		assert.Equal(t, 17, tag.Line)
@@ -207,7 +207,7 @@ func TestParseCoverageFootnote(t *testing.T) {
 	require.NotNil(t, note)
 
 	assert.Equal(t, CoverageFootnoteId("~REQ002~"), note.CoverageFootnoteId, "incorrect CoverageFootnoteId in footnote")
-	assert.Equal(t, "com.example.basic", note.PackageId, "incorrect package Id in footnote")
+	assert.Equal(t, "com.example.basic", string(note.PackageId), "incorrect package Id in footnote")
 
 	require.Len(t, note.Coverers, 2, "should have 2 coverage references")
 	assert.Equal(t, "folder1/filename1:line1:impl", note.Coverers[0].CoverageLabel)
@@ -223,7 +223,7 @@ func TestParseCoverageFootnote2(t *testing.T) {
 	require.NotNil(t, note)
 
 	assert.Equal(t, CoverageFootnoteId("~VVMLeader.def~"), note.CoverageFootnoteId, "incorrect CoverageFootnoteId in footnote")
-	assert.Equal(t, "server.design.orch", note.PackageId, "incorrect package Id in footnote")
+	assert.Equal(t, "server.design.orch", string(note.PackageId), "incorrect package Id in footnote")
 
 	require.Len(t, note.Coverers, 1, "should have 1 coverer")
 	assert.Equal(t, "apps/app.go:80:impl", note.Coverers[0].CoverageLabel)
@@ -235,7 +235,7 @@ func TestParseCoverageFootnote_JustFootnote(t *testing.T) {
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 	assert.Equal(t, CoverageFootnoteId("12"), note.CoverageFootnoteId)
-	assert.Equal(t, "", note.PackageId)
+	assert.Equal(t, "", string(note.PackageId))
 
 }
 
