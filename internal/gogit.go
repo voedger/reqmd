@@ -100,12 +100,6 @@ func (g *git) PathToRoot() string {
 	return g.pathToRoot
 }
 
-func (g *git) CommitHash() string {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-	return g.commit.Hash.String()
-}
-
 func (g *git) constructRepoRootFolderURL() error {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
@@ -122,14 +116,31 @@ func (g *git) constructRepoRootFolderURL() error {
 	}
 	remoteURL := urls[0]
 
-	branchName := g.commit.Hash.String()
+	// Determine which branch to use
+	var commitRef string
+
+	// Check if main branch exists
+	_, err = g.repo.Reference("refs/heads/main", false)
+	if err == nil {
+		// Main branch exists
+		commitRef = "main"
+	} else {
+		// Check if master branch exists
+		_, err = g.repo.Reference("refs/heads/master", false)
+		if err == nil {
+			// Master branch exists
+			commitRef = "master"
+		} else {
+			return fmt.Errorf("neither main nor master branch exists")
+		}
+	}
 
 	// Detect provider and construct URL
 	switch {
 	case strings.Contains(remoteURL, "github.com"):
-		g.repoRootFolderURL = fmt.Sprintf("%s/blob/%s", remoteURL, branchName)
+		g.repoRootFolderURL = fmt.Sprintf("%s/blob/%s", remoteURL, commitRef)
 	case strings.Contains(remoteURL, "gitlab.com"):
-		g.repoRootFolderURL = fmt.Sprintf("%s/-/blob/%s", remoteURL, branchName)
+		g.repoRootFolderURL = fmt.Sprintf("%s/-/blob/%s", remoteURL, commitRef)
 	default:
 		return fmt.Errorf("unsupported git provider: %s", remoteURL)
 	}

@@ -31,15 +31,3 @@ type IGit interface {
 	FileHash(absoluteFilePath string) (relPath, hash string, err error)
 	RepoRootFolderURL() string
 }
-
-// Optional specialized parsers, if you want to keep them separate:
-// IMarkdownParser could parse only Markdown files.
-// ISourceCoverageParser could parse only source files.
-//
-// type IMarkdownParser interface {
-// 	ParseMarkdown(path string) (FileStructure, []ProcessingError)
-// }
-//
-// type ISourceCoverageParser interface {
-// 	ParseSourceCoverage(path string) (FileStructure, []ProcessingError)
-// }

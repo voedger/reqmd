@@ -13,10 +13,10 @@ import (
 	"github.com/voedger/reqmd/internal"
 )
 
-// skipIfNoRootCmdMarker skips the test if no .rootcmdYYMMDD file exists
+// skipIfNoRootCmdMarker skips the test if no .expYYYYMMDD file exists (e.g. .exp2025041)
 func skipIfNoRootCmdMarker(t *testing.T) {
-	pattern := fmt.Sprintf(".exp%s", time.Now().Format("060102"))
-	matches, err := filepath.Glob(".exp*")
+	pattern := fmt.Sprintf(".exp%s*", time.Now().Format("20060102"))
+	matches, err := filepath.Glob(pattern)
 	if err != nil || len(matches) == 0 {
 		t.Skipf("skipping test, no %s file found", pattern)
 	}

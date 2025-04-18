@@ -49,9 +49,9 @@ func TestFileParser_md(t *testing.T) {
 
 			require.Len(t, footnote.Coverers, 2, "should have 2 coverage references")
 			assert.Equal(t, "folder1/filename1:line1:impl", footnote.Coverers[0].CoverageLabel)
-			assert.Equal(t, "https://example.com/pkg1/filename1#L11", footnote.Coverers[0].CoverageUrL)
+			assert.Equal(t, "https://example.com/pkg1/filename1#L11", footnote.Coverers[0].CoverageURL)
 			assert.Equal(t, "folder2/filename2:line2:test", footnote.Coverers[1].CoverageLabel)
-			assert.Equal(t, "https://example.com/pkg2/filename2#L22", footnote.Coverers[1].CoverageUrL)
+			assert.Equal(t, "https://example.com/pkg2/filename2#L22", footnote.Coverers[1].CoverageURL)
 		}
 	}
 }
@@ -202,14 +202,7 @@ func TestParseRequirements_table(t *testing.T) {
 
 func TestParseCoverageFootnote(t *testing.T) {
 	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L11), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#L22)"
-	ctx := &MarkdownContext{
-		rfiles: &Reqmdjson{
-			FileUrl2FileHash: map[string]string{
-				"https://example.com/pkg1/filename1": "hash1",
-				"https://example.com/pkg2/filename2": "hash2",
-			},
-		},
-	}
+	ctx := &MarkdownContext{}
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 
@@ -218,22 +211,14 @@ func TestParseCoverageFootnote(t *testing.T) {
 
 	require.Len(t, note.Coverers, 2, "should have 2 coverage references")
 	assert.Equal(t, "folder1/filename1:line1:impl", note.Coverers[0].CoverageLabel)
-	assert.Equal(t, "https://example.com/pkg1/filename1#L11", note.Coverers[0].CoverageUrL)
-	assert.Equal(t, "hash1", note.Coverers[0].FileHash)
+	assert.Equal(t, "https://example.com/pkg1/filename1#L11", note.Coverers[0].CoverageURL)
 	assert.Equal(t, "folder2/filename2:line2:test", note.Coverers[1].CoverageLabel)
-	assert.Equal(t, "https://example.com/pkg2/filename2#L22", note.Coverers[1].CoverageUrL)
-	assert.Equal(t, "hash2", note.Coverers[1].FileHash)
+	assert.Equal(t, "https://example.com/pkg2/filename2#L22", note.Coverers[1].CoverageURL)
 }
 
 func TestParseCoverageFootnote2(t *testing.T) {
 	line := "[^~VVMLeader.def~]: `[~server.design.orch/VVMLeader.def~]` [apps/app.go:80:impl](https://example.com/pkg1/filename1#L80)"
-	ctx := &MarkdownContext{
-		rfiles: &Reqmdjson{
-			FileUrl2FileHash: map[string]string{
-				"https://example.com/pkg1/filename1": "hash1",
-			},
-		},
-	}
+	ctx := &MarkdownContext{}
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 
@@ -246,13 +231,7 @@ func TestParseCoverageFootnote2(t *testing.T) {
 
 func TestParseCoverageFootnote_JustFootnote(t *testing.T) {
 	line := "[^12]:"
-	ctx := &MarkdownContext{
-		rfiles: &Reqmdjson{
-			FileUrl2FileHash: map[string]string{
-				"https://example.com/pkg1/filename1": "hash1",
-			},
-		},
-	}
+	ctx := &MarkdownContext{}
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 	assert.Equal(t, CoverageFootnoteId("12"), note.CoverageFootnoteId)
