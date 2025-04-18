@@ -28,9 +28,6 @@ func (a *applier) Apply(ar *AnalyzerResult) error {
 				fmt.Println("Action\n\t" + action.String())
 			}
 		}
-		if a.dryRun {
-			return nil
-		}
 	}
 	if len(ar.MdActions) == 0 {
 		fmt.Println("reqmd: Nothing to do")
