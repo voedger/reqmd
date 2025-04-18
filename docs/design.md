@@ -21,13 +21,11 @@ The tool follows a three-stage pipeline architecture:
    - Ensures requirement IDs are unique
    - Determines which coverage footnotes need updates
    - Identifies requirements needing coverage annotations
-   - Verifies file hashes against reqmd.json
    - Generates a list of required file modifications
 
 3. **Apply** – Update Files
    - Updates or creates coverage footnotes
    - Appends coverage annotations to requirements
-   - Maintains reqmd.json for file tracking
    - Makes changes only when no errors exist
 
 The system is designed using SOLID principles:
@@ -88,7 +86,7 @@ Summary of responsibilities
 - **fileparser_md.go**: Specialized parsing logic for Markdown files
 - **fileparser_src.go**: Specialized parsing for source files
 - **analyzer.go**: Implement `IAnalyzer`, checks for semantic errors, determine required transformations
-- **applier.go**: Implement `IApplier`, apply transformations to markdown and `reqmd.json`
+- **applier.go**: Implement `IApplier`, apply transformations to markdown files
 - **utils.go**: Common helper functions
 - **gogit.go**: Implement IGit interface using `go-git` library
 
@@ -149,21 +147,15 @@ URL structure examples:
 
 The following files may require changes:
 
-- reqmd.json is updated when:
-  - FileUrl is added/removed
-  - FileHash is updated
 - Markdown files are updated when:
   - A Coverer with new FileURL is added
-  - A Coverer with existing FileURL no longer exists
-  - Coverer.FileHash is updated  
+  - A Coverer with existing FileURL no longer exists  
   - Some RequirementSites are BareRequirementSites and have no new Coverers
 
-### Analyze Reqmdjson actions
+### Analyze markdown actions
 
 Principles:
 
-- If a folder has any requirement with changed footnotes, the whole folder's reqmd.json needs updating
-- As a result reqmd.json can be empty, in this case applier shall make an attempt to delete it, if exists
 - FileUrl() helper function is used to strip line numbers from CoverageURLs
 
 ### Apply markdown actions
@@ -207,11 +199,6 @@ Process ActionFootnotes:
 - No specific ordering of new footnotes required
 - Existing footnote ordering shall be preserved
 - If there new footnotes then an empty line is added at the end of the file
-
-### Apply Regmdjson actions
-
-- If Reqmdjson is empty and the file specified by FilePath exists then it is deleted
-- Else Reqmdjson is jsonized with indentation and written to the file specified by FilePath
 
 ### Error handling
 

@@ -188,7 +188,7 @@ Syntax:
   CoverageArea   = "L" Number .
 ```
 
-**Note:** When generating URLs, the tool uses `main/master` as the default CommitRef. This ensures that links remain valid even when branches are squashed and simplifies tracking across repositories.
+**Note:** When generating URLs, the tool uses `main/master` as the default CommitRef. This ensures that links remain valid even when branches are squashed and simplifies tracking across repositories without needing to maintain file hash information.
 
 Requirements:
 

@@ -165,6 +165,6 @@ reqmd trace -v docs/ src/ tests/
 - Commit references
   - `main/master` is used as the default reference for file URLs instead of commit hashes
   - Motivation: 
-    - Simplifies maintenance by eliminating the need to track file hashes in reqmd.json
+    - Simplifies maintenance by eliminating the need to track file changes
     - Enables working in branches that will be squashed
     - Provides more readable and stable URLs in documentation
