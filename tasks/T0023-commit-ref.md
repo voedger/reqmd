@@ -47,15 +47,11 @@ Cons:
       - If master branch exists then `master` is usued
       - Otherwise error is returned
 
-### Step 3: Update URL construction in analyzer
+### Step 3 get rid of reqmd.json
 
-- Update the coverer URL generation in `internal/analyzer.go` to use commit ref instead of commit hash
-- Modify how file URLs are constructed using the commit ref
+We do not need reqmd.json anymore, so get rid of it in the documentation and code
 
-### Step 4: Remove file hash tracking from reqmd.json
 
-- Update the `Reqmdjson` structure in `internal/models.go` to no longer require file hashes
-- Modify `FileUrl2FileHash` to be optional or remove if not needed
 
 ### Step 5: Update tests for CommitRef changes
 

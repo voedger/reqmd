@@ -4,7 +4,6 @@
 package internal
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -213,19 +212,7 @@ func (s *scanner) folderProcessor(folderPath string, igit IGit) (FileProcessor, 
 	}
 
 	// Initialize markdown context for this folder
-	mctx := &MarkdownContext{
-		rfiles: &Reqmdjson{
-			FileUrl2FileHash: make(map[string]string),
-		},
-	}
-
-	// Try to load reqmd.json if it exists
-	reqmdPath := filepath.Join(folderPath, ReqmdjsonFileName)
-	if content, err := os.ReadFile(reqmdPath); err == nil {
-		if err := json.Unmarshal(content, &mctx.rfiles); err != nil {
-			return nil, fmt.Errorf("failed to parse %s: %w", ReqmdjsonFileName, err)
-		}
-	}
+	mctx := &MarkdownContext{}
 
 	return func(filePath string) error {
 		return s.scanFile(filePath, mctx, igit)

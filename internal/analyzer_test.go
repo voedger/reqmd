@@ -313,9 +313,7 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 	analyzer := NewAnalyzer()
 
 	OldCoverageURL := "https://github.com/org/repo/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/old/file.go"
-	OldFileHash := "oldhash"
 	NewCoverageURL := "https://github.com/org/repo/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/new/file.go"
-	NewFileHash := "newhash"
 
 	// Create a markdown file with a requirement and existing footnote
 	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordCovered)
@@ -327,7 +325,6 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 				{
 					CoverageLabel: "old/file.go:15:impl",
 					CoverageUrL:   OldCoverageURL,
-					FileHash:      OldFileHash,
 				},
 			},
 		},
@@ -341,7 +338,6 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 			createCoverageTag("pkg1/REQ001", "impl", 20),
 		},
 	)
-	srcFile.FileHash = NewFileHash
 
 	result, err := analyzer.Analyze([]FileStructure{mdFile, srcFile})
 	require.NoError(t, err)
@@ -354,48 +350,6 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 	assert.Equal(t, ActionFootnote, actions[0].Type)
 	assert.NotContains(t, actions[0].Data, OldCoverageURL)
 	assert.Contains(t, actions[0].Data, NewCoverageURL)
-}
-
-func TestAnalyzer_ActionFootnote_AnCov_SameHash(t *testing.T) {
-	analyzer := NewAnalyzer()
-
-	OldCoverageURL := "https://github.com/org/repo/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/old/file.go"
-	OldFileHash := "oldhash"
-	NewCoverageURL := "https://github.com/org/repo/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/new/file.go"
-	NewFileHash := OldFileHash
-
-	// Create a markdown file with a requirement and existing footnote
-	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordCovered)
-	mdFile.CoverageFootnotes = []CoverageFootnote{
-		{
-			CoverageFootnoteId: "REQ001",
-			Line:               20,
-			Coverers: []Coverer{
-				{
-					CoverageLabel: "old/file.go:15:impl",
-					CoverageUrL:   OldCoverageURL,
-					FileHash:      OldFileHash,
-				},
-			},
-		},
-	}
-
-	// Source file with the same Url but new hash
-	srcFile := createSourceFileStructure(
-		"src/impl.go",
-		NewCoverageURL,
-		[]CoverageTag{
-			createCoverageTag("pkg1/REQ001", "impl", 20),
-		},
-	)
-	srcFile.FileHash = NewFileHash
-
-	result, err := analyzer.Analyze([]FileStructure{mdFile, srcFile})
-	require.NoError(t, err)
-	require.Empty(t, result.ProcessingErrors)
-
-	actions := result.MdActions[mdFile.Path]
-	require.Len(t, actions, 0)
 }
 
 // Helper function to create a simple FileStructure with one annotated requirement that has cw coverage
@@ -435,7 +389,6 @@ func createMdStructureA(path, pkgID string, line int, reqName_ string, cw Covera
 					{
 						CoverageLabel: "somefolder/somefile.go:15:impl",
 						CoverageUrL:   "someurl",
-						FileHash:      "somehash",
 					},
 				},
 			},
