@@ -29,7 +29,7 @@ func (a *applier) Apply(ar *AnalyzerResult) error {
 			}
 		}
 		if len(ar.MdActions) == 0 {
-			fmt.Println("Nothing to do")
+			fmt.Println("reqmd: Nothing to do")
 			return nil
 		}
 		if a.dryRun {
