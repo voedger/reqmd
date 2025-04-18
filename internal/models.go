@@ -66,7 +66,7 @@ type RequirementSite struct {
 	FilePath            string
 	Line                int                // line number where the requirement is defined/referenced
 	RequirementName     RequirementName    // e.g., "Post.handler"
-	CoverageFootnoteID  CoverageFootnoteId // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
+	CoverageFootnoteId  CoverageFootnoteId // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
 	CoverageStatusWord  CoverageStatusWord // "covered", "uncvrd", or empty
 	CoverageStatusEmoji CoverageStatusEmoji
 	HasAnnotationRef    bool // true if it already has coverage annotation reference, false if it’s bare

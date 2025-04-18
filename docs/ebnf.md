@@ -45,7 +45,7 @@ Input files consist of markdown files and source files.
 
   AnyCharacter   = ? any character ? .
 
-  CoverageFootnoteID = {? any character but "]" ?}
+  CoverageFootnoteId = {? any character but "]" ?}
 ```
 
 ## Markdown files
@@ -99,7 +99,7 @@ Markdown body is a sequence of different text elements. The tool processes:
   CoverageStatusWord = "covered" | "uncvrd" .
   RequirementName = Identifier .
   RequirementId = PackageID "/" RequirementName .
-  CoverageFootnoteReference = "[^" CoverageFootnoteID "]" .
+  CoverageFootnoteReference = "[^" CoverageFootnoteId "]" .
   CoverageStatusEmoji = "✅" | "❓" .
 ```
 
@@ -162,7 +162,7 @@ Where:
 
 Syntax:
 ```ebnf
-  CoverageFootnote = "[^" CoverageFootnoteID "]" ":" "`[" CoverageFootnoteHint "]`" [Coverers] .
+  CoverageFootnote = "[^" CoverageFootnoteId "]" ":" "`[" CoverageFootnoteHint "]`" [Coverers] .
   CoverageFootnoteHint = "~" PackageID "/" RequirementName "~" CoverageType .
   Coverers    = Coverer { "," Coverer } .
   Coverer     = "[" CoverageLabel "]" "(" CoverageURL ")" .

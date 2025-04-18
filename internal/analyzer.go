@@ -93,7 +93,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 		if !coverage.Site.HasAnnotationRef {
 			footnoteId = a.nextFootnoteId(coverage.FileStructure.Path)
 		} else {
-			footnoteId = coverage.Site.CoverageFootnoteID
+			footnoteId = coverage.Site.CoverageFootnoteId
 		}
 
 		// Check if site action is needed
@@ -137,7 +137,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 
 			// Find annotation line, keep 0 if not found
 			for _, cf := range coverage.FileStructure.CoverageFootnotes {
-				if cf.CoverageFootnoteId == coverage.Site.CoverageFootnoteID {
+				if cf.CoverageFootnoteId == coverage.Site.CoverageFootnoteId {
 					footnoteAction.Line = cf.Line
 					break
 				}
@@ -196,8 +196,8 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 
 				// Check RequirementSites
 				for _, req := range file.Requirements {
-					if req.CoverageFootnoteID != "" {
-						updateMaxFootnoteId(req.CoverageFootnoteID)
+					if req.CoverageFootnoteId != "" {
+						updateMaxFootnoteId(req.CoverageFootnoteId)
 					}
 				}
 
@@ -228,7 +228,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 
 				// Process existing coverage footnotes
 				for _, footnote := range file.CoverageFootnotes {
-					if footnote.CoverageFootnoteId == req.CoverageFootnoteID {
+					if footnote.CoverageFootnoteId == req.CoverageFootnoteId {
 						// Convert []Coverer to []*Coverer
 						coverage.CurrentCoverers = make([]*Coverer, len(footnote.Coverers))
 						for i := range footnote.Coverers {
