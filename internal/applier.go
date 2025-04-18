@@ -50,7 +50,7 @@ func (a *applier) Apply(ar *AnalyzerResult) error {
 /*
 Principles:
 
-- RequirementSiteRegex and CoverageFootnoteRegex from models.go are used to match lines with RequirementID
+- RequirementSiteRegex and CoverageFootnoteRegex from models.go are used to match lines with RequirementId
 -
 
 */
@@ -78,7 +78,7 @@ func applyMdActions(path FilePath, actions []MdAction) error {
 				return fmt.Errorf("unknown action type: %s", action.Type)
 			}
 			if !re.MatchString(line) {
-				return fmt.Errorf("line %d does not match requirement ID in file %s", action.Line, path)
+				return fmt.Errorf("line %d does not match requirement Id in file %s", action.Line, path)
 			}
 			newLine := re.ReplaceAllStringFunc(line, func(_ string) string {
 				return action.Data

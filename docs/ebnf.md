@@ -94,8 +94,8 @@ Markdown body is a sequence of different text elements. The tool processes:
 
 ```ebnf
   RequirementSite = RequirementSiteLabel [ CoverageStatusWord CoverageFootnoteReference ] [ CoverageStatusEmoji ] .
-  RequirementSiteLabel = "`" RequirementSiteID "`" .
-  RequirementSiteID = "~" RequirementName "~" .
+  RequirementSiteLabel = "`" RequirementSiteId "`" .
+  RequirementSiteId = "~" RequirementName "~" .
   CoverageStatusWord = "covered" | "uncvrd" .
   RequirementName = Identifier .
   RequirementId = PackageId "/" RequirementName .

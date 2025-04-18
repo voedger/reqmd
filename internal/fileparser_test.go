@@ -19,8 +19,8 @@ func TestFileParser_md(t *testing.T) {
 	basicFile, _, err := parseFile(newMdCtx(), testDataFile)
 	require.NoError(t, err)
 
-	// Test package ID and requirements count
-	assert.Equal(t, "com.example.basic", basicFile.PackageId, "incorrect package ID")
+	// Test package Id and requirements count
+	assert.Equal(t, "com.example.basic", basicFile.PackageId, "incorrect package id")
 	assert.Len(t, basicFile.Requirements, 2, "incorrect number of requirements")
 
 	// Find and verify REQ001
@@ -45,7 +45,7 @@ func TestFileParser_md(t *testing.T) {
 		if len(basicFile.CoverageFootnotes) > 0 {
 			footnote := basicFile.CoverageFootnotes[0]
 			assert.Equal(t, CoverageFootnoteId("~REQ002~"), footnote.CoverageFootnoteId, "incorrect CoverageFootnoteId in footnote")
-			assert.Equal(t, "com.example.basic", footnote.PackageId, "incorrect package ID in footnote")
+			assert.Equal(t, "com.example.basic", footnote.PackageId, "incorrect package Id in footnote")
 
 			require.Len(t, footnote.Coverers, 2, "should have 2 coverage references")
 			assert.Equal(t, "folder1/filename1:line1:impl", footnote.Coverers[0].CoverageLabel)
@@ -207,7 +207,7 @@ func TestParseCoverageFootnote(t *testing.T) {
 	require.NotNil(t, note)
 
 	assert.Equal(t, CoverageFootnoteId("~REQ002~"), note.CoverageFootnoteId, "incorrect CoverageFootnoteId in footnote")
-	assert.Equal(t, "com.example.basic", note.PackageId, "incorrect package ID in footnote")
+	assert.Equal(t, "com.example.basic", note.PackageId, "incorrect package Id in footnote")
 
 	require.Len(t, note.Coverers, 2, "should have 2 coverage references")
 	assert.Equal(t, "folder1/filename1:line1:impl", note.Coverers[0].CoverageLabel)
@@ -223,7 +223,7 @@ func TestParseCoverageFootnote2(t *testing.T) {
 	require.NotNil(t, note)
 
 	assert.Equal(t, CoverageFootnoteId("~VVMLeader.def~"), note.CoverageFootnoteId, "incorrect CoverageFootnoteId in footnote")
-	assert.Equal(t, "server.design.orch", note.PackageId, "incorrect package ID in footnote")
+	assert.Equal(t, "server.design.orch", note.PackageId, "incorrect package Id in footnote")
 
 	require.Len(t, note.Coverers, 1, "should have 1 coverer")
 	assert.Equal(t, "apps/app.go:80:impl", note.Coverers[0].CoverageLabel)

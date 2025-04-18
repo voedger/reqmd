@@ -7,12 +7,12 @@ import "fmt"
 
 // ********** Syntax errors
 
-func NewErrPkgIdent(filePath string, line int, pkgID string) ProcessingError {
+func NewErrPkgIdent(filePath string, line int, pkgId string) ProcessingError {
 	return ProcessingError{
 		Code:     "pkgident",
 		FilePath: filePath,
 		Line:     line,
-		Message:  "PackageId shall be an identifier: " + pkgID,
+		Message:  "PackageId shall be an identifier: " + pkgId,
 	}
 }
 
@@ -67,13 +67,13 @@ func NewErrUnmatchedFence(filePath string, openFenceLine int) ProcessingError {
 
 // ********** Semantic errors
 
-func NewErrDuplicateRequirementId(filePath1 string, line1 int, filePath2 string, line2 int, reqID RequirementId) ProcessingError {
+func NewErrDuplicateRequirementId(filePath1 string, line1 int, filePath2 string, line2 int, reqId RequirementId) ProcessingError {
 	return ProcessingError{
 		Code:     "dupreqid",
 		FilePath: filePath1,
 		Line:     line1,
 		Message: fmt.Sprintf("duplicate RequirementId detected:\n\t%s\n\t%s:%d",
-			reqID, filePath2, line2),
+			reqId, filePath2, line2),
 	}
 }
 
