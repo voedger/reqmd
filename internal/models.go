@@ -21,7 +21,36 @@ const (
 )
 
 type RequirementName string
-type RequirementId string
+type PackageId string
+
+// RequirementId
+type RequirementId struct {
+	PackageId       PackageId
+	RequirementName RequirementName
+}
+
+func (r RequirementId) String() string {
+	return fmt.Sprintf("%s/%s", r.PackageId, r.RequirementName)
+}
+
+func NewReqId(pkgId PackageId, reqName RequirementName) RequirementId {
+	return RequirementId{
+		PackageId:       pkgId,
+		RequirementName: reqName,
+	}
+}
+
+func StrToReqId(reqStr string) RequirementId {
+	parts := strings.Split(reqStr, "/")
+	if len(parts) != 2 {
+		return RequirementId{}
+	}
+	return RequirementId{
+		PackageId:       PackageId(parts[0]),
+		RequirementName: RequirementName(parts[1]),
+	}
+}
+
 type CoverageFootnoteId string
 type FilePath = string
 type FolderPath = string
@@ -48,7 +77,7 @@ const (
 type FileStructure struct {
 	Path              string
 	Type              FileType           // indicates if it's Markdown or source
-	PackageID         string             // parsed from Markdown header (if markdown)
+	PackageId         PackageId          // parsed from Markdown header (if markdown)
 	Requirements      []RequirementSite  // for Markdown: discovered requirements (bare or annotated)
 	CoverageFootnotes []CoverageFootnote // for Markdown: discovered coverage footnotes
 	CoverageTags      []CoverageTag      // for source: discovered coverage tags
@@ -66,7 +95,7 @@ type RequirementSite struct {
 	FilePath            string
 	Line                int                // line number where the requirement is defined/referenced
 	RequirementName     RequirementName    // e.g., "Post.handler"
-	CoverageFootnoteID  CoverageFootnoteId // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
+	CoverageFootnoteId  CoverageFootnoteId // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
 	CoverageStatusWord  CoverageStatusWord // "covered", "uncvrd", or empty
 	CoverageStatusEmoji CoverageStatusEmoji
 	HasAnnotationRef    bool // true if it already has coverage annotation reference, false if it’s bare
@@ -108,7 +137,7 @@ func (c *CoverageTag) String() string {
 type CoverageFootnote struct {
 	FilePath           string
 	Line               int
-	PackageID          string
+	PackageId          PackageId
 	RequirementName    RequirementName
 	CoverageFootnoteId CoverageFootnoteId
 	Coverers           []Coverer
@@ -169,7 +198,7 @@ func FormatCoverageFootnote(cf *CoverageFootnote) string {
 	for _, coverer := range cf.Coverers {
 		refs = append(refs, fmt.Sprintf("[%s](%s)", coverer.CoverageLabel, coverer.CoverageURL))
 	}
-	hint := fmt.Sprintf("`[~%s/%s~impl]`", cf.PackageID, cf.RequirementName)
+	hint := fmt.Sprintf("`[~%s/%s~impl]`", cf.PackageId, cf.RequirementName)
 	if len(refs) > 0 {
 		coverersStr := strings.Join(refs, ", ")
 		res := fmt.Sprintf("[^%s]: %s %s", cf.CoverageFootnoteId, hint, coverersStr)

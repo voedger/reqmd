@@ -123,7 +123,7 @@ reqmd trace -v docs/ src/ tests/
 
 - Duplicate RequirementId detected
   - Message should include information about the files where the duplicates are found.
-- Markdown file with RequirementSites shall define PackageID
+- Markdown file with RequirementSites shall define PackageId
   - Message inclides line information about the first RequirementSite
 
 ### Phases

@@ -106,7 +106,7 @@ func TestFormatCoverageFootnote(t *testing.T) {
 		{
 			name: "no coverers",
 			footnote: &CoverageFootnote{
-				PackageID:          "pkg1",
+				PackageId:          "pkg1",
 				CoverageFootnoteId: "001",
 				RequirementName:    "REQ001",
 			},
@@ -116,7 +116,7 @@ func TestFormatCoverageFootnote(t *testing.T) {
 			name: "with sorted coverers",
 			footnote: &CoverageFootnote{
 				CoverageFootnoteId: "002",
-				PackageID:          "pkg2",
+				PackageId:          "pkg2",
 				RequirementName:    "REQ001",
 				Coverers: []Coverer{
 					{CoverageLabel: "b.go:1:test", CoverageURL: "url2"},

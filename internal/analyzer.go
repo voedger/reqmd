@@ -54,7 +54,7 @@ func (a *analyzer) Analyze(files []FileStructure) (*AnalyzerResult, error) {
 }
 
 func (a *analyzer) buildIdsSortedByPos() {
-	// Create slice with all requirement IDs
+	// Create slice with all requirement Ids
 	a.idsSortedByPos = make([]RequirementId, 0, len(a.coverages))
 	for reqId := range a.coverages {
 		a.idsSortedByPos = append(a.idsSortedByPos, reqId)
@@ -93,7 +93,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 		if !coverage.Site.HasAnnotationRef {
 			footnoteId = a.nextFootnoteId(coverage.FileStructure.Path)
 		} else {
-			footnoteId = coverage.Site.CoverageFootnoteID
+			footnoteId = coverage.Site.CoverageFootnoteId
 		}
 
 		// Check if site action is needed
@@ -119,7 +119,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 
 			// Create footnote action
 			newCf := &CoverageFootnote{
-				PackageID:          coverage.FileStructure.PackageID,
+				PackageId:          coverage.FileStructure.PackageId,
 				CoverageFootnoteId: footnoteId,
 				Coverers:           make([]Coverer, len(coverage.NewCoverers)),
 				RequirementName:    coverage.Site.RequirementName,
@@ -137,7 +137,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 
 			// Find annotation line, keep 0 if not found
 			for _, cf := range coverage.FileStructure.CoverageFootnotes {
-				if cf.CoverageFootnoteId == coverage.Site.CoverageFootnoteID {
+				if cf.CoverageFootnoteId == coverage.Site.CoverageFootnoteId {
 					footnoteAction.Line = cf.Line
 					break
 				}
@@ -156,13 +156,13 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 
 	// Processes files to analyze and manage requirements and their coverage.
 	// - Iterates through the provided files and processes only Markdown files.
-	// - Validates that Markdown files with requirements have a valid PackageID.
+	// - Validates that Markdown files with requirements have a valid PackageId.
 	//   If not, it logs an error and skips further processing for that file.
-	// - Tracks the maximum integer value of footnote IDs in c.maxFootnoteIntIds
+	// - Tracks the maximum integer value of footnote Ids in c.maxFootnoteIntIds
 	//   for each file by analyzing both RequirementSites and CoverageFootnotes.
 	// - Builds `a.coverages`, map[RequirementId]*requirementCoverage:
 	//   - For each requirement in the file:
-	//     - Generates a unique RequirementId by combining the PackageID and the
+	//     - Generates a unique RequirementId by combining the PackageId and the
 	//       requirement name.
 	//     - Checks for duplicate RequirementIds in the `coverages` map. If a
 	//       duplicate is found, it logs an error and skips the requirement.
@@ -177,8 +177,8 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 
 	for _, file := range files {
 		if file.Type == FileTypeMarkdown {
-			if len(file.Requirements) > 0 && file.PackageID == "" {
-				*errors = append(*errors, NewErrMissingPackageIDWithReqs(file.Path, file.Requirements[0].Line))
+			if len(file.Requirements) > 0 && file.PackageId == "" {
+				*errors = append(*errors, NewErrMissingPackageIdWithReqs(file.Path, file.Requirements[0].Line))
 				continue
 			}
 
@@ -196,8 +196,8 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 
 				// Check RequirementSites
 				for _, req := range file.Requirements {
-					if req.CoverageFootnoteID != "" {
-						updateMaxFootnoteId(req.CoverageFootnoteID)
+					if req.CoverageFootnoteId != "" {
+						updateMaxFootnoteId(req.CoverageFootnoteId)
 					}
 				}
 
@@ -208,14 +208,14 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 			}
 
 			for _, req := range file.Requirements {
-				var reqID RequirementId = RequirementId(file.PackageID + "/" + string(req.RequirementName)) // FIXME make NewRequirementId
+				var reqId RequirementId = NewReqId(file.PackageId, req.RequirementName) // FIXME make NewRequirementId
 
 				// Check for duplicates using coverages map
-				if existing, exists := a.coverages[reqID]; exists {
+				if existing, exists := a.coverages[reqId]; exists {
 					*errors = append(*errors, NewErrDuplicateRequirementId(
 						existing.FileStructure.Path, existing.Site.Line,
 						file.Path, req.Line,
-						reqID))
+						reqId))
 					continue
 				}
 
@@ -224,11 +224,11 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 					Site:          &req,
 					FileStructure: &file,
 				}
-				a.coverages[reqID] = coverage
+				a.coverages[reqId] = coverage
 
 				// Process existing coverage footnotes
 				for _, footnote := range file.CoverageFootnotes {
-					if footnote.CoverageFootnoteId == req.CoverageFootnoteID {
+					if footnote.CoverageFootnoteId == req.CoverageFootnoteId {
 						// Convert []Coverer to []*Coverer
 						coverage.CurrentCoverers = make([]*Coverer, len(footnote.Coverers))
 						for i := range footnote.Coverers {
@@ -259,7 +259,7 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 	return nil
 }
 
-// Finds the next available footnote ID for a given file
+// Finds the next available footnote Id for a given file
 // nolint
 func (a *analyzer) nextFootnoteId(filePath FilePath) CoverageFootnoteId {
 	currentMax, ok := a.maxFootnoteIntIds[filePath]

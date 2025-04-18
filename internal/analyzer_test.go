@@ -17,7 +17,7 @@ func TestAnalyzer_error_Duplicates(t *testing.T) {
 		{
 			Path:      "file1.md",
 			Type:      FileTypeMarkdown,
-			PackageID: "pkg1",
+			PackageId: "pkg1",
 			Requirements: []RequirementSite{
 				{
 					FilePath:        "file1.md",
@@ -29,7 +29,7 @@ func TestAnalyzer_error_Duplicates(t *testing.T) {
 		{
 			Path:      "file2.md",
 			Type:      FileTypeMarkdown,
-			PackageID: "pkg1",
+			PackageId: "pkg1",
 			Requirements: []RequirementSite{
 				{
 					FilePath:        "file2.md",
@@ -55,7 +55,7 @@ func TestAnalyzer_error_Duplicates(t *testing.T) {
 	}
 }
 
-func TestAnalyzer_error_MissingPackageID(t *testing.T) {
+func TestAnalyzer_error_MissingPackageId(t *testing.T) {
 	analyzer := NewAnalyzer()
 
 	files := []FileStructure{
@@ -113,7 +113,7 @@ func TestAnalyzer_ActionFootnote_Bare(t *testing.T) {
 	assert.Equal(t, "[^1]: `[~pkg1/REQ001~impl]`", actions[1].Data)
 }
 
-// Bare requirement, there is a footnote with CoverageFootnoteID == "19"
+// Bare requirement, there is a footnote with CoverageFootnoteId == "19"
 func TestAnalyzer_ActionFootnote_Bare_f19(t *testing.T) {
 	analyzer := NewAnalyzer()
 
@@ -148,8 +148,8 @@ func TestAnalyzer_ActionFootnote_Bare_f19(t *testing.T) {
 	assert.Equal(t, "[^20]: `[~pkg1/REQ001~impl]`", actions[1].Data)
 }
 
-// Bare requirement, there is a footnote with CoverageFootnoteID == "19"
-// and a RequirementSite with CoverageFootnoteID == "21".
+// Bare requirement, there is a footnote with CoverageFootnoteId == "19"
+// and a RequirementSite with CoverageFootnoteId == "21".
 func TestAnalyzer_ActionFootnote_Bare_f19_r21(t *testing.T) {
 	analyzer := NewAnalyzer()
 
@@ -163,12 +163,12 @@ func TestAnalyzer_ActionFootnote_Bare_f19_r21(t *testing.T) {
 			Line:               10 + 10,
 		},
 	}
-	// Add a RequirementSite with CoverageFootnoteID == "21"
+	// Add a RequirementSite with CoverageFootnoteId == "21"
 	{
 		req := RequirementSite{
 			FilePath:            "req.md",
 			RequirementName:     RequirementName("REQ002"),
-			CoverageFootnoteID:  CoverageFootnoteId("21"),
+			CoverageFootnoteId:  CoverageFootnoteId("21"),
 			Line:                11,
 			HasAnnotationRef:    true,
 			CoverageStatusWord:  CoverageStatusWordUncvrd,
@@ -221,7 +221,7 @@ func TestAnalyzer_ActionFootnote_Bare_NewCoverer(t *testing.T) {
 		"src/impl.go",
 		"https://github.com/org/repo/blob/main/src/impl.go",
 		[]CoverageTag{
-			createCoverageTag("pkg1/REQ001", "impl1", 20),
+			createCoverageTag(StrToReqId("pkg1/REQ001"), "impl1", 20),
 		},
 	)
 
@@ -257,7 +257,7 @@ func TestAnalyzer_ActionStatusUpdate_AnUncov_NewCoverer(t *testing.T) {
 		"src/impl.go",
 		"https://github.com/org/repo/blob/main/src/impl.go#L20",
 		[]CoverageTag{
-			createCoverageTag("pkg1/REQ002", "impl", 20),
+			createCoverageTag(StrToReqId("pkg1/REQ002"), "impl", 20),
 		},
 	)
 
@@ -335,7 +335,7 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 		"src/impl.go",
 		NewCoverageURL,
 		[]CoverageTag{
-			createCoverageTag("pkg1/REQ001", "impl", 20),
+			createCoverageTag(StrToReqId("pkg1/REQ001"), "impl", 20),
 		},
 	)
 
@@ -353,10 +353,10 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 }
 
 // Helper function to create a simple FileStructure with one annotated requirement that has cw coverage
-func createMdStructureA(path, pkgID string, line int, reqName_ string, cw CoverageStatusWord) FileStructure {
+func createMdStructureA(path string, pkgId PackageId, line int, reqName_ string, cw CoverageStatusWord) FileStructure {
 
 	var reqName RequirementName = RequirementName(reqName_)
-	var footnoteID CoverageFootnoteId = CoverageFootnoteId(reqName_)
+	var footnoteId CoverageFootnoteId = CoverageFootnoteId(reqName_)
 
 	emoji := CoverageStatusEmojiUncvrd
 	if cw == CoverageStatusWordCovered {
@@ -366,12 +366,12 @@ func createMdStructureA(path, pkgID string, line int, reqName_ string, cw Covera
 	fs := FileStructure{
 		Path:      path,
 		Type:      FileTypeMarkdown,
-		PackageID: pkgID,
+		PackageId: pkgId,
 		Requirements: []RequirementSite{
 			{
 				FilePath:            path,
 				RequirementName:     reqName,
-				CoverageFootnoteID:  footnoteID,
+				CoverageFootnoteId:  footnoteId,
 				Line:                line,
 				HasAnnotationRef:    true,
 				CoverageStatusWord:  cw,
@@ -383,7 +383,7 @@ func createMdStructureA(path, pkgID string, line int, reqName_ string, cw Covera
 	if cw == CoverageStatusWordCovered {
 		fs.CoverageFootnotes = []CoverageFootnote{
 			{
-				CoverageFootnoteId: footnoteID,
+				CoverageFootnoteId: footnoteId,
 				Line:               line + 10,
 				Coverers: []Coverer{
 					{
@@ -399,9 +399,9 @@ func createMdStructureA(path, pkgID string, line int, reqName_ string, cw Covera
 }
 
 // Helper function to create a CoverageTag
-func createCoverageTag(reqID RequirementId, coverageType string, line int) CoverageTag {
+func createCoverageTag(reqId RequirementId, coverageType string, line int) CoverageTag {
 	return CoverageTag{
-		RequirementId: reqID,
+		RequirementId: reqId,
 		CoverageType:  coverageType,
 		Line:          line,
 	}

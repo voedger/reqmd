@@ -35,15 +35,15 @@ type T interface {
 type ExecRootCmdFunc func(args []string, version string) error
 
 // RunSysTest executes a system test with the given parameters
-// If testID contains no subfoldersthen a single git repo is created and reqmd receives a single folder as an argument
+// If testId contains no subfoldersthen a single git repo is created and reqmd receives a single folder as an argument
 // Otherwise, each subfolder is treated as a separate path and separate git repos are created for each subfolder
-func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, version string) {
+func RunSysTest(t T, testsDir string, testId string, rootCmd ExecRootCmdFunc, version string) {
 
 	t.Helper()
 
-	// Find sysTestData Dir using testID
-	sysTestDataDir, err := findSysTestDataDir(testsDir, testID)
-	require.NoError(t, err, "Failed to find sysTestData Dir for testID: %s", testID)
+	// Find sysTestData Dir using testId
+	sysTestDataDir, err := findSysTestDataDir(testsDir, testId)
+	require.NoError(t, err, "Failed to find sysTestData Dir for testId: %s", testId)
 
 	testFolderAbsPaths := []string{}
 	{
@@ -71,8 +71,8 @@ func RunSysTest(t T, testsDir string, testID string, rootCmd ExecRootCmdFunc, ve
 
 	commitHashes := make(map[string]string)
 
-	// tempTestFolder keeps all test data for the current testID
-	tempTestBaseFolder, err := filepath.Abs(filepath.Join(".testdata", testID))
+	// tempTestFolder keeps all test data for the current testId
+	tempTestBaseFolder, err := filepath.Abs(filepath.Join(".testdata", testId))
 	require.NoError(t, err, "Failed to get absolute path for tempTestBaseFolder: %s", tempTestBaseFolder)
 	{
 		// Remove tempTestFolder if it exists
@@ -181,9 +181,9 @@ func validateGoldenLines(t T, goldenData *goldenData, paths []string) {
 	}
 }
 
-// findSysTestDataDir locates the test data Dir for the given testID
-func findSysTestDataDir(testsDir string, testID string) (string, error) {
-	return filepathJoin(testsDir, testID), nil
+// findSysTestDataDir locates the test data Dir for the given testId
+func findSysTestDataDir(testsDir string, testId string) (string, error) {
+	return filepathJoin(testsDir, testId), nil
 }
 
 // createGitRepo initializes a git repository in the given directory

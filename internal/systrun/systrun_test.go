@@ -36,7 +36,7 @@ func Test_err_Unexpected(t *testing.T) {
 	RunSysTest(mockT, runSysTestsDir, "err_unexpected", internal.ExecRootCmd, "0.0.1")
 	require.True(t, mockT.failed, "expected test to fail")
 	mockT.assertMsgsContains("Unexpected error")
-	mockT.assertMsgsContains("PackageID shall be an identifier: 11com.example.basic")
+	mockT.assertMsgsContains("PackageId shall be an identifier: 11com.example.basic")
 }
 
 // Errors are declared and occur but not matched
@@ -46,7 +46,7 @@ func Test_err_MatchedAndUnmatched(t *testing.T) {
 	require.True(t, mockT.failed, "expected test to fail")
 	mockT.assertMsgsContains("Expected error not found in stderr")
 	mockT.assertMsgsContains("Unexpected error")
-	mockT.assertMsgsContains("PackageID shall be an identifier: 11com.example.basic")
+	mockT.assertMsgsContains("PackageId shall be an identifier: 11com.example.basic")
 }
 
 func Test_err_LineCountMismatch(t *testing.T) {

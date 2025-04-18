@@ -51,7 +51,7 @@ func parseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 			FilePath:            filePath,
 			RequirementName:     RequirementName(match[1]),
 			CoverageStatusWord:  CoverageStatusWord(match[2]),
-			CoverageFootnoteID:  CoverageFootnoteId(match[3]),
+			CoverageFootnoteId:  CoverageFootnoteId(match[3]),
 			CoverageStatusEmoji: CoverageStatusEmoji(match[4]),
 			Line:                lineNum,
 			HasAnnotationRef:    match[3] != "",
@@ -77,7 +77,7 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 		footnote = &CoverageFootnote{
 			FilePath:           filePath,
 			CoverageFootnoteId: CoverageFootnoteId(matches[1]),
-			PackageID:          matches[2],
+			PackageId:          PackageId(matches[2]),
 			Line:               lineNum,
 		}
 

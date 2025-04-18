@@ -45,7 +45,7 @@ Input files consist of markdown files and source files.
 
   AnyCharacter   = ? any character ? .
 
-  CoverageFootnoteID = {? any character but "]" ?}
+  CoverageFootnoteId = {? any character but "]" ?}
 ```
 
 ## Markdown files
@@ -58,8 +58,8 @@ MarkdownFile   = Header Body .
 Header         = "---" NewLine
                  PackageDeclaration NewLine
                  "---" NewLine .
-PackageDeclaration = "reqmd.package:" WS PackageID .
-PackageID      = Identifier .
+PackageDeclaration = "reqmd.package:" WS PackageId .
+PackageId      = Identifier .
 
 Body           = { MarkdownElement } .
 MarkdownElement = RequirementSite | CoverageFootnote | PlainText .
@@ -69,7 +69,7 @@ PlainText      = { AnyCharacter } .
 
 ### Header
 
-The header specifies a PackageID (which is an Identifier), for example:
+The header specifies a PackageId (which is an Identifier), for example:
 
 ```markdown
 ---
@@ -94,12 +94,12 @@ Markdown body is a sequence of different text elements. The tool processes:
 
 ```ebnf
   RequirementSite = RequirementSiteLabel [ CoverageStatusWord CoverageFootnoteReference ] [ CoverageStatusEmoji ] .
-  RequirementSiteLabel = "`" RequirementSiteID "`" .
-  RequirementSiteID = "~" RequirementName "~" .
+  RequirementSiteLabel = "`" RequirementSiteId "`" .
+  RequirementSiteId = "~" RequirementName "~" .
   CoverageStatusWord = "covered" | "uncvrd" .
   RequirementName = Identifier .
-  RequirementId = PackageID "/" RequirementName .
-  CoverageFootnoteReference = "[^" CoverageFootnoteID "]" .
+  RequirementId = PackageId "/" RequirementName .
+  CoverageFootnoteReference = "[^" CoverageFootnoteId "]" .
   CoverageStatusEmoji = "✅" | "❓" .
 ```
 
@@ -162,8 +162,8 @@ Where:
 
 Syntax:
 ```ebnf
-  CoverageFootnote = "[^" CoverageFootnoteID "]" ":" "`[" CoverageFootnoteHint "]`" [Coverers] .
-  CoverageFootnoteHint = "~" PackageID "/" RequirementName "~" CoverageType .
+  CoverageFootnote = "[^" CoverageFootnoteId "]" ":" "`[" CoverageFootnoteHint "]`" [Coverers] .
+  CoverageFootnoteHint = "~" PackageId "/" RequirementName "~" CoverageType .
   Coverers    = Coverer { "," Coverer } .
   Coverer     = "[" CoverageLabel "]" "(" CoverageURL ")" .
   CoverageLabel = FilePath ":" Number ":" CoverageType .
@@ -219,7 +219,7 @@ func handlePostRequestTest(t *testing.T) {
 Breakdown of the `[~server.api.v2/Post.handler~test]`:
 
 - `server.api.v2/Post` is RequirementId
-- `server.api.v2` is the PackageID.
+- `server.api.v2` is the PackageId.
 - `Post.handler` is the RequirementName.
 - `test` is the CoverageType that is Name.
 
@@ -233,10 +233,10 @@ Breakdown of the `[~server.api.v2/Post.handler~test]`:
     
     For example: 
         [~server.api.v2/Post.handler~test] 
-    Here, PackageID is "server.api.v2", RequirementName is "Post.handler", and CoverageType is "test". 
+    Here, PackageId is "server.api.v2", RequirementName is "Post.handler", and CoverageType is "test". 
   *)
 
   SourceFile   = { SourceElement } ;
   SourceElement = CoverageTag | PlainText ;
-  CoverageTag  = "[" "~" PackageID "/" RequirementName "~" CoverageType "]";
+  CoverageTag  = "[" "~" PackageId "/" RequirementName "~" CoverageType "]";
 ```

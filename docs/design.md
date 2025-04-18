@@ -18,7 +18,7 @@ The tool follows a three-stage pipeline architecture:
 
 2. **Analyze** – Validate and Plan Changes
    - Performs semantic validation checks
-   - Ensures requirement IDs are unique
+   - Ensures requirement Ids are unique
    - Determines which coverage footnotes need updates
    - Identifies requirements needing coverage annotations
    - Generates a list of required file modifications
@@ -221,8 +221,8 @@ Process ActionFootnotes:
 ### System tests. Core principles
 
 - System tests (SysTests) are located in the `internal/sys_test.go` file
-- Each SysTest has a symbolic TestID
-- Each SysTest is associated with a  SysTestData folder located in `testdata/systest/<TestID>` folder
+- Each SysTest has a symbolic TestId
+- Each SysTest is associated with a  SysTestData folder located in `testdata/systest/<TestId>` folder
   - `req`: TestMarkdown-s, Reqmd-s, GoldenFile-s
   - `src`: Source files
 - TestMarkdown file contains NormalLines and GoldenLines (for errors), see below
