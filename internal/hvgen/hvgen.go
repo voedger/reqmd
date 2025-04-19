@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/voedger/reqmd/internal"
@@ -44,7 +45,7 @@ func HVGenerator(cfg Config) ([]internal.FileStructure, error) {
 	folderNames := generateFolderNames(cfg.MaxTreeDepth)
 
 	// Generate requirement IDs
-	reqIds := generateRequirementIds(r, cfg.NumReqSites, cfg.AvgSitesPerPackage)
+	reqIds := generateRequirementIds(cfg.NumReqSites, cfg.AvgSitesPerPackage)
 
 	// Group requirement IDs by package for file distribution
 	reqIdPerFile := groupRequirementIdsPerFile(r, reqIds, cfg.AvgSitesPerFile)
@@ -62,6 +63,7 @@ func HVGenerator(cfg Config) ([]internal.FileStructure, error) {
 }
 
 // generateFolderNames generates a slice of folder names
+// in the format ["f1", "f2", "f3"...] with length equal to maxDepth
 func generateFolderNames(maxDepth int) []string {
 	folderNames := make([]string, maxDepth)
 	for i := range folderNames {
@@ -71,35 +73,53 @@ func generateFolderNames(maxDepth int) []string {
 }
 
 // generateRequirementIds generates requirement IDs based on configuration
-func generateRequirementIds(r *rand.Rand, numReqSites int, avgSitesPerPackage int) []internal.RequirementId {
-	reqIds := make([]internal.RequirementId, numReqSites)
+// Input: numReqSites, avgSitesPerPackage
+// Output: []RequirementId sorted by PackageId
+//
+// Requirements are distributed across packages randomly with avgSitesPerPackage metric
+// Each requirement has a unique name and is associated with a specific package ID.
 
-	// Calculate how many packages we need
+func generateRequirementIds(numReqSites int, avgSitesPerPackage int) []internal.RequirementId {
+	if numReqSites <= 0 || avgSitesPerPackage <= 0 {
+		return []internal.RequirementId{}
+	}
+
+	// Calculate approximately how many packages we need
 	numPackages := numReqSites / avgSitesPerPackage
 	if numPackages < 1 {
 		numPackages = 1
 	}
 
-	// Generate requirement IDs
+	result := make([]internal.RequirementId, numReqSites)
+
+	// Distribute requirements across packages
 	for i := range numReqSites {
-		packageIdx := i / avgSitesPerPackage
-		if packageIdx >= numPackages {
-			packageIdx = numPackages - 1
+		packageIdx := rand.Intn(numPackages)
+
+		// Create a requirement ID with a unique name
+		reqId := internal.RequirementId{
+			PackageId:       internal.PackageId(fmt.Sprintf("pkg%d", packageIdx+1)),
+			RequirementName: internal.RequirementName(fmt.Sprintf("req%d", i+1)),
 		}
 
-		packageId := internal.PackageId(fmt.Sprintf("pkg.test.%d", packageIdx))
-		reqName := internal.RequirementName(fmt.Sprintf("REQ%04d", i))
-
-		reqIds[i] = internal.RequirementId{
-			PackageId:       packageId,
-			RequirementName: reqName,
-		}
+		result[i] = reqId
 	}
 
-	return reqIds
+	// Sort by PackageId to group related requirements together
+	sort.Slice(result, func(i, j int) bool {
+		return string(result[i].PackageId) < string(result[j].PackageId)
+	})
+
+	return result
 }
 
 // groupRequirementIdsPerFile groups requirement IDs into files
+// Input: reqIds, AvgSitesPerFile
+// Output: [][]RequirementId where each element contains
+// RequirementIds with the same PackageId
+//
+// This function distributes requirements to files while ensuring
+// requirements with the same package ID stay together.
 func groupRequirementIdsPerFile(r *rand.Rand, reqIds []internal.RequirementId, avgSitesPerFile int) [][]internal.RequirementId {
 	if len(reqIds) == 0 || avgSitesPerFile <= 0 {
 		return [][]internal.RequirementId{}
@@ -156,6 +176,12 @@ func groupRequirementIdsPerFile(r *rand.Rand, reqIds []internal.RequirementId, a
 }
 
 // generateCoverageTags generates coverage tags for requirements
+// Input: AvgTagsPerSite, reqIds
+// Output: []CoverageTag, map[RequirementId][]CoverageTags
+//
+// This function creates coverage tags for each requirement ID,
+// with random coverage types ("impl" or "test") and line numbers.
+// The number of tags per requirement is determined by avgTagsPerSite.
 func generateCoverageTags(r *rand.Rand, reqIds []internal.RequirementId, avgTagsPerSite int) ([]internal.CoverageTag, map[internal.RequirementId][]internal.CoverageTag) {
 	coverageTypes := []string{"impl", "test"}
 	var allTags []internal.CoverageTag
@@ -192,6 +218,11 @@ func generateCoverageTags(r *rand.Rand, reqIds []internal.RequirementId, avgTags
 }
 
 // groupCoverageTagsPerFile groups coverage tags into files
+// Input: ctags, cfg.AvgTagsPerFile
+// Output: [][]CoverageTags
+//
+// This function distributes coverage tags across files,
+// attempting to keep tags for the same requirement together.
 func groupCoverageTagsPerFile(r *rand.Rand, ctags []internal.CoverageTag, avgTagsPerFile int) [][]internal.CoverageTag {
 	if len(ctags) == 0 || avgTagsPerFile <= 0 {
 		return [][]internal.CoverageTag{}
@@ -236,6 +267,15 @@ func groupCoverageTagsPerFile(r *rand.Rand, ctags []internal.CoverageTag, avgTag
 }
 
 // generateFileStructures creates file structures based on grouped requirements and tags
+// Input: reqIdPerFile, ctagPerFile, folderNames
+// Output: []FileStructure
+//
+// This function creates FileStructure objects by generating:
+// - Path: from random elements of folderNames
+// - Type: Markdown or Source (ratio determined by srcToMdRatio)
+// - PackageId: from the requirements assigned to the file
+// - Requirements: from reqIdPerFile with unique line numbers
+// - CoverageTags: from ctagPerFile with unique line numbers
 func generateFileStructures(r *rand.Rand, reqIdPerFile [][]internal.RequirementId, ctagPerFile [][]internal.CoverageTag, folderNames []string, srcToMdRatio int) []internal.FileStructure {
 	maxFiles := max(len(reqIdPerFile), len(ctagPerFile))
 	result := make([]internal.FileStructure, maxFiles)
