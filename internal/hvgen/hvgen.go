@@ -48,7 +48,7 @@ func HVGenerator(cfg Config) ([]internal.FileStructure, error) {
 	reqIds := generateRequirementIds(cfg.NumReqSites, cfg.AvgSitesPerPackage)
 
 	// Group requirement IDs by package for file distribution
-	reqIdPerFile := groupRequirementIdsPerFile(r, reqIds, cfg.AvgSitesPerFile)
+	reqIdPerFile := groupRequirementIdsPerFile(reqIds, cfg.AvgSitesPerFile)
 
 	// Generate coverage tags
 	ctags, _ := generateCoverageTags(r, reqIds, cfg.AvgTagsPerSite)
@@ -113,65 +113,47 @@ func generateRequirementIds(numReqSites int, avgSitesPerPackage int) []internal.
 	return result
 }
 
-// groupRequirementIdsPerFile groups requirement IDs into files
-// Input: reqIds, AvgSitesPerFile
+// groupRequirementIdsPerFile groups reqIds into files according to avgSitesPerFile parameter
 // Output: [][]RequirementId where each element contains
 // RequirementIds with the same PackageId
 //
 // This function distributes requirements to files while ensuring
 // requirements with the same package ID stay together.
-func groupRequirementIdsPerFile(r *rand.Rand, reqIds []internal.RequirementId, avgSitesPerFile int) [][]internal.RequirementId {
+// Flow:
+// - Initialize current group (cg): currentPackageId, cgNumReqs
+// - Iterate over reqIds
+//   - If reqIds.PackageId != cgPackageId or len(cg) >= cgNumReqs: flush cg to result and start new cg
+func groupRequirementIdsPerFile(reqIds []internal.RequirementId, avgSitesPerFile int) [][]internal.RequirementId {
 	if len(reqIds) == 0 || avgSitesPerFile <= 0 {
 		return [][]internal.RequirementId{}
 	}
 
-	// Create a map to group requirements by package
-	reqsByPackage := make(map[internal.PackageId][]internal.RequirementId)
+	var result [][]internal.RequirementId
+	var currentGroup []internal.RequirementId
+	var currentPackageId internal.PackageId
+
+	currentPackageId = reqIds[0].PackageId
+	currentNumReqs := rand.Intn(avgSitesPerFile)
+
 	for _, reqId := range reqIds {
-		reqsByPackage[reqId.PackageId] = append(reqsByPackage[reqId.PackageId], reqId)
-	}
-
-	// Calculate number of files needed
-	numFiles := len(reqIds) / avgSitesPerFile
-	if numFiles < 1 {
-		numFiles = 1
-	}
-
-	result := make([][]internal.RequirementId, numFiles)
-	fileIdx := 0
-
-	// Distribute requirements to files, keeping requirements with same package ID together
-	for _, pkgReqs := range reqsByPackage {
-		// Distribute package's requirements across files
-		remainingReqs := len(pkgReqs)
-		startIdx := 0
-
-		for remainingReqs > 0 {
-			// Determine how many requirements to add to this file
-			count := avgSitesPerFile
-			if count > remainingReqs {
-				count = remainingReqs
+		// If we encounter a new package or reached max group size, flush the current group
+		if reqId.PackageId != currentPackageId || len(currentGroup) >= currentNumReqs {
+			if len(currentGroup) > 0 {
+				result = append(result, currentGroup)
+				currentGroup = nil
 			}
-
-			// Add variation in sites per file
-			variation := r.Intn(3) - 1 // -1, 0, or 1
-			count += variation
-			if count <= 0 {
-				count = 1
-			}
-			if count > remainingReqs {
-				count = remainingReqs
-			}
-
-			// Add requirements to the current file
-			result[fileIdx] = append(result[fileIdx], pkgReqs[startIdx:startIdx+count]...)
-
-			startIdx += count
-			remainingReqs -= count
-			fileIdx = (fileIdx + 1) % numFiles
+			currentPackageId = reqId.PackageId
+			currentNumReqs = rand.Intn(avgSitesPerFile)
 		}
+
+		// Add the current reqId to the group
+		currentGroup = append(currentGroup, reqId)
 	}
 
+	// Don't forget to add the last group
+	if len(currentGroup) > 0 {
+		result = append(result, currentGroup)
+	}
 	return result
 }
 
