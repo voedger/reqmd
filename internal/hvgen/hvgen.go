@@ -54,7 +54,7 @@ func HVGenerator(cfg Config) ([]internal.FileStructure, error) {
 	ctags, _ := generateCoverageTags(reqIds, cfg.MaxTagsPerSite)
 
 	// Group coverage tags per file
-	ctagPerFile := groupCoverageTagsPerFile(r, ctags, cfg.MaxTagsPerFile)
+	ctagPerFile := groupCoverageTagsPerFile(ctags, cfg.MaxTagsPerFile)
 
 	// Generate file structures
 	fileStructs := generateFileStructures(r, reqIdPerFile, ctagPerFile, folderNames, cfg.SrcToMdRatio)
@@ -113,16 +113,13 @@ func generateRequirementIds(numReqSites int, maxSitesPerPackage int) []internal.
 	return result
 }
 
-// groupRequirementIdsPerFile groups reqIds into files according to avgSitesPerFile parameter
-// Output: [][]RequirementId where each element contains
-// RequirementIds with the same PackageId
+// groupRequirementIdsPerFile groups reqIds into files according to maxSitesPerFile parameter
+// Output: [][]RequirementId where each element contains RequirementIds with the same PackageId
 //
-// This function distributes requirements to files while ensuring
-// requirements with the same package ID stay together.
 // Flow:
-// - Initialize current group (cg): currentPackageId, cgNumReqs
+// - Initialize current group (cg): currentPackageId, currentGroupSize
 // - Iterate over reqIds
-//   - If reqIds.PackageId != cgPackageId or len(cg) >= cgNumReqs: flush cg to result and start new cg
+//   - If reqIds.PackageId != cgPackageId or len(cg) >= cgNumReqs: flush the cg to result and start a new cg
 func groupRequirementIdsPerFile(reqIds []internal.RequirementId, maxSitesPerFile int) [][]internal.RequirementId {
 	if len(reqIds) == 0 || maxSitesPerFile <= 0 {
 		return [][]internal.RequirementId{}
@@ -162,13 +159,7 @@ func groupRequirementIdsPerFile(reqIds []internal.RequirementId, maxSitesPerFile
 	return result
 }
 
-// generateCoverageTags generates coverage tags for requirements
-// Input: AvgTagsPerSite, reqIds
-// Output: tags []CoverageTag, reqToTags map[RequirementId][]CoverageTags
-//
-// This function creates coverage tags for each requirement ID,
-// with random coverage types ("impl" or "test") and line numbers.
-// The number of tags per requirement is determined by maxTagsPerSite.
+// generateCoverageTags generates coverage tags for requirements and maps them to requirements
 func generateCoverageTags(reqIds []internal.RequirementId, maxTagsPerSite int) ([]internal.CoverageTag, map[internal.RequirementId][]internal.CoverageTag) {
 	coverageTypes := []string{"impl", "test"}
 	var allTags []internal.CoverageTag
@@ -195,50 +186,34 @@ func generateCoverageTags(reqIds []internal.RequirementId, maxTagsPerSite int) (
 	return allTags, reqToTags
 }
 
-// groupCoverageTagsPerFile groups coverage tags into files
-// Input: ctags, cfg.AvgTagsPerFile
-// Output: [][]CoverageTags
-//
-// This function distributes coverage tags across files,
-// attempting to keep tags for the same requirement together.
-func groupCoverageTagsPerFile(r *rand.Rand, ctags []internal.CoverageTag, avgTagsPerFile int) [][]internal.CoverageTag {
-	if len(ctags) == 0 || avgTagsPerFile <= 0 {
+// groupCoverageTagsPerFile groups coverage tags, each group contains rand.Intn(maxTagsPerFile + 1) tags
+// Tags are not sorted by RequirementId
+func groupCoverageTagsPerFile(ctags []internal.CoverageTag, maxTagsPerFile int) [][]internal.CoverageTag {
+	if len(ctags) == 0 || maxTagsPerFile <= 0 {
 		return [][]internal.CoverageTag{}
 	}
 
-	// Calculate number of files needed
-	numFiles := len(ctags) / avgTagsPerFile
-	if numFiles < 1 {
-		numFiles = 1
-	}
+	var result [][]internal.CoverageTag
 
-	result := make([][]internal.CoverageTag, numFiles)
+	// Make a copy of the input slice to avoid modifying the original
+	tagsCopy := make([]internal.CoverageTag, len(ctags))
+	copy(tagsCopy, ctags)
 
-	// Create a map to group tags by requirement ID
-	tagsByReqId := make(map[internal.RequirementId][]internal.CoverageTag)
-	for _, tag := range ctags {
-		tagsByReqId[tag.RequirementId] = append(tagsByReqId[tag.RequirementId], tag)
-	}
+	// Shuffle the tags
+	rand.Shuffle(len(tagsCopy), func(i, j int) {
+		tagsCopy[i], tagsCopy[j] = tagsCopy[j], tagsCopy[i]
+	})
 
-	fileIdx := 0
+	// Group tags into files
+	for len(tagsCopy) > 0 {
+		// Determine number of tags for this file (between 1 and maxTagsPerFile)
+		numTags := min(rand.Intn(maxTagsPerFile)+1, len(tagsCopy))
 
-	// Distribute tags to files, keeping tags with same requirement ID together
-	for _, reqTags := range tagsByReqId {
-		// Determine how many tags to add to this file
-		count := avgTagsPerFile
-		variation := r.Intn(3) - 1 // -1, 0, or 1
-		count += variation
-		if count <= 0 {
-			count = 1
-		}
-		if count > len(reqTags) {
-			count = len(reqTags)
-		}
+		// Extract tags for this file
+		fileTags := tagsCopy[:numTags]
+		tagsCopy = tagsCopy[numTags:]
 
-		// Add tags to the current file
-		result[fileIdx] = append(result[fileIdx], reqTags[:count]...)
-
-		fileIdx = (fileIdx + 1) % numFiles
+		result = append(result, fileTags)
 	}
 
 	return result
