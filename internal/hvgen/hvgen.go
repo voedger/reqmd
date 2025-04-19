@@ -51,13 +51,13 @@ func HVGenerator(cfg Config) ([]internal.FileStructure, error) {
 	reqIdPerFile := groupRequirementIdsPerFile(reqIds, cfg.MaxSitesPerFile)
 
 	// Generate coverage tags
-	ctags, _ := generateCoverageTags(reqIds, cfg.MaxTagsPerSite)
+	ctags, reqToTags := generateCoverageTags(reqIds, cfg.MaxTagsPerSite)
 
 	// Group coverage tags per file
 	ctagPerFile := groupCoverageTagsPerFile(ctags, cfg.MaxTagsPerFile)
 
 	// Generate file structures
-	fileStructs := generateFileStructures(r, reqIdPerFile, ctagPerFile, folderNames, cfg.SrcToMdRatio)
+	fileStructs := generateFileStructures(r, reqIdPerFile, ctagPerFile, reqToTags, folderNames, cfg.SrcToMdRatio)
 
 	return fileStructs, nil
 }
@@ -175,7 +175,6 @@ func generateCoverageTags(reqIds []internal.RequirementId, maxTagsPerSite int) (
 			tag := internal.CoverageTag{
 				RequirementId: reqId,
 				CoverageType:  coverageTypes[rand.Intn(len(coverageTypes))],
-				Line:          rand.Intn(100) + 1, // Line numbers from 1 to 100
 			}
 			tags[i] = tag
 			allTags = append(allTags, tag)
@@ -220,8 +219,6 @@ func groupCoverageTagsPerFile(ctags []internal.CoverageTag, maxTagsPerFile int) 
 }
 
 // generateFileStructures creates file structures based on grouped requirements and tags
-// Input: reqIdPerFile, ctagPerFile, folderNames
-// Output: []FileStructure
 //
 // This function creates FileStructure objects by generating:
 // - Path: from random elements of folderNames
@@ -229,17 +226,24 @@ func groupCoverageTagsPerFile(ctags []internal.CoverageTag, maxTagsPerFile int) 
 // - PackageId: from the requirements assigned to the file
 // - Requirements: from reqIdPerFile with unique line numbers
 // - CoverageTags: from ctagPerFile with unique line numbers
-func generateFileStructures(r *rand.Rand, reqIdPerFile [][]internal.RequirementId, ctagPerFile [][]internal.CoverageTag, folderNames []string, srcToMdRatio int) []internal.FileStructure {
+func generateFileStructures(r *rand.Rand,
+	reqIdPerFile [][]internal.RequirementId,
+	ctagPerFile [][]internal.CoverageTag,
+	reqToTags map[internal.RequirementId][]internal.CoverageTag,
+	folderNames []string,
+	srcToMdRatio int,
+) []internal.FileStructure {
+
 	maxFiles := max(len(reqIdPerFile), len(ctagPerFile))
 	result := make([]internal.FileStructure, maxFiles)
 
-	for i := 0; i < maxFiles; i++ {
+	for i := range maxFiles {
 		fs := internal.FileStructure{}
 
 		// Generate path with random folder depth
 		depth := r.Intn(len(folderNames)) + 1
 		pathParts := make([]string, depth)
-		for j := 0; j < depth; j++ {
+		for j := range depth {
 			pathParts[j] = folderNames[r.Intn(len(folderNames))]
 		}
 
@@ -255,10 +259,11 @@ func generateFileStructures(r *rand.Rand, reqIdPerFile [][]internal.RequirementI
 		fs.Path = filepath.Join(pathParts...)
 		fs.Type = fileType
 
+		usedLines := make(map[int]bool)
+
 		// Add requirements if available for this file index
-		if i < len(reqIdPerFile) && len(reqIdPerFile[i]) > 0 {
+		if i < len(reqIdPerFile) {
 			fs.PackageId = reqIdPerFile[i][0].PackageId
-			usedLines := make(map[int]bool)
 
 			for _, reqId := range reqIdPerFile[i] {
 				// Generate a unique line number
@@ -275,14 +280,14 @@ func generateFileStructures(r *rand.Rand, reqIdPerFile [][]internal.RequirementI
 					CoverageFootnoteId: internal.CoverageFootnoteId(fmt.Sprintf("%d", len(fs.Requirements)+1)),
 				}
 
+				// Generate
+
 				fs.Requirements = append(fs.Requirements, reqSite)
 			}
 		}
 
 		// Add coverage tags if available for this file index
 		if i < len(ctagPerFile) {
-			usedLines := make(map[int]bool)
-
 			for _, tag := range ctagPerFile[i] {
 				// Generate a unique line number
 				line := r.Intn(100) + 1
@@ -295,11 +300,6 @@ func generateFileStructures(r *rand.Rand, reqIdPerFile [][]internal.RequirementI
 				fs.CoverageTags = append(fs.CoverageTags, tag)
 			}
 		}
-
-		// Set other fields
-		fs.RepoRootFolderURL = "http://example.com/repo"
-		fs.RelativePath = fs.Path
-		fs.FileHash = fmt.Sprintf("hash%d", i)
 
 		result[i] = fs
 	}
