@@ -192,7 +192,6 @@ func TestParseRequirements_table(t *testing.T) {
 			require.Equal(t, len(tt.expected), len(got), "number of requirements mismatch: %d: %s: %s", tidx, tt.name, tt.input)
 			for i, exp := range tt.expected {
 				// Set common fields that we don't need to specify in every test case
-				exp.FilePath = "test.md"
 				assert.Equal(t, exp, got[i], "requirement %d.%d mismatch, %s: %s", tidx, i, tt.name, tt.input)
 			}
 			assert.Empty(t, errors, "unexpected errors")

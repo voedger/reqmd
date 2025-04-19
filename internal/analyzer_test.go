@@ -20,7 +20,6 @@ func TestAnalyzer_error_Duplicates(t *testing.T) {
 			PackageId: "pkg1",
 			Requirements: []RequirementSite{
 				{
-					FilePath:        "file1.md",
 					RequirementName: "REQ001",
 					Line:            10,
 				},
@@ -32,7 +31,6 @@ func TestAnalyzer_error_Duplicates(t *testing.T) {
 			PackageId: "pkg1",
 			Requirements: []RequirementSite{
 				{
-					FilePath:        "file2.md",
 					RequirementName: "REQ001",
 					Line:            20,
 				},
@@ -64,7 +62,6 @@ func TestAnalyzer_error_MissingPackageId(t *testing.T) {
 			Type: FileTypeMarkdown,
 			Requirements: []RequirementSite{
 				{
-					FilePath:        "file1.md",
 					RequirementName: "REQ001",
 					Line:            10,
 				},
@@ -166,7 +163,6 @@ func TestAnalyzer_ActionFootnote_Bare_f19_r21(t *testing.T) {
 	// Add a RequirementSite with CoverageFootnoteId == "21"
 	{
 		req := RequirementSite{
-			FilePath:            "req.md",
 			RequirementName:     RequirementName("REQ002"),
 			CoverageFootnoteId:  CoverageFootnoteId("21"),
 			Line:                11,
@@ -369,7 +365,6 @@ func createMdStructureA(path string, pkgId PackageId, line int, reqName_ string,
 		PackageId: pkgId,
 		Requirements: []RequirementSite{
 			{
-				FilePath:            path,
 				RequirementName:     reqName,
 				CoverageFootnoteId:  footnoteId,
 				Line:                line,

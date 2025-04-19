@@ -92,7 +92,6 @@ func (f *FileStructure) FileURL() string {
 
 // RequirementSite represents a single requirement reference discovered in a Markdown file.
 type RequirementSite struct {
-	FilePath            string
 	Line                int                // line number where the requirement is defined/referenced
 	RequirementName     RequirementName    // e.g., "Post.handler"
 	CoverageFootnoteId  CoverageFootnoteId // Other.handler for "`~Post.handler~`cov[^~Other.handler~]"
@@ -135,7 +134,6 @@ func (c *CoverageTag) String() string {
 
 // CoverageFootnote represents the footnote in Markdown that references coverage tags.
 type CoverageFootnote struct {
-	FilePath           string
 	Line               int
 	PackageId          PackageId
 	RequirementName    RequirementName
