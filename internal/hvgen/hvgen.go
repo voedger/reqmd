@@ -283,11 +283,3 @@ func generateFileStructures(r *rand.Rand,
 
 	return result
 }
-
-// helper function for max of two ints (for Go <1.21)
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
