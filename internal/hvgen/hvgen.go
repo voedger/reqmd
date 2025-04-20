@@ -44,10 +44,10 @@ func HVGenerator(cfg Config) ([]internal.FileStructure, error) {
 	// Generate folder names
 	folderNames := generateFolderNames(cfg.MaxTreeDepth)
 
-	// Generate requirement IDs
+	// Generate requirement ids
 	reqIds := generateRequirementIds(cfg.NumReqSites, cfg.MaxSitesPerPackage)
 
-	// Group requirement IDs by package for file distribution
+	// Group requirement ids by package for file distribution
 	reqIdPerFile := groupRequirementIdsPerFile(reqIds, cfg.MaxSitesPerFile)
 
 	// Generate coverage tags
@@ -229,7 +229,7 @@ func groupCoverageTagsPerFile(ctags []internal.CoverageTag, maxTagsPerFile int) 
 func generateFileStructures(r *rand.Rand,
 	reqIdPerFile [][]internal.RequirementId,
 	ctagPerFile [][]internal.CoverageTag,
-	reqToTags map[internal.RequirementId][]internal.CoverageTag,
+	_ map[internal.RequirementId][]internal.CoverageTag,
 	folderNames []string,
 	srcToMdRatio int,
 ) []internal.FileStructure {
@@ -259,28 +259,15 @@ func generateFileStructures(r *rand.Rand,
 		fs.Path = filepath.Join(pathParts...)
 		fs.Type = fileType
 
-		usedLines := make(map[int]bool)
-
 		// Add requirements if available for this file index
 		if i < len(reqIdPerFile) {
 			fs.PackageId = reqIdPerFile[i][0].PackageId
 
 			for _, reqId := range reqIdPerFile[i] {
-				// Generate a unique line number
-				line := r.Intn(100) + 1
-				for usedLines[line] {
-					line = r.Intn(100) + 1
-				}
-				usedLines[line] = true
-
 				// Create requirement site
 				reqSite := internal.RequirementSite{
-					Line:               line,
-					RequirementName:    reqId.RequirementName,
-					CoverageFootnoteId: internal.CoverageFootnoteId(fmt.Sprintf("%d", len(fs.Requirements)+1)),
+					RequirementName: reqId.RequirementName,
 				}
-
-				// Generate
 
 				fs.Requirements = append(fs.Requirements, reqSite)
 			}
@@ -288,17 +275,7 @@ func generateFileStructures(r *rand.Rand,
 
 		// Add coverage tags if available for this file index
 		if i < len(ctagPerFile) {
-			for _, tag := range ctagPerFile[i] {
-				// Generate a unique line number
-				line := r.Intn(100) + 1
-				for usedLines[line] {
-					line = r.Intn(100) + 1
-				}
-				usedLines[line] = true
-
-				tag.Line = line
-				fs.CoverageTags = append(fs.CoverageTags, tag)
-			}
+			fs.CoverageTags = append(fs.CoverageTags, ctagPerFile[i]...)
 		}
 
 		result[i] = fs
