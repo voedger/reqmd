@@ -342,9 +342,11 @@ func createFiles(fileStructs []internal.FileStructure, targetDir string) (err er
 func generateFileContent(fs internal.FileStructure) string {
 	var content string
 
+	fileName := filepath.Base(fs.Path)
+
 	// Add header for markdown files
 	if fs.Type == internal.FileTypeMarkdown {
-		content = fmt.Sprintf("---\nreqmd.package: %s\n---\n\n", fs.PackageId)
+		content = fmt.Sprintf("---\nreqmd.package: %s\n---\n\n# %s\n\n", fs.PackageId, fileName)
 	}
 
 	// Create a slice of elements to insert into the file
