@@ -22,21 +22,19 @@ type Config struct {
 	MaxSitesPerFile    int
 	MaxTagsPerFile     int
 	MaxTreeDepth       int
-	SrcToMdRatio       int
-	targetDir          string
+	TargetDir          string
 }
 
 // DefaultConfig provides sensible defaults for Config
 func DefaultConfig(targetDir string) Config {
 	return Config{
-		NumReqSites:        1000,
+		NumReqSites:        100,
 		MaxSitesPerPackage: 5,
 		MaxTagsPerSite:     2,
 		MaxSitesPerFile:    3,
 		MaxTagsPerFile:     3,
 		MaxTreeDepth:       4,
-		SrcToMdRatio:       5,
-		targetDir:          targetDir,
+		TargetDir:          targetDir,
 	}
 }
 
@@ -60,9 +58,9 @@ func HVGenerator(cfg Config) (err error) {
 	ctagPerFile := groupCoverageTagsPerFile(ctags, cfg.MaxTagsPerFile)
 
 	// Generate file structures
-	fileStructs := generateFileStructures(r, reqIdPerFile, ctagPerFile, reqToTags, folderNames, cfg.SrcToMdRatio)
+	fileStructs := generateFileStructures(r, reqIdPerFile, ctagPerFile, reqToTags, folderNames)
 
-	return createFiles(fileStructs, cfg.targetDir)
+	return createFiles(fileStructs, cfg.TargetDir)
 }
 
 // generateFolderNames generates a slice of folder names
@@ -234,7 +232,6 @@ func generateFileStructures(r *rand.Rand,
 	ctagPerFile [][]internal.CoverageTag,
 	_ map[internal.RequirementId][]internal.CoverageTag,
 	folderNames []string,
-	srcToMdRatio int,
 ) []internal.FileStructure {
 
 	maxFiles := max(len(reqIdPerFile), len(ctagPerFile))
@@ -251,20 +248,11 @@ func generateFileStructures(r *rand.Rand,
 		}
 
 		// Determine file type (markdown or source)
-		fileType := internal.FileTypeSource
-		if r.Intn(srcToMdRatio+1) == 0 { // 1 in (srcToMdRatio+1) chance of being markdown
-			fileType = internal.FileTypeMarkdown
-			pathParts = append(pathParts, fmt.Sprintf("doc%d.md", i))
-		} else {
-			pathParts = append(pathParts, fmt.Sprintf("file%d.go", i))
-		}
-
-		fs.Path = filepath.Join(pathParts...)
-		fs.Type = fileType
+		fs.Type = internal.FileTypeSource
 
 		// Add requirements if available for this file index
 		if i < len(reqIdPerFile) {
-			fileType = internal.FileTypeMarkdown
+			fs.Type = internal.FileTypeMarkdown
 			fs.PackageId = reqIdPerFile[i][0].PackageId
 
 			for _, reqId := range reqIdPerFile[i] {
@@ -277,7 +265,7 @@ func generateFileStructures(r *rand.Rand,
 			}
 		}
 
-		if fileType == internal.FileTypeMarkdown {
+		if fs.Type == internal.FileTypeMarkdown {
 			pathParts = append(pathParts, fmt.Sprintf("doc%d.md", i))
 		} else {
 			pathParts = append(pathParts, fmt.Sprintf("file%d.go", i))
@@ -321,7 +309,7 @@ func generateFileStructures(r *rand.Rand,
 func createFiles(fileStructs []internal.FileStructure, targetDir string) (err error) {
 	for _, fs := range fileStructs {
 		// Create directory structure if needed
-		path := filepath.Dir(filepath.Join(targetDir, fs.Path))
+		path := filepath.Join(targetDir, fs.Path)
 		dir := filepath.Dir(path)
 		if err = os.MkdirAll(dir, 0755); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
@@ -373,14 +361,11 @@ func generateFileContent(fs internal.FileStructure) string {
 	// Add coverage tags for source files
 	for i, tag := range fs.CoverageTags {
 		lineNum := (i+1)*10 + 5 // Position tags at different lines than requirements
-		tagContent := ""
-		if fs.Type == internal.FileTypeSource {
-			tagContent = fmt.Sprintf("// [~%s/%s~%s]\n",
-				tag.RequirementId.PackageId,
-				tag.RequirementId.RequirementName,
-				tag.CoverageType,
-			)
-		}
+		tagContent := fmt.Sprintf("// [~%s/%s~%s]\n",
+			tag.RequirementId.PackageId,
+			tag.RequirementId.RequirementName,
+			tag.CoverageType,
+		)
 
 		elements = append(elements, fileElement{
 			line:    lineNum,
