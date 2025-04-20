@@ -65,142 +65,6 @@ func HVGenerator(cfg Config) (err error) {
 	return createFiles(fileStructs, cfg.targetDir)
 }
 
-// createFiles creates files based on fileStructs
-//
-// Parameters:
-//
-// - Path is relative to the working directory
-// - Type is either internal.FileTypeMarkdown or internal.FileTypeSource
-// - PackageId is the package ID of the file
-// - Requirements have the following fields filled:
-//   - RequirementName
-//
-// - CoverageFootnotes: is not filled
-// - CoverageTags:
-//   - RequirementId
-//   - CoverageType
-//
-// Behavior:
-//
-// - Creates Header if Type is Markdown
-// - For Requirements and CoverageTags
-//   - Generates random line numbers
-//
-// - Generates meaningful PlainText elements and mix them with Requirements and CoverageTags
-// - Writes the result to file
-func createFiles(fileStructs []internal.FileStructure, targetDir string) (err error) {
-	for _, fs := range fileStructs {
-		// Create directory structure if needed
-		path := filepath.Dir(filepath.Join(targetDir, fs.Path))
-		dir := filepath.Dir(path)
-		if err = os.MkdirAll(dir, 0755); err != nil {
-			return fmt.Errorf("failed to create directory %s: %w", dir, err)
-		}
-
-		// Generate file content
-		content := generateFileContent(fs)
-
-		// Write to file
-		if err = os.WriteFile(path, []byte(content), 0644); err != nil {
-			return fmt.Errorf("failed to write file %s: %w", path, err)
-		}
-	}
-	return nil
-}
-
-// generateFileContent creates content for a file based on its FileStructure
-func generateFileContent(fs internal.FileStructure) string {
-	var content string
-
-	// Add header for markdown files
-	if fs.Type == internal.FileTypeMarkdown {
-		content = fmt.Sprintf("---\nreqmd.package: %s\n---\n\n", fs.PackageId)
-	}
-
-	// Create a slice of elements to insert into the file
-	type fileElement struct {
-		line    int
-		content string
-	}
-	var elements []fileElement
-
-	// Add requirements for markdown files
-	for i, req := range fs.Requirements {
-		lineNum := (i + 1) * 10 // Distribute requirements with gap for plaintext
-		reqContent := ""
-		if fs.Type == internal.FileTypeMarkdown {
-			reqContent = fmt.Sprintf("## %s\n\n", req.RequirementName)
-		}
-
-		elements = append(elements, fileElement{
-			line:    lineNum,
-			content: reqContent,
-		})
-	}
-
-	// Add coverage tags for source files
-	for i, tag := range fs.CoverageTags {
-		lineNum := (i+1)*10 + 5 // Position tags at different lines than requirements
-		tagContent := ""
-		if fs.Type == internal.FileTypeSource {
-			tagContent = fmt.Sprintf("// @reqt[%s/%s] %s\n",
-				tag.RequirementId.PackageId,
-				tag.RequirementId.RequirementName,
-				tag.CoverageType)
-		}
-
-		elements = append(elements, fileElement{
-			line:    lineNum,
-			content: tagContent,
-		})
-	}
-
-	// Sort elements by line number
-	sort.Slice(elements, func(i, j int) bool {
-		return elements[i].line < elements[j].line
-	})
-
-	// Generate placeholder code or text between elements
-	prevLine := 0
-	for _, elem := range elements {
-		// Add placeholder text between elements
-		linesGap := elem.line - prevLine - 1
-		if linesGap > 0 {
-			placeholder := generatePlaceholderContent(fs.Type, linesGap)
-			content += placeholder
-		}
-
-		// Add the element content
-		content += elem.content
-		prevLine = elem.line
-	}
-
-	// Add some trailing content
-	content += generatePlaceholderContent(fs.Type, 5)
-
-	return content
-}
-
-// generatePlaceholderContent creates filler text or code for the specified number of lines
-func generatePlaceholderContent(fileType internal.FileType, numLines int) string {
-	if numLines <= 0 {
-		return ""
-	}
-
-	var result string
-	if fileType == internal.FileTypeMarkdown {
-		for i := range numLines {
-			result += fmt.Sprintf("This is placeholder text for line %d.\n", i+1)
-		}
-	} else { // Source
-		for i := range numLines {
-			result += fmt.Sprintf("// This is placeholder code for line %d\n", i+1)
-		}
-	}
-
-	return result
-}
-
 // generateFolderNames generates a slice of folder names
 // in the format ["f1", "f2", "f3"...] with length equal to maxDepth
 func generateFolderNames(maxDepth int) []string {
@@ -426,6 +290,143 @@ func generateFileStructures(r *rand.Rand,
 		}
 
 		result[i] = fs
+	}
+
+	return result
+}
+
+// createFiles creates files based on fileStructs
+//
+// Parameters:
+//
+// - Path is relative to the working directory
+// - Type is either internal.FileTypeMarkdown or internal.FileTypeSource
+// - PackageId is the package ID of the file
+// - Requirements have the following fields filled:
+//   - RequirementName
+//
+// - CoverageFootnotes: is not filled
+// - CoverageTags:
+//   - RequirementId
+//   - CoverageType
+//
+// Behavior:
+//
+// - Creates Header if Type is Markdown
+// - For Requirements and CoverageTags
+//   - Generates random line numbers
+//
+// - Generates meaningful PlainText elements and mix them with Requirements and CoverageTags
+// - Writes the result to file
+func createFiles(fileStructs []internal.FileStructure, targetDir string) (err error) {
+	for _, fs := range fileStructs {
+		// Create directory structure if needed
+		path := filepath.Dir(filepath.Join(targetDir, fs.Path))
+		dir := filepath.Dir(path)
+		if err = os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", dir, err)
+		}
+
+		// Generate file content
+		content := generateFileContent(fs)
+
+		// Write to file
+		if err = os.WriteFile(path, []byte(content), 0644); err != nil {
+			return fmt.Errorf("failed to write file %s: %w", path, err)
+		}
+	}
+	return nil
+}
+
+// generateFileContent creates content for a file based on its FileStructure
+func generateFileContent(fs internal.FileStructure) string {
+	var content string
+
+	// Add header for markdown files
+	if fs.Type == internal.FileTypeMarkdown {
+		content = fmt.Sprintf("---\nreqmd.package: %s\n---\n\n", fs.PackageId)
+	}
+
+	// Create a slice of elements to insert into the file
+	type fileElement struct {
+		line    int
+		content string
+	}
+	var elements []fileElement
+
+	// Add requirements for markdown files
+	for i, req := range fs.Requirements {
+		lineNum := (i + 1) * 10 // Distribute requirements with gap for plaintext
+		reqContent := ""
+		if fs.Type == internal.FileTypeMarkdown {
+			reqContent = fmt.Sprintf("`~%s~`\n", req.RequirementName)
+		}
+
+		elements = append(elements, fileElement{
+			line:    lineNum,
+			content: reqContent,
+		})
+	}
+
+	// Add coverage tags for source files
+	for i, tag := range fs.CoverageTags {
+		lineNum := (i+1)*10 + 5 // Position tags at different lines than requirements
+		tagContent := ""
+		if fs.Type == internal.FileTypeSource {
+			tagContent = fmt.Sprintf("// [~%s/%s~%s]\n",
+				tag.RequirementId.PackageId,
+				tag.RequirementId.RequirementName,
+				tag.CoverageType,
+			)
+		}
+
+		elements = append(elements, fileElement{
+			line:    lineNum,
+			content: tagContent,
+		})
+	}
+
+	// Sort elements by line number
+	sort.Slice(elements, func(i, j int) bool {
+		return elements[i].line < elements[j].line
+	})
+
+	// Generate placeholder code or text between elements
+	prevLine := 0
+	for _, elem := range elements {
+		// Add placeholder text between elements
+		linesGap := elem.line - prevLine - 1
+		if linesGap > 0 {
+			placeholder := generatePlaceholderContent(fs.Type, linesGap)
+			content += placeholder
+		}
+
+		// Add the element content
+		content += elem.content
+		prevLine = elem.line
+	}
+
+	// Add some trailing content
+	content += generatePlaceholderContent(fs.Type, 5)
+
+	return content
+}
+
+// generatePlaceholderContent creates filler text or code for the specified number of lines
+func generatePlaceholderContent(fileType internal.FileType, numLines int) string {
+	if numLines <= 0 {
+		return ""
+	}
+
+	var result string
+	if fileType == internal.FileTypeMarkdown {
+		for i := range numLines {
+			result += fmt.Sprintf("This is placeholder text for line %d.\n", i+1)
+		}
+	} else { // Source
+		for i := range numLines {
+			result += fmt.Sprintf("// This is placeholder code for line %d\n", i+1)
+		}
 	}
 
 	return result
