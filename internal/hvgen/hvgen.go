@@ -23,10 +23,11 @@ type Config struct {
 	MaxTagsPerFile     int
 	MaxTreeDepth       int
 	SrcToMdRatio       int
+	targetDir          string
 }
 
 // DefaultConfig provides sensible defaults for Config
-func DefaultConfig() Config {
+func DefaultConfig(targetDir string) Config {
 	return Config{
 		NumReqSites:        1000,
 		MaxSitesPerPackage: 5,
@@ -35,6 +36,7 @@ func DefaultConfig() Config {
 		MaxTagsPerFile:     3,
 		MaxTreeDepth:       4,
 		SrcToMdRatio:       5,
+		targetDir:          targetDir,
 	}
 }
 
@@ -60,7 +62,7 @@ func HVGenerator(cfg Config) (err error) {
 	// Generate file structures
 	fileStructs := generateFileStructures(r, reqIdPerFile, ctagPerFile, reqToTags, folderNames, cfg.SrcToMdRatio)
 
-	return createFiles(fileStructs)
+	return createFiles(fileStructs, cfg.targetDir)
 }
 
 // createFiles creates files based on fileStructs
@@ -86,10 +88,11 @@ func HVGenerator(cfg Config) (err error) {
 //
 // - Generates meaningful PlainText elements and mix them with Requirements and CoverageTags
 // - Writes the result to file
-func createFiles(fileStructs []internal.FileStructure) (err error) {
+func createFiles(fileStructs []internal.FileStructure, targetDir string) (err error) {
 	for _, fs := range fileStructs {
 		// Create directory structure if needed
-		dir := filepath.Dir(fs.Path)
+		path := filepath.Dir(filepath.Join(targetDir, fs.Path))
+		dir := filepath.Dir(path)
 		if err = os.MkdirAll(dir, 0755); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
@@ -98,8 +101,8 @@ func createFiles(fileStructs []internal.FileStructure) (err error) {
 		content := generateFileContent(fs)
 
 		// Write to file
-		if err = os.WriteFile(fs.Path, []byte(content), 0644); err != nil {
-			return fmt.Errorf("failed to write file %s: %w", fs.Path, err)
+		if err = os.WriteFile(path, []byte(content), 0644); err != nil {
+			return fmt.Errorf("failed to write file %s: %w", path, err)
 		}
 	}
 	return nil
