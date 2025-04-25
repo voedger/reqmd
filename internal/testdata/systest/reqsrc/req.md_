@@ -1,0 +1,9 @@
+---
+reqmd.package: req
+---
+
+# Just a requirement site
+
+`~main~`covered[^1]✅
+
+[^1]: `[~req/main~impl]` [main.go:5:impl](https://github.com/voedger/example/blob/main/main.go#L5)

@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-// [~reqsrc/main~impl]
+// [~req/main~impl]
 func main() {
 	fmt.Println("Hello, World!")
 }

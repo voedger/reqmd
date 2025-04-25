@@ -1,0 +1,11 @@
+---
+reqmd.package: reqs2footnote1
+---
+
+# Covered site with existing footnote
+
+`~func1~`uncovered[^1]
+`~func2~`uncovered[^2]
+
+[^1]: `[~reqs2footnote1/func1~impl]`
+[^2]: `[~reqs2footnote1/func2~impl]`
