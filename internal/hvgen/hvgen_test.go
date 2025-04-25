@@ -8,10 +8,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/voedger/reqmd/internal"
 	"github.com/voedger/reqmd/internal/hvgen"
 )
 
-func TestHVGenerator_small(t *testing.T) {
+func TestHVGenerator_low(t *testing.T) {
 
 	testDir := filepath.Join(".testdata", "TestHVGenerator")
 
@@ -31,6 +32,37 @@ func TestHVGenerator_small(t *testing.T) {
 	err = createGitRepo(testDir)
 	require.NoError(t, err)
 
+	err = internal.ExecRootCmd([]string{"reqmd", "-v", "trace", testDir}, "0.0.1")
+	require.NoError(t, err)
+}
+
+func TestHVGenerator_high(t *testing.T) {
+
+	if testing.Short() {
+		// Skip the test if -short flag is used
+		t.Skip("Skipping high-volume test in short mode")
+	}
+
+	testDir := filepath.Join(".testdata", "TestHVGenerator")
+
+	err := os.RemoveAll(testDir)
+	require.NoError(t, err)
+
+	cfg := hvgen.DefaultConfig(testDir)
+	cfg.NumReqSites = 2000
+	cfg.MaxSitesPerPackage = 10
+	cfg.MaxSitesPerFile = 4
+	cfg.MaxTagsPerSite = 10
+	cfg.MaxTagsPerFile = 4
+	cfg.MaxTreeDepth = 4
+	err = hvgen.HVGenerator(cfg)
+	require.NoError(t, err)
+
+	err = createGitRepo(testDir)
+	require.NoError(t, err)
+
+	err = internal.ExecRootCmd([]string{"reqmd", "-v", "trace", testDir}, "0.0.1")
+	require.NoError(t, err)
 }
 
 // Create a git repo in testDir and commit all files
