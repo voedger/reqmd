@@ -268,6 +268,10 @@ Specification:
 
 ---
 
+## High-volume file processing test
+
+[Ref.](../tasks/T0022.md)
+
 ## Implementation details
 
 - SSH URLs (e.g., git@github.com:org/repo.git) are not supported

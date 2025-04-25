@@ -48,7 +48,6 @@ func parseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 		}
 
 		req := RequirementSite{
-			FilePath:            filePath,
 			RequirementName:     RequirementName(match[1]),
 			CoverageStatusWord:  CoverageStatusWord(match[2]),
 			CoverageFootnoteId:  CoverageFootnoteId(match[3]),
@@ -75,7 +74,6 @@ func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, 
 	matches := CoverageFootnoteRegex.FindStringSubmatch(line)
 	if len(matches) > 0 {
 		footnote = &CoverageFootnote{
-			FilePath:           filePath,
 			CoverageFootnoteId: CoverageFootnoteId(matches[1]),
 			PackageId:          PackageId(matches[2]),
 			Line:               lineNum,

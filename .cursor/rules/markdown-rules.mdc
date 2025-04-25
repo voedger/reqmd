@@ -6,13 +6,25 @@ alwaysApply: false
 ---
 description: 
 globs: 
+alwaysApply: false
+---
+---
+description: 
+globs: 
 alwaysApply: true
 ---
 
 # Your rule content
 
+## Markdown
+
 - Do not add periods to markdown list items
 - Add an empty line before markdown lists
 - Use sentence capitalization style
 - Capitalize previously defined terms
+
+## Go
+
+- Use go 1.24 and above features
+- Use `for <idx> = range(<slice>)` whenever appropriate (do not use for <idx> := 0; idx <... ; idx ++)
 

@@ -66,8 +66,8 @@ func (a *analyzer) buildIdsSortedByPos() {
 		reqJ := a.coverages[a.idsSortedByPos[j]]
 
 		// Compare file paths first
-		if reqI.Site.FilePath != reqJ.Site.FilePath {
-			return reqI.Site.FilePath < reqJ.Site.FilePath
+		if reqI.FileStructure.Path != reqJ.FileStructure.Path {
+			return reqI.FileStructure.Path < reqJ.FileStructure.Path
 		}
 
 		// If same file, compare line numbers

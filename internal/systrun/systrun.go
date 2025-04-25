@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -36,7 +37,7 @@ type ExecRootCmdFunc func(args []string, version string) error
 // RunSysTest executes a system test with the given parameters
 // If testId contains no subfoldersthen a single git repo is created and reqmd receives a single folder as an argument
 // Otherwise, each subfolder is treated as a separate path and separate git repos are created for each subfolder
-func RunSysTest(t T, testsDir string, testId string, rootCmd ExecRootCmdFunc, args []string, version string) {
+func RunSysTest(t T, testsDir string, testId string, rootCmd ExecRootCmdFunc, version string) {
 
 	t.Helper()
 
@@ -106,6 +107,8 @@ func RunSysTest(t T, testsDir string, testId string, rootCmd ExecRootCmdFunc, ar
 		// Prepare args
 		testArgs = append(testArgs, tempFolder)
 	}
+
+	log.Println("commitHashes", commitHashes)
 
 	// Replace placeholders in tempReqs
 	replacePlaceholders(t, goldenData, commitHashes)
@@ -298,10 +301,12 @@ func replacePlaceholders(_ T, goldenData *goldenData, commitHashes map[string]st
 	// Replace in goldenData.lines
 	for filePath, lines := range goldenData.lines {
 		for i, line := range lines {
-			for k, v := range commitHashes {
-				placeholder := fmt.Sprintf("{{.CommitHash.%s}}", k)
-				line = strings.ReplaceAll(line, placeholder, v)
-				goldenData.lines[filePath][i] = line
+			if strings.Contains(line, "CommitHash") {
+				for k, v := range commitHashes {
+					placeholder := fmt.Sprintf("{{.CommitHash.%s}}", k)
+					line = strings.ReplaceAll(line, placeholder, v)
+					goldenData.lines[filePath][i] = line
+				}
 			}
 		}
 	}
