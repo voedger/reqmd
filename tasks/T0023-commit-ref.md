@@ -32,7 +32,7 @@ Cons:
 
 ### Step 1: Update EBNF definitions in docs/ebnf.md
 
-- Modify the EBNF grammar definition for `CommitRef` 
+- Modify the EBNF grammar definition for `CommitRef`
 - Note: The EBNF already has the correct definition showing `CommitRef = "main" | "master" | BranchName | CommitHash`
 - Ensure documentation reflects the preference for `main` as the default reference
 
@@ -50,8 +50,6 @@ Cons:
 ### Step 3 get rid of reqmd.json
 
 We do not need reqmd.json anymore, so get rid of it in the documentation and code
-
-
 
 ### Step 5: Update tests for CommitRef changes
 

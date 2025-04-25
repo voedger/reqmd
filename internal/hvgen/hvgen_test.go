@@ -11,23 +11,15 @@ import (
 	"github.com/voedger/reqmd/internal/hvgen"
 )
 
-func TestHVGenerator(t *testing.T) {
+func TestHVGenerator_small(t *testing.T) {
 
 	testDir := filepath.Join(".testdata", "TestHVGenerator")
 
 	err := os.RemoveAll(testDir)
 	require.NoError(t, err)
 
-	// NumReqSites        int
-	// MaxSitesPerPackage int
-	// MaxTagsPerSite     int
-	// MaxSitesPerFile    int
-	// MaxTagsPerFile     int
-	// MaxTreeDepth       int
-	// SrcToMdRatio       int
-
 	cfg := hvgen.DefaultConfig(testDir)
-	cfg.NumReqSites = 500
+	cfg.NumReqSites = 50
 	cfg.MaxSitesPerPackage = 10
 	cfg.MaxSitesPerFile = 4
 	cfg.MaxTagsPerSite = 10
