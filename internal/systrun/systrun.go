@@ -119,6 +119,14 @@ func RunSysTest(t T, testsDir string, testId string, rootCmd ExecRootCmdFunc, ve
 
 	// Validate golden lines against all requirement directories
 	validateGoldenLines(t, goldenData, allTempFolders)
+
+	// Keep tempFolders but remove .git subfolders
+	for _, testFolderAbsPath := range allTempFolders {
+		gitFolder := filepath.Join(testFolderAbsPath, ".git")
+		err = os.RemoveAll(gitFolder)
+		require.NoError(t, err, "Failed to remove git folder: %s", gitFolder)
+	}
+
 }
 
 func validateGoldenLines(t T, goldenData *goldenData, paths []string) {
