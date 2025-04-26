@@ -1,4 +1,4 @@
-# reqmd requirements
+# Requirements for the reqmd tool
 
 This document defines the requirements for a command-line tool that traces requirements from markdown files to their corresponding coverage in source files. The tool establishes traceability links between requirement identifiers and coverage tags, automatically generating footnotes that link requirement identifiers to coverage tags.
 
@@ -18,7 +18,7 @@ Ref. [ebnf.md](ebnf.md)
 
 ---
 
-## Syntax/Semantic errors
+## Syntax/semantic errors
 
 - [Handle inconsistency between Footnote and PackageId](err-inconsistency-between-footnote-and-packageid.md)
 - [internal/errors_syn.go](../internal/errors_syn.go)
