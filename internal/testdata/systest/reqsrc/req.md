@@ -1,5 +1,5 @@
 ---
-reqmd.package: reqsrc
+reqmd.package: req
 ---
 
 # Just a requirement site

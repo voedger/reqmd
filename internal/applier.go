@@ -61,6 +61,11 @@ func applyMdActions(path FilePath, actions []MdAction) error {
 		return err
 	}
 
+	// Trim trailing empty lines
+	for len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) == "" {
+		lines = lines[:len(lines)-1]
+	}
+
 	for _, action := range actions {
 		if action.Line > 0 {
 			lineIndex := action.Line - 1
@@ -144,11 +149,9 @@ func needFootnoteSeparator(lines []string) bool {
 	if strings.TrimSpace(lastLine) == "" {
 		return false
 	}
-	// Check for existing footnotes.
-	for _, ln := range lines {
-		if CoverageFootnoteRegex.MatchString(ln) {
-			return false
-		}
+	// Return false if the last line is a footnote.
+	if CoverageFootnoteRegex.MatchString(lines[len(lines)-1]) {
+		return false
 	}
 	return true
 }

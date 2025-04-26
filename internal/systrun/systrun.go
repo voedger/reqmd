@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -107,8 +106,6 @@ func RunSysTest(t T, testsDir string, testId string, rootCmd ExecRootCmdFunc, ve
 		// Prepare args
 		testArgs = append(testArgs, tempFolder)
 	}
-
-	log.Println("commitHashes", commitHashes)
 
 	// Replace placeholders in tempReqs
 	replacePlaceholders(t, goldenData, commitHashes)
