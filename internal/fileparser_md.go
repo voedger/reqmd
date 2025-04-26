@@ -42,7 +42,10 @@ func parseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 		}
 
 		covStatus := match[2]
-		if covStatus != "" && covStatus != "covered" && covStatus != "uncvrd" {
+		if covStatus != "" &&
+			covStatus != string(CoverageStatusWordCovered) &&
+			covStatus != string(CoverageStatusWordUncvrd) &&
+			covStatus != string(CoverageStatusWordCovrd) {
 			*errors = append(*errors, NewErrCoverageStatusWord(filePath, lineNum, covStatus))
 			return requirements
 		}

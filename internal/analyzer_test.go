@@ -233,7 +233,7 @@ func TestAnalyzer_ActionFootnote_Bare_NewCoverer(t *testing.T) {
 	assert.Equal(t, ActionSite, actions[0].Type)
 	assert.Equal(t, RequirementName("REQ001"), actions[0].RequirementName)
 	assert.Equal(t, 10, actions[0].Line)
-	assert.Equal(t, actions[0].Data, FormatRequirementSite("REQ001", CoverageStatusWordCovered, "1"))
+	assert.Equal(t, actions[0].Data, FormatRequirementSite("REQ001", CoverageStatusWordCovrd, "1"))
 
 	// Verify footnote action
 	assert.Equal(t, ActionFootnote, actions[1].Type)
@@ -269,7 +269,7 @@ func TestAnalyzer_ActionStatusUpdate_AnUncov_NewCoverer(t *testing.T) {
 	assert.Equal(t, ActionSite, actions[0].Type)
 	assert.Equal(t, RequirementName("REQ002"), actions[0].RequirementName)
 	assert.Equal(t, 10, actions[0].Line)
-	assert.Equal(t, actions[0].Data, FormatRequirementSite("REQ002", CoverageStatusWordCovered, "REQ002"))
+	assert.Equal(t, actions[0].Data, FormatRequirementSite("REQ002", CoverageStatusWordCovrd, "REQ002"))
 
 	// Verify footnote action
 	assert.Equal(t, ActionFootnote, actions[1].Type)
@@ -312,7 +312,7 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 	NewCoverageURL := "https://github.com/org/repo/blob/979d75b2c7da961f94396ce2b286e7389eb73d75/new/file.go"
 
 	// Create a markdown file with a requirement and existing footnote
-	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordCovered)
+	mdFile := createMdStructureA("req.md", "pkg1", 10, "REQ001", CoverageStatusWordCovrd)
 	mdFile.CoverageFootnotes = []CoverageFootnote{
 		{
 			CoverageFootnoteId: "REQ001",

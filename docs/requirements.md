@@ -41,15 +41,15 @@ Ref. [ebnf.md](ebnf.md)
 ## Construction requirements
 
 - The tool shall be implemented in Go
-- All files but main.go shall be in single `internal` folder, there shall be no subfolders
+- All files but main.go shall be in `internal` folder and its subfolders
 - Design of the solution shall follow SOLID principles
   - Tracing shall be abstracted by ITracer interface, implemented by Tracer
   - All necessary interfaces shall be injected into Tracer during construction (NewTracer)
 - Naming
-  - Interface names shall start with I
-  - Interface implementation names shall be deduced from the interface name by removing the I prefix
-  - All interfaces shall be defined in a separate file interfaces.go
-  - All data structures used across the application shall be defined in the models.go file
+  - Interface names shall start with `I`
+  - Interface implementation names shall be deduced from the interface name by removing the I prefix and possibly lowercasing the first letter
+  - All interfaces shall be defined in a separate file `interfaces.go`
+  - All data structures used across the application shall be defined in the `models.go` file
 - "github.com/go-git/go-git/v5" shall be used for git operations
 
 ---
@@ -57,9 +57,11 @@ Ref. [ebnf.md](ebnf.md)
 ## Decisions
 
 - RequirementSiteStatus
-  - `covered` denotes the covered status
+  - `covrd/covered` denotes the covered status
+  - `covrd` is used by the tool as CoverageStatusWord
+  - `covered` is kept for backward compatibility
   - `uncvrd` denotes the uncovered status
-  - Motivation: use short words with a high level of uniqueness for uncovered status
+  - Motivation: use short words with a high level of uniqueness for covered/uncovered status
 - Separation of the `<path-to-markdowns>` and `<path-to-sources>`
   - Paths are separated to avoid modifications of sources
 - SSH URLs (like git@github.com:org/repo.git) are not supported

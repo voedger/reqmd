@@ -746,6 +746,7 @@ Made changes.
 - It is cool to review each function using UI (it is way faster then Copilot) but it takes more time in total
 - Provide implementation details: coversions is made reading lines one by one and tracking the status (finite-state machine)
 - Check that the sources comply with the `## System tests` requirements `#file:sys_test.go #file:systest.go #file:systest_test.go`👍
+- augmentcode: Check that the code complies with the documentation.🏆
 
 ```markdown
 ## Compliance Analysis

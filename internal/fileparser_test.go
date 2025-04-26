@@ -127,7 +127,7 @@ func newMdCtx() *MarkdownContext {
 
 func TestParseRequirements_invalid_coverage_status(t *testing.T) {
 	var errors []ProcessingError
-	res := parseRequirements("test.md", "`~Post.handler~`covrd[^~Post.handler~]", 1, &errors)
+	res := parseRequirements("test.md", "`~Post.handler~`coovrd[^~Post.handler~]", 1, &errors)
 	require.Len(t, res, 0)
 }
 
@@ -283,12 +283,12 @@ func TestParseRequirements_errors(t *testing.T) {
 		},
 		{
 			name: "invalid coverage status",
-			line: "`~REQ001~`covrd[^~REQ001~]✅",
+			line: "`~REQ001~`coovrd[^~REQ001~]✅",
 			wantErr: ProcessingError{
 				Code:     "covstatus",
 				FilePath: "test.md",
 				Line:     3,
-				Message:  "CoverageStatusWord shall be 'covered' or 'uncvrd': covrd",
+				Message:  "CoverageStatusWord shall be 'covered' or 'uncvrd': coovrd",
 			},
 		},
 		{

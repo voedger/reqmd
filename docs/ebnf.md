@@ -96,12 +96,15 @@ Markdown body is a sequence of different text elements. The tool processes:
   RequirementSite = RequirementSiteLabel [ CoverageStatusWord CoverageFootnoteReference ] [ CoverageStatusEmoji ] .
   RequirementSiteLabel = "`" RequirementSiteId "`" .
   RequirementSiteId = "~" RequirementName "~" .
-  CoverageStatusWord = "covered" | "uncvrd" .
+  CoverageStatusWord = "covered" | "uncvrd" | "covrd" .
   RequirementName = Identifier .
   RequirementId = PackageId "/" RequirementName .
   CoverageFootnoteReference = "[^" CoverageFootnoteId "]" .
   CoverageStatusEmoji = "✅" | "❓" .
 ```
+
+Note: CoverageStatusWord `covered` is kept for backward compatibility.
+
 
 Constraints:
 

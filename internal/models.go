@@ -16,7 +16,8 @@ type CoverageStatusWord string
 
 const (
 	CoverageStatusWordEmpty   CoverageStatusWord = ""
-	CoverageStatusWordCovered CoverageStatusWord = "covered"
+	CoverageStatusWordCovrd   CoverageStatusWord = "covrd"
+	CoverageStatusWordCovered CoverageStatusWord = "covered" // kept for backward compatibility
 	CoverageStatusWordUncvrd  CoverageStatusWord = "uncvrd"
 )
 
@@ -114,7 +115,7 @@ func FormatRequirementSite(requirementName RequirementName, coverageStatusWord C
 	lbl := fmt.Sprintf("`~%s~`", requirementName)
 
 	emoji := CoverageStatusEmojiUncvrd
-	if coverageStatusWord == CoverageStatusWordCovered {
+	if coverageStatusWord == CoverageStatusWordCovered || coverageStatusWord == CoverageStatusWordCovrd {
 		emoji = CoverageStatusEmojiCovered
 	}
 

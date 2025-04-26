@@ -2,6 +2,6 @@
 reqmd.package: reqsrc
 ---
 
-`~main~`covered[^1]✅
+`~main~`covrd[^1]✅
 
 [^1]: `[~reqsrc/main~impl]` [main.go:5:impl](https://github.com/voedger/example/blob/main/main.go#L5)

@@ -24,7 +24,7 @@ type analyzer struct {
 type requirementCoverage struct {
 	Site            *RequirementSite
 	FileStructure   *FileStructure
-	CurrentCoverers []*Coverer // Is not nil if there are existing footnotes
+	CurrentCoverers []*Coverer // Is not nil if there are existing footnotes // TODO FootnoteCoverers, CoverageTags
 	NewCoverers     []*Coverer
 }
 
@@ -86,7 +86,7 @@ func (a *analyzer) analyzeMdActions(result *AnalyzerResult) {
 		// coverageStatus is "covered" if there are new coverers
 		coverageStatus := CoverageStatusWordUncvrd
 		if len(coverage.NewCoverers) > 0 {
-			coverageStatus = CoverageStatusWordCovered
+			coverageStatus = CoverageStatusWordCovrd
 		}
 
 		var footnoteId CoverageFootnoteId
