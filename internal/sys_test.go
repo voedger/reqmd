@@ -16,8 +16,12 @@ func Test_systest_noreqs(t *testing.T) {
 	runSysTest(t, "noreqs")
 }
 
-func Test_systest_errors(t *testing.T) {
-	runSysTest(t, "errors")
+func Test_systest_errors_syn(t *testing.T) {
+	runSysTest(t, "errors_syn")
+}
+
+func Test_systest_errors_sem(t *testing.T) {
+	runSysTest(t, "errors_sem")
 }
 
 func Test_systest_justreqs(t *testing.T) {

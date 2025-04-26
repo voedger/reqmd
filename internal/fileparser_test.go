@@ -57,7 +57,7 @@ func TestFileParser_md(t *testing.T) {
 }
 
 func TestFileParser_md_error_pkgident(t *testing.T) {
-	testData := filepath.Join("testdata", "systest", "errors", "err_pkgident.md")
+	testData := filepath.Join("testdata", "systest", "errors_syn", "err_pkgident.md")
 	_, errors, err := parseFile(newMdCtx(), testData)
 	require.NoError(t, err)
 	require.Len(t, errors, 1, "expected exactly 1 syntax error")

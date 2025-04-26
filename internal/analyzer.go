@@ -228,6 +228,11 @@ func (a *analyzer) buildRequirementCoverages(files []FileStructure, errors *[]Pr
 
 				// Process existing coverage footnotes
 				for _, footnote := range file.CoverageFootnotes {
+					if footnote.PackageId != file.PackageId {
+						*errors = append(*errors, NewErrPkgMismatch(file.Path, footnote.Line, string(footnote.PackageId), string(file.PackageId)))
+						continue
+					}
+
 					if footnote.CoverageFootnoteId == req.CoverageFootnoteId {
 						// Convert []Coverer to []*Coverer
 						coverage.CurrentCoverers = make([]*Coverer, len(footnote.Coverers))

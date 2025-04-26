@@ -120,6 +120,7 @@ func TestAnalyzer_ActionFootnote_Bare_f19(t *testing.T) {
 
 	mdFile.CoverageFootnotes = []CoverageFootnote{
 		{
+			PackageId:          "pkg1",
 			CoverageFootnoteId: CoverageFootnoteId("19"),
 			Line:               10 + 10,
 		},
@@ -158,6 +159,7 @@ func TestAnalyzer_ActionFootnote_Bare_f19_r21(t *testing.T) {
 		{
 			CoverageFootnoteId: CoverageFootnoteId("19"),
 			Line:               10 + 10,
+			PackageId:          "pkg1",
 		},
 	}
 	// Add a RequirementSite with CoverageFootnoteId == "21"
@@ -317,6 +319,7 @@ func TestAnalyzer_ActionFootnote_AnCov_NewHash(t *testing.T) {
 		{
 			CoverageFootnoteId: "REQ001",
 			Line:               20,
+			PackageId:          "pkg1",
 			Coverers: []Coverer{
 				{
 					CoverageLabel: "old/file.go:15:impl",
@@ -379,6 +382,7 @@ func createMdStructureA(path string, pkgId PackageId, line int, reqName_ string,
 		fs.CoverageFootnotes = []CoverageFootnote{
 			{
 				CoverageFootnoteId: footnoteId,
+				PackageId:          pkgId,
 				Line:               line + 10,
 				Coverers: []Coverer{
 					{

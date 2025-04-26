@@ -18,11 +18,17 @@ Ref. [ebnf.md](ebnf.md)
 
 ---
 
+## Syntax/Semantic errors
+
+- [Handle inconsistency between Footnote and PackageId](err-inconsistency-between-footnote-and-packageid.md)
+- [internal/errors_syn.go](../internal/errors_syn.go)
+- [internal/errors_sem.go](../internal/errors_sem.go)
+
+### Handle inconsistency between Footnote and PackageId
+
+---
+
 ## Processing requirements
-
-### Syntax/Semantic errors
-
-- See [internal/errors.go](../internal/errors.go)
 
 ### Phases
 

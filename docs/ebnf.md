@@ -105,7 +105,6 @@ Markdown body is a sequence of different text elements. The tool processes:
 
 Note: CoverageStatusWord `covered` is kept for backward compatibility.
 
-
 Constraints:
 
 - Only one RequirementSite is allowed per line.
@@ -132,6 +131,8 @@ Example of an UncoveredAnnotatedRequirementSite:
 ```
 
 ### CoverageFootnote
+
+#### CoverageFootnote example
 
 CoverageFootnote contains a CoverageFootnoteHint and an optional list of Coverers. A Coverer contains "[" CoverageLabel "]" followed by "(" CoverageURL ")".
 
@@ -163,7 +164,8 @@ Where:
 - `main` - CommitRef
 - `L4` - CoverageArea  
 
-Syntax:
+#### CoverageFootnote syntax
+
 ```ebnf
   CoverageFootnote = "[^" CoverageFootnoteId "]" ":" "`[" CoverageFootnoteHint "]`" [Coverers] .
   CoverageFootnoteHint = "~" PackageId "/" RequirementName "~" CoverageType .

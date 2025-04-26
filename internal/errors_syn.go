@@ -64,24 +64,3 @@ func NewErrUnmatchedFence(filePath string, openFenceLine int) ProcessingError {
 		Message:  fmt.Sprintf("opening code block fence at line %d has no matching closing fence", openFenceLine),
 	}
 }
-
-// ********** Semantic errors
-
-func NewErrDuplicateRequirementId(filePath1 string, line1 int, filePath2 string, line2 int, reqId RequirementId) ProcessingError {
-	return ProcessingError{
-		Code:     "dupreqid",
-		FilePath: filePath1,
-		Line:     line1,
-		Message: fmt.Sprintf("duplicate RequirementId detected:\n\t%s\n\t%s:%d",
-			reqId, filePath2, line2),
-	}
-}
-
-func NewErrMissingPackageIdWithReqs(filePath string, lineOfTheFirstReqSite int) ProcessingError {
-	return ProcessingError{
-		Code:     "nopkgidreqs",
-		FilePath: filePath,
-		Line:     lineOfTheFirstReqSite,
-		Message:  "markdown file with RequirementSites shall define reqmd.package",
-	}
-}
