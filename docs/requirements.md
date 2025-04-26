@@ -14,7 +14,11 @@ Ref. [ebnf.md](ebnf.md)
 
 - [Installation](uc-installation.md)
 - [Tracing](uc-tracing.md)
-- [Ignore `.*` folders](uc-ignore-dot-folders.md)
+
+## Options
+
+- [Ignore `.*` folders](op-ignore-dot-folders.md)
+- [Ignore paths by pattern](op-ignore-paths-by-pattern.md)
 
 ---
 
