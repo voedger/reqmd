@@ -220,8 +220,6 @@ func FileURL(coverageURL string) string {
 	return coverageURL[:idx]
 }
 
-const ReqmdjsonFileName = "reqmd.json"
-
 type ProcessingError struct {
 	Code     string // error code (e.g., "pkgident")
 	FilePath string // file that has a syntax error
