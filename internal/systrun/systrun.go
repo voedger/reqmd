@@ -204,8 +204,11 @@ func createGitRepo(t T, dir string) {
 	require.NoError(t, err, "Failed to set git user Email")
 
 	// Add a remote origin for test purposes
-	err = runGitCommand(dir, "remote", "add", "origin", RemoteOrigin)
-	require.NoError(t, err, "Failed to create origin remote")
+	{
+		origin := RemoteOrigin + "/" + filepath.Base(dir)
+		err = runGitCommand(dir, "remote", "add", "origin", origin)
+		require.NoError(t, err, "Failed to create origin remote")
+	}
 }
 
 // runGitCommand executes a git command with the given arguments in the specified directory
