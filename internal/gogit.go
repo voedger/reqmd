@@ -14,7 +14,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-func NewIGit(path string) (IGit, error) {
+func NewGitVCS(path string) (IVCS, error) {
 
 	// Find path to the root of the git repository
 	{

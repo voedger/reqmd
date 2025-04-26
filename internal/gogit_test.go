@@ -23,7 +23,7 @@ import (
 // Creates 4 text files in TestFolder, named 1.txt, 2.txt, 3.txt, 4.txt
 // Creates 4 text files in subfolder1, named 11.txt, 12.txt, 13.txt, 14.txt
 // Creates 4 text files in subfolder2, named 21.txt, 22.txt, 23.txt, 24.txt
-// Opens repo using NewIGit
+// Opens repo using NewGitVCS()
 // Checks that Hash can be obtained for all files in TestFolder and its subfolders
 // Checks that TestFolder can be obtained as a root folder of the Repository
 func Test_IGit(t *testing.T) {
@@ -100,9 +100,9 @@ func Test_IGit(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Opens repo using NewIGit
-	var igit internal.IGit
-	igit, err = internal.NewIGit(testFolder)
+	// Opens repo using NewGitVCS
+	var igit internal.IVCS
+	igit, err = internal.NewGitVCS(testFolder)
 	require.NoError(t, err)
 
 	// Checks that Hash can be obtained for all files in TestFolder and its subfolders

@@ -107,7 +107,7 @@ func ByteCountSI(b int64) string {
 }
 
 // scanFile handles both markdown and source files in a unified way
-func (s *scanner) scanFile(filePath string, mctx *MarkdownContext, igit IGit) error {
+func (s *scanner) scanFile(filePath string, mctx *MarkdownContext, igit IVCS) error {
 	filePath = filepath.ToSlash(filePath)
 	ext := strings.ToLower(filepath.Ext(filePath))
 
@@ -186,7 +186,7 @@ func (s *scanner) scanPaths(paths []string) (err error) {
 	// Process all paths
 	for _, path := range paths {
 
-		git, err := NewIGit(path)
+		git, err := NewGitVCS(path)
 		if err != nil {
 			return fmt.Errorf("failed to initialize git for path %s: %w", path, err)
 		}
@@ -203,7 +203,7 @@ func (s *scanner) scanPaths(paths []string) (err error) {
 	return nil
 }
 
-func (s *scanner) folderProcessor(folderPath string, igit IGit) (FileProcessor, error) {
+func (s *scanner) folderProcessor(folderPath string, igit IVCS) (FileProcessor, error) {
 
 	// If folder name starts with a dot, skip it
 	if strings.HasPrefix(filepath.Base(folderPath), ".") {

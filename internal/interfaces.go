@@ -25,7 +25,7 @@ type IApplier interface {
 	Apply(*AnalyzerResult) error
 }
 
-type IGit interface {
+type IVCS interface {
 	// Slashed, absolute path to the root of the git repository
 	PathToRoot() string // TODO: do we need this?
 	FileHash(absoluteFilePath string) (relPath, hash string, err error)
