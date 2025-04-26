@@ -42,7 +42,6 @@ Ref. [ebnf.md](ebnf.md)
 
 - The tool shall be implemented in Go
 - All files but main.go shall be in single `internal` folder, there shall be no subfolders
-- File hashes shall be calculated using `git hash-object`
 - Design of the solution shall follow SOLID principles
   - Tracing shall be abstracted by ITracer interface, implemented by Tracer
   - All necessary interfaces shall be injected into Tracer during construction (NewTracer)
