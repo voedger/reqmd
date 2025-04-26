@@ -30,7 +30,7 @@ FILES=$(find .. -type f \( -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name 
 # Process each file found
 for FILE in $FILES; do
     # Skip files that are in testdata folders (handle both Unix and Windows paths)
-    if [[ "$FILE" == *"/testdata/"* || "$FILE" == *"\\testdata\\"* ]]; then
+    if [[ "$FILE" == *"/testdata/"* || "$FILE" == *"\\testdata\\"*  || "$FILE" == *".testdata"* ]]; then
         continue
     fi
     

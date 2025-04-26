@@ -44,9 +44,9 @@ func Test_RootCmd_LocalVoedger(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func Test_RootCmd_Data(t *testing.T) {
+func Test_RootCmd_TestData(t *testing.T) {
 	skipIfNoRootCmdMarker(t)
 
-	err := internal.ExecRootCmd([]string{"reqmd", "-v", "trace", "--dry-run", ".data/voedger-internals/server/apiv2", "../../../voedger"}, "0.0.1")
+	err := internal.ExecRootCmd([]string{"reqmd", "-v", "trace", "--dry-run", ".testdata/voedger-internals/server/apiv2", "../../../voedger"}, "0.0.1")
 	require.Nil(t, err)
 }
