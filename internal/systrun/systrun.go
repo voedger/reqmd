@@ -66,7 +66,7 @@ func RunSysTest(t T, testsDir string, testId string, rootCmd ExecRootCmdFunc, ve
 	require.NoError(t, err, "Failed to parse golden data")
 
 	var allTempFolders []string
-	var testArgs []string = []string{"reqmd", "trace", "--ignore-lines", "^// line:"}
+	var testArgs []string = []string{"reqmd", "trace", "--ignore-lines", "^// line"}
 
 	commitHashes := make(map[string]string)
 

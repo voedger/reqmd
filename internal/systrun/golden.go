@@ -140,11 +140,11 @@ func extractGoldenErrors(filePath string, lines []string, gd *goldenData) error 
 func applyGoldenAnnotations(normalLines []string) []string {
 	// Define regex patterns for different directive types
 	const (
-		lineReplacePrefix = `^\s*//\s*line:\s*`
-		lineRemovePrefix  = `^\s*//\s*line-\s*`
-		lineAddPrefix     = `^\s*//\s*line\+:\s*`
-		lineAtBeginPrefix = `^\s*//\s*line1:\s*`
-		lineAtEndPrefix   = `^\s*//\s*line>>:\s*`
+		lineReplacePrefix = `^\s*g:\s*line:\s*`
+		lineRemovePrefix  = `^\s*g:\s*line-\s*`
+		lineAddPrefix     = `^\s*g:\s*line\+:\s*`
+		lineAtBeginPrefix = `^\s*g:\s*line1:\s*`
+		lineAtEndPrefix   = `^\s*g:\s*line>>:\s*`
 	)
 
 	// Compile regex patterns once
@@ -161,7 +161,7 @@ func applyGoldenAnnotations(normalLines []string) []string {
 	// First pass: collect transformed lines and handle directives
 	for _, line := range normalLines {
 		// Skip processing if the line is a GoldenAnnotation
-		isGoldenAnnotation := strings.HasPrefix(strings.TrimSpace(line), "//")
+		isGoldenAnnotation := strings.HasPrefix(strings.TrimSpace(line), "g:")
 
 		if isGoldenAnnotation {
 			// Process directives
@@ -211,7 +211,14 @@ func applyGoldenAnnotations(normalLines []string) []string {
 
 	// Apply end lines (append)
 	if len(endLines) > 0 {
+		// Remove trailing empty lines
+		for len(transformedLines) > 0 && strings.TrimSpace(transformedLines[len(transformedLines)-1]) == "" {
+			transformedLines = transformedLines[:len(transformedLines)-1]
+		}
+
 		transformedLines = append(transformedLines, endLines...)
+		// Add an empty line at the end
+		transformedLines = append(transformedLines, "")
 	}
 
 	return transformedLines
