@@ -49,6 +49,14 @@ func parseFile(mctx *MarkdownContext, filePath string) (*FileStructure, []Proces
 		lineNum++
 		line := scanner.Text()
 
+		// Check if the line should be ignored based on ignore patterns
+		if shouldIgnoreLine(mctx, line) {
+			if IsVerbose {
+				Verbose("parseFile: ignoring line", "line", lineNum, "file", filePath)
+			}
+			continue
+		}
+
 		// Source file parsing - always parse coverage tags regardless of file type
 		if !inCodeBlock {
 			tags := parseCoverageTags(filePath, line, lineNum)
@@ -145,4 +153,22 @@ func parseCoverageTags(filePath string, line string, lineNum int) []CoverageTag 
 		}
 	}
 	return tags
+}
+
+// shouldIgnoreLine checks if a line should be ignored based on the ignore patterns
+// in the MarkdownContext. Returns true if the line should be ignored.
+func shouldIgnoreLine(mctx *MarkdownContext, line string) bool {
+	// If no ignore patterns are defined, process all lines
+	if mctx == nil || len(mctx.IgnorePatterns) == 0 {
+		return false
+	}
+
+	// Check if the line matches any of the ignore patterns
+	for _, pattern := range mctx.IgnorePatterns {
+		if pattern.MatchString(line) {
+			return true
+		}
+	}
+
+	return false
 }

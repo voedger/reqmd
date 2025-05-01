@@ -16,6 +16,8 @@ var (
 )
 
 type MarkdownContext struct {
+	// IgnorePatterns contains compiled regular expressions that match lines to be ignored
+	IgnorePatterns []*regexp.Regexp
 }
 
 // isCodeBlockMarker checks if a line is a code block marker, handling indentation
