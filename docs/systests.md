@@ -41,7 +41,7 @@ WS               = { " " | "\t" } .
 Body             = { NormalLine | GoldenAnnotation } .
 GoldenAnnotation = "//" {WS} (GoldenErrors | LineMutation) .
 GoldenErrors     = "errors:" {WS} {"""" ErrRegex """" {WS}} .
-LineMutation       = ("line" | "line-" | "line+" | "line" | "line>>") [":" {WS} Content] .
+LineMutation       = ("line" | "line-" | "line+" | "line" | "line>>") [{WS} ":" Content] .
 ```
 
 Specification:
@@ -65,10 +65,10 @@ This line is expected to be removed
 
 Golden annotation syntax:
 
-- `// line-`: Remove the previous non-annotation line
-- `// line+`: Add a line after the previous non-annotation line
+- `// line-`: Remove the previous non-GoldenAnnotation line
+- `// line+`: Add a line after the previous non-GoldenAnnotation line
   - Multiple statements are allowed and processed in order
-- `// line`: Replace the previous non-annotation line
+- `// line`: Replace the previous non-GoldenAnnotation line
 - `// line1`: Insert a line at the beginning of the file
   - Multiple statements are allowed and processed in order
 - `// line>>`: Append a line at the end of the file

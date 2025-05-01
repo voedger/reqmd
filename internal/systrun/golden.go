@@ -133,6 +133,94 @@ func extractGoldenErrors(filePath string, lines []string, gd *goldenData) error 
 	return nil
 }
 
+// extractGoldenEmbedding processes the embedded golden data in markdown files
+func extractGoldenEmbedding(lines []string) []string {
+	// Define regex patterns for different directive types
+	const (
+		lineReplacePrefix = `^\s*//\s*line:\s*`
+		lineRemovePrefix  = `^\s*//\s*line-\s*`
+		lineAddPrefix     = `^\s*//\s*line\+:\s*`
+		lineAtBeginPrefix = `^\s*//\s*line1:\s*`
+		lineAtEndPrefix   = `^\s*//\s*line>>:\s*`
+	)
+
+	// Compile regex patterns once
+	lineReplaceRegex := regexp.MustCompile(lineReplacePrefix)
+	lineRemoveRegex := regexp.MustCompile(lineRemovePrefix)
+	lineAddRegex := regexp.MustCompile(lineAddPrefix)
+	lineBeginRegex := regexp.MustCompile(lineAtBeginPrefix)
+	lineEndRegex := regexp.MustCompile(lineAtEndPrefix)
+
+	var transformedLines []string
+	var sourceLines []string
+	var beginningLines []string
+	var endLines []string
+
+	// Clone original lines as source
+	sourceLines = append(sourceLines, lines...)
+
+	// First pass: collect transformed lines and handle directives
+	for _, line := range lines {
+		// Skip processing if the line is a GoldenAnnotation
+		isGoldenAnnotation := strings.HasPrefix(strings.TrimSpace(line), "//")
+
+		if isGoldenAnnotation {
+			// Process directives
+			switch {
+			case lineReplaceRegex.MatchString(line):
+				// Replace the last non-annotation line
+				for j := len(transformedLines) - 1; j >= 0; j-- {
+					if !strings.HasPrefix(strings.TrimSpace(transformedLines[j]), "//") {
+						transformedLines[j] = lineReplaceRegex.ReplaceAllString(line, "")
+						break
+					}
+				}
+			case lineRemoveRegex.MatchString(line):
+				// Remove the last non-annotation line
+				for j := len(transformedLines) - 1; j >= 0; j-- {
+					if !strings.HasPrefix(strings.TrimSpace(transformedLines[j]), "//") {
+						transformedLines = append(transformedLines[:j], transformedLines[j+1:]...)
+						break
+					}
+				}
+			case lineAddRegex.MatchString(line):
+				// Add a line after the last non-annotation line
+				contentToAdd := lineAddRegex.ReplaceAllString(line, "")
+				for j := len(transformedLines) - 1; j >= 0; j-- {
+					if !strings.HasPrefix(strings.TrimSpace(transformedLines[j]), "//") {
+						transformedLines = append(transformedLines[:j+1], append([]string{contentToAdd}, transformedLines[j+1:]...)...)
+						break
+					}
+				}
+			case lineBeginRegex.MatchString(line):
+				// Collect lines to be added at the beginning
+				beginningLines = append(beginningLines, lineBeginRegex.ReplaceAllString(line, ""))
+			case lineEndRegex.MatchString(line):
+				// Collect lines to be added at the end
+				endLines = append(endLines, lineEndRegex.ReplaceAllString(line, ""))
+			default:
+				// Other annotations should be preserved
+				transformedLines = append(transformedLines, line)
+			}
+		} else {
+			// Normal line, just add it
+			transformedLines = append(transformedLines, line)
+		}
+	}
+
+	// Apply beginning lines (prepend)
+	if len(beginningLines) > 0 {
+		transformedLines = append(beginningLines, transformedLines...)
+	}
+
+	// Apply end lines (append)
+	if len(endLines) > 0 {
+		transformedLines = append(transformedLines, endLines...)
+	}
+
+	return transformedLines
+}
+
 // extractErrorRegexes parses a string containing quoted regex patterns
 func extractErrorRegexes(s string) []string {
 	var regexes []string
