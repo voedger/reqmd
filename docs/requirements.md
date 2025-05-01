@@ -19,6 +19,7 @@ Ref. [ebnf.md](ebnf.md)
 
 - [Ignore `.*` folders](op-ignore-dot-folders.md)
 - [Ignore paths by pattern](op-ignore-paths-by-pattern.md)
+- [Ignore lines by pattern](20250501-op-ignore-lines-by-pattern.md)
 
 ---
 
