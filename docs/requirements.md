@@ -33,6 +33,7 @@ Ref. [ebnf.md](ebnf.md)
 ## Non-functional
 
 - [System tests](systests.md)
+  - [Golden data embedding to avoid separate .md_ files](20250501-nf-golden-data-embedding.md)
 
 ## Processing requirements
 

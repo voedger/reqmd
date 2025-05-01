@@ -1,4 +1,4 @@
-# Implement golden data embedding to avoid separate .md_ files
+# Golden data embedding to avoid separate .md_ files
 
 ## Problem
 
