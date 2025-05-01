@@ -17,6 +17,17 @@ Some other content
 // golden: Some other expected content
 ```
 
+Complete syntax
+
+- `// golden-`: Remove the previous non-golden line
+- `// golden+`: Add a line after the previous non-golden line
+  - Multiple statements are allowed and processed in order
+- `// golden`: Replace the previous non-golden line
+- `// golden1`: Insert a line at the beginning of the file
+  - Multiple statements are allowed and processed in order
+- `// golden>>`: Append a line at the end of the file
+  - Multiple statements are allowed and processed in order
+
 ## Addessed issues
 
 - https://github.com/voedger/reqmd/issues/19
