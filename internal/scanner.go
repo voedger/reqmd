@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -29,10 +30,22 @@ const (
 	maxFileSize = 128 * 1024 // 128KB
 )
 
-func NewScanner(extensions string, ignoreLines []string) IScanner {
+func preparePatterns(patterns []string) ([]*regexp.Regexp, error) {
+	var compiledPatterns []*regexp.Regexp
+	for _, pattern := range patterns {
+		compiled, err := regexp.Compile(pattern)
+		if err != nil {
+			return nil, fmt.Errorf("invalid pattern '%s': %w", pattern, err)
+		}
+		compiledPatterns = append(compiledPatterns, compiled)
+	}
+	return compiledPatterns, nil
+}
+
+func NewScanner(extensions string, ignorePatterns []*regexp.Regexp) IScanner {
 	s := &scanner{
 		sourceExtensions: make(map[string]bool),
-		ignoreLines:      ignoreLines,
+		ignorePatterns:   ignorePatterns,
 	}
 	// Use provided extensions or fallback to defaults
 	exts := extensions
@@ -40,7 +53,7 @@ func NewScanner(extensions string, ignoreLines []string) IScanner {
 		exts = defaultSourceExtensions
 	}
 	// Initialize extensions map
-	for _, ext := range strings.Split(exts, ",") {
+	for ext := range strings.SplitSeq(exts, ",") {
 		s.sourceExtensions[strings.TrimSpace(ext)] = true
 	}
 	return s
@@ -83,7 +96,7 @@ func (s *scanner) Scan(paths []string) (*ScannerResult, error) {
 
 type scanner struct {
 	sourceExtensions map[string]bool
-	ignoreLines      []string
+	ignorePatterns   []*regexp.Regexp
 	stats            struct {
 		processedFiles atomic.Int64
 		processedBytes atomic.Int64
@@ -109,7 +122,7 @@ func ByteCountSI(b int64) string {
 }
 
 // scanFile handles both markdown and source files in a unified way
-func (s *scanner) scanFile(filePath string, mctx *MarkdownContext, igit IVCS) error {
+func (s *scanner) scanFile(filePath string, pctx *ParsingContext, igit IVCS) error {
 	filePath = filepath.ToSlash(filePath)
 	ext := strings.ToLower(filepath.Ext(filePath))
 
@@ -153,7 +166,7 @@ func (s *scanner) scanFile(filePath string, mctx *MarkdownContext, igit IVCS) er
 
 	// Parse the file once
 
-	structure, errs, err := parseFile(mctx, filePath)
+	structure, errs, err := parseFile(pctx, filePath)
 	if err != nil {
 		return err
 	}
@@ -214,10 +227,11 @@ func (s *scanner) folderProcessor(folderPath string, igit IVCS) (FileProcessor, 
 	}
 
 	// Initialize markdown context for this folder
-	mctx := &MarkdownContext{}
+	pctx := &ParsingContext{}
+	pctx.IgnorePatterns = s.ignorePatterns
 
 	return func(filePath string) error {
-		return s.scanFile(filePath, mctx, igit)
+		return s.scanFile(filePath, pctx, igit)
 	}, nil
 
 }
