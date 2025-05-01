@@ -29,9 +29,10 @@ const (
 	maxFileSize = 128 * 1024 // 128KB
 )
 
-func NewScanner(extensions string) IScanner {
+func NewScanner(extensions string, ignoreLines []string) IScanner {
 	s := &scanner{
 		sourceExtensions: make(map[string]bool),
+		ignoreLines:      ignoreLines,
 	}
 	// Use provided extensions or fallback to defaults
 	exts := extensions
@@ -82,6 +83,7 @@ func (s *scanner) Scan(paths []string) (*ScannerResult, error) {
 
 type scanner struct {
 	sourceExtensions map[string]bool
+	ignoreLines      []string
 	stats            struct {
 		processedFiles atomic.Int64
 		processedBytes atomic.Int64
