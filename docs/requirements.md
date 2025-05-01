@@ -28,9 +28,11 @@ Ref. [ebnf.md](ebnf.md)
 - [internal/errors_syn.go](../internal/errors_syn.go)
 - [internal/errors_sem.go](../internal/errors_sem.go)
 
-### Handle inconsistency between Footnote and PackageId
-
 ---
+
+## Non-functional
+
+- [System tests](systests.md)
 
 ## Processing requirements
 
