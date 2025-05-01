@@ -2,14 +2,14 @@
 
 ## Architecture
 
-- System tests (SysTests) are located in the `internal/sys_test.go` file
+- System tests (**SysTests**) are located in the `internal/sys_test.go` file
 - Each SysTest has a symbolic TestId
 - Each SysTest is associated with a SysTestData folder located in `testdata/systest/<TestId>` folder
   - `req`: Contains TestMarkdown files, Reqmd files, and GoldenFiles
   - `src`: Contains source files
-- TestMarkdown files contain NormalLines and GoldenLines, see below
-- `reqid: nf/GoldenDataEmbedding`🏷️: GoldenLines represent the expected errors for the previous line
-  - 🚫: GoldenLines represent expected errors for the previous NormalLine
+- **TestMarkdown** files contain **NormalLines** and **GoldenAnnotations**, see below
+- `reqid: nf/GoldenDataEmbedding`🏷️: GoldenAnnotations represent the expected errors or transormation of the
+  - obsoleted🚫: GoldenLines represent expected errors for the previous NormalLine
 - SysTestData is loaded and processed by the `internal/systest/RunSysTest` function
 - `RunSysTest` uses the `parseGoldenData()` function to parse the Golden Data and return a `goldenData` struct
 - `RunSysTest` uses the `actualizeGoldenData()` function to replace `{{.CommitHash}}` with the actual commit hash
@@ -30,16 +30,18 @@
     - For each GoldenFile, read the file content line by line and store in goldenData.lines[normalizedPath]
     - The lines are stored in the same order as they appear in the file
     - Empty lines and whitespace are preserved exactly as they appear in the files
+  - Golden data can also be embedded directly in NormalFiles using GoldenAnnotations (see Golden data embedding below)
 
 ## TestMarkdown format
 
 File structure:
 
 ```ebnf
-WS           = { " " | "\t" } .
-Body         = { NormalLine | GoldenLine } .
-GoldenLine   = "//" {WS} (GoldenErrors) .
-GoldenErrors = "errors:" {WS} {"""" ErrRegex """" {WS}} .
+WS               = { " " | "\t" } .
+Body             = { NormalLine | GoldenAnnotation } .
+GoldenAnnotation = "//" {WS} (GoldenErrors | LineMutation) .
+GoldenErrors     = "errors:" {WS} {"""" ErrRegex """" {WS}} .
+LineMutation       = ("line" | "line-" | "line+" | "line" | "line>>") [":" {WS} Content] .
 ```
 
 Specification:
@@ -48,3 +50,26 @@ Specification:
 - ErrRegex is a regular expression that matches the error message
   - If a line is related to multiple errors, then multiple ErrRegexes are used
   - Line errors and ErrRegexes have a one-to-one relationship
+
+## Golden data embedding
+
+Instead of maintaining separate golden files (with `_` suffix), golden data can be embedded directly in the source markdown files using specially formatted comments:
+
+```markdown
+`~REQ001~`
+// line: `~REQ001~`covered✅
+
+This line is expected to be removed
+// line-
+```
+
+Golden annotation syntax:
+
+- `// line-`: Remove the previous non-annotation line
+- `// line+`: Add a line after the previous non-annotation line
+  - Multiple statements are allowed and processed in order
+- `// line`: Replace the previous non-annotation line
+- `// line1`: Insert a line at the beginning of the file
+  - Multiple statements are allowed and processed in order
+- `// line>>`: Append a line at the end of the file
+  - Multiple statements are allowed and processed in order

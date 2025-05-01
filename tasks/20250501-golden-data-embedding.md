@@ -6,7 +6,7 @@ Currently, our system test architecture relies on separate golden files (with `_
 
 ## Proposed solution
 
-Embed golden data directly in the source markdown files using specially formatted comments, similar to how we already handle error expectations.
+`~nf/GoldenDataEmbedding~`: Embed golden data directly in the source markdown files using specially formatted comments, similar to how we already handle error expectations.
 
 Example:
 ```markdown
