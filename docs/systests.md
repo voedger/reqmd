@@ -1,5 +1,9 @@
 # System tests
 
+## Definitions
+
+- **GoldenData**: A set of expected errors and lines that are used to validate the output of a SysTest
+
 ## Architecture
 
 - System tests (**SysTests**) are located in the `internal/sys_test.go` file
@@ -7,13 +11,17 @@
 - Each SysTest is associated with a SysTestData folder located in `testdata/systest/<TestId>` folder
   - `req`: Contains TestMarkdown files, Reqmd files, and GoldenFiles
   - `src`: Contains source files
-- **TestMarkdown** files contain **NormalLines** and **GoldenAnnotations**, see below
-- `reqid: nf/GoldenDataEmbedding`🏷️: GoldenAnnotations represent the expected errors or transormation of the
+- **TestMarkdown** files contain **NormalLines** and **GoldenAnnotations**
+- GoldenAnnotations represent the expected errors or transformation of TestMarkdown lines to GoldenData lines
+  - `covtag: nf/GoldenDataEmbedding`🏷️
   - obsoleted🚫: GoldenLines represent expected errors for the previous NormalLine
-- SysTestData is loaded and processed by the `internal/systest/RunSysTest` function
-- `RunSysTest` uses the `parseGoldenData()` function to parse the Golden Data and return a `goldenData` struct
-- `RunSysTest` uses the `actualizeGoldenData()` function to replace `{{.CommitHash}}` with the actual commit hash
-- `goldenData` struct contains:
+- **SysTestData** is loaded and processed by the `~RunSysTest~` function of the internal/systest package
+- `~RunSysTest~`: Function
+  - `~parseGoldenData~`: Parses the Golden Data and returns a `goldenData` struct
+  - `~actualizeGoldenData~`: Replaces `{{.CommitHash.}}` with the actual commit hash
+  - `~applyGoldenAnnotations~`: Applies GoldenAnnotations to the NormalLines
+    - `covtag: nf/GoldenDataEmbedding`🏷️
+- `~goldenData~`: A struct:
   - `errors map[Path]map[int][]*regexp.Regexp` - expected errors (compiled regexes)
   - `lines map[Path][]string` - expected lines
 - `parseGoldenData`:
@@ -30,7 +38,6 @@
     - For each GoldenFile, read the file content line by line and store in goldenData.lines[normalizedPath]
     - The lines are stored in the same order as they appear in the file
     - Empty lines and whitespace are preserved exactly as they appear in the files
-  - Golden data can also be embedded directly in NormalFiles using GoldenAnnotations (see Golden data embedding below)
 
 ## TestMarkdown format
 

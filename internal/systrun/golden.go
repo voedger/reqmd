@@ -50,20 +50,22 @@ func parseGoldenData(reqFolderPaths []string) (*goldenData, error) {
 			normalizedPath := getNormalizedPath(relPath)
 
 			// Load file contents
-			lines, err := loadFileLines(path)
+			normalLines, err := loadFileLines(path)
 			if err != nil {
 				return fmt.Errorf("loading file %s: %v", path, err)
 			}
 
+			normalLines = applyGoldenAnnotations(normalLines)
+
 			// Only store lines for markdown files we need to check for errors
 			// and golden files we need to compare against
 			if isGoldenFile(path) || !hasGoldenCounterpart(path) {
-				gd.lines[normalizedPath] = lines
+				gd.lines[normalizedPath] = normalLines
 			}
 
 			// Process markdown files for golden errors
 			if strings.HasSuffix(strings.ToLower(path), ".md") && !isGoldenFile(path) {
-				if err := extractGoldenErrors(relPath, lines, gd); err != nil {
+				if err := extractGoldenErrors(relPath, normalLines, gd); err != nil {
 					return fmt.Errorf("extracting golden errors from %s: %v", relPath, err)
 				}
 			}
@@ -134,8 +136,8 @@ func extractGoldenErrors(filePath string, lines []string, gd *goldenData) error 
 	return nil
 }
 
-// extractGoldenEmbedding processes the embedded golden data in markdown files
-func extractGoldenEmbedding(lines []string) []string {
+// applyGoldenAnnotations processes the embedded golden data in markdown files
+func applyGoldenAnnotations(normalLines []string) []string {
 	// Define regex patterns for different directive types
 	const (
 		lineReplacePrefix = `^\s*//\s*line:\s*`
@@ -157,7 +159,7 @@ func extractGoldenEmbedding(lines []string) []string {
 	var endLines []string
 
 	// First pass: collect transformed lines and handle directives
-	for _, line := range lines {
+	for _, line := range normalLines {
 		// Skip processing if the line is a GoldenAnnotation
 		isGoldenAnnotation := strings.HasPrefix(strings.TrimSpace(line), "//")
 

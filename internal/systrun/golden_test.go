@@ -147,7 +147,7 @@ func Test_extractGoldenEmbedding(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractGoldenEmbedding(tt.lines)
+			result := applyGoldenAnnotations(tt.lines)
 
 			if len(result) != len(tt.expected) {
 				t.Errorf("Length mismatch: got %d lines, want %d lines", len(result), len(tt.expected))
