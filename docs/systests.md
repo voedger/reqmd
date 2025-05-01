@@ -7,8 +7,9 @@
 - Each SysTest is associated with a SysTestData folder located in `testdata/systest/<TestId>` folder
   - `req`: Contains TestMarkdown files, Reqmd files, and GoldenFiles
   - `src`: Contains source files
-- TestMarkdown files contain NormalLines and GoldenLines (for errors), see below
-- GoldenLines represent expected errors for the previous NormalLine
+- TestMarkdown files contain NormalLines and GoldenLines, see below
+- `reqid: nf/GoldenDataEmbedding`🏷️: GoldenLines represent the expected errors for the previous line
+  - 🚫: GoldenLines represent expected errors for the previous NormalLine
 - SysTestData is loaded and processed by the `internal/systest/RunSysTest` function
 - `RunSysTest` uses the `parseGoldenData()` function to parse the Golden Data and return a `goldenData` struct
 - `RunSysTest` uses the `actualizeGoldenData()` function to replace `{{.CommitHash}}` with the actual commit hash
