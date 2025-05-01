@@ -17,7 +17,7 @@ Some other content
 // golden: Some other expected content
 ```
 
-Complete syntax
+More examples:
 
 - `// golden-`: Remove the previous non-golden line
 - `// golden+`: Add a line after the previous non-golden line
