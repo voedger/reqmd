@@ -5,6 +5,7 @@ package systrun
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -152,12 +153,8 @@ func extractGoldenEmbedding(lines []string) []string {
 	lineEndRegex := regexp.MustCompile(lineAtEndPrefix)
 
 	var transformedLines []string
-	var sourceLines []string
 	var beginningLines []string
 	var endLines []string
-
-	// Clone original lines as source
-	sourceLines = append(sourceLines, lines...)
 
 	// First pass: collect transformed lines and handle directives
 	for _, line := range lines {
@@ -199,13 +196,10 @@ func extractGoldenEmbedding(lines []string) []string {
 				// Collect lines to be added at the end
 				endLines = append(endLines, lineEndRegex.ReplaceAllString(line, ""))
 			default:
-				// Other annotations should be preserved
-				transformedLines = append(transformedLines, line)
+				log.Println("extractGoldenEmbedding: Skipping unknown directive:", line)
 			}
-		} else {
-			// Normal line, just add it
-			transformedLines = append(transformedLines, line)
 		}
+		transformedLines = append(transformedLines, line)
 	}
 
 	// Apply beginning lines (prepend)
