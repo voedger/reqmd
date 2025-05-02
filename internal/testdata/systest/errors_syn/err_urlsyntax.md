@@ -5,4 +5,4 @@ reqmd.package: urlsyntax
 `~func1~`covrd[^1]✅
 
 [^1]: `[~urlsyntax/func1~impl]` [reqsrcfootnote.go:5:impl](://github.com/voedger/example/blob/main/reqsrcfootnote.go#L5)
-// errors: " the URL provided is invalid.*missing protocol scheme"
+> errors " the URL provided is invalid.*missing protocol scheme"

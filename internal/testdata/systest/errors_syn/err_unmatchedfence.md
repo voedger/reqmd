@@ -7,4 +7,4 @@ reqmd.package: errors
 This requirement has an unmatched fence.
 
 ```text
-// errors: "opening code block fence"
+> errors "opening code block fence"

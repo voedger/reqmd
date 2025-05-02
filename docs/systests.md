@@ -47,7 +47,7 @@ File structure:
 WS               = { " " | "\t" } .
 Body             = { NormalLine | GoldenAnnotation } .
 GoldenAnnotation = ">" {WS} (GoldenErrors | LineMutation) .
-GoldenErrors     = "errors:" {WS} {"""" ErrRegex """" {WS}} .
+GoldenErrors     = "errors" {WS} {"""" ErrRegex """" {WS}} .
 LineMutation       = ("replace" | "delete" | "insert" | "firstline" | "lastilne" ) [{WS} ":" Content] .
 ```
 

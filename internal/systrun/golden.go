@@ -100,7 +100,7 @@ func isGoldenFile(path string) bool {
 // extractGoldenErrors extracts error patterns from markdown files
 func extractGoldenErrors(filePath string, lines []string, gd *goldenData) error {
 	// Regular expression for golden error lines: "// errors: "regex" "regex" ..."
-	errLineRegex := regexp.MustCompile(`^\s*//\s*errors:\s*(.*)$`)
+	errLineRegex := regexp.MustCompile(`^>\s*errors\s*(.*)$`)
 
 	for i := range lines {
 		matches := errLineRegex.FindStringSubmatch(lines[i])
@@ -151,6 +151,7 @@ func applyGoldenAnnotations(normalLines []string) []string {
 	mutFirstRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*firstline\s*`)
 	mutAppendRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*append\s*`)
 	mutDeleteLastRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*deletelast\s*`)
+	mutErrRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*errors\s*`)
 
 	var transformedLines []string
 	var beginningLines []string
@@ -189,6 +190,8 @@ func applyGoldenAnnotations(normalLines []string) []string {
 				endLines = append(endLines, mutAppendRegex.ReplaceAllString(line, ""))
 			case mutDeleteLastRegex.MatchString(line):
 				deletedLastLines++
+			case mutErrRegex.MatchString(line):
+				// Ignore error lines here
 			default:
 				log.Panicf("extractGoldenEmbedding: unknown directive: `%s`", line)
 			}
