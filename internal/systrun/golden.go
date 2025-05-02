@@ -137,8 +137,9 @@ func extractGoldenErrors(filePath string, lines []string, gd *goldenData) error 
 	return nil
 }
 
-// Define the prefix for golden annotations
-const goldenAnnotationPrefix = ">"
+func ga(line string) string {
+	return goldenAnnotationPrefix + " " + line
+}
 
 // applyGoldenAnnotations processes the embedded golden data in markdown files
 func applyGoldenAnnotations(normalLines []string) []string {
