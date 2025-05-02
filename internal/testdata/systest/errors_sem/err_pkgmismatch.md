@@ -7,4 +7,4 @@ reqmd.package: pkgmismatch
 `~req~`
 
 [^1]: `[~other.package/req~impl]`
-> errors "CoverageFootnote package \(other.package\) is not consistent with PackageId in the header \(pkgmismatch\)"
+@ errors "CoverageFootnote package \(other.package\) is not consistent with PackageId in the header \(pkgmismatch\)"

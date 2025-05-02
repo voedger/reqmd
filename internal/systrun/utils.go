@@ -3,7 +3,7 @@ package systrun
 import "regexp"
 
 // Define the prefix for golden annotations
-const goldenAnnotationPrefix = ">"
+const goldenAnnotationPrefix = "@"
 const goldenAnnotationRegexpPrefix = `^\` + goldenAnnotationPrefix + `\s*`
 
 func ga(line string) string {
