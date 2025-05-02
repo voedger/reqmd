@@ -100,7 +100,7 @@ func isGoldenFile(path string) bool {
 // extractGoldenErrors extracts error patterns from markdown files
 func extractGoldenErrors(filePath string, lines []string, gd *goldenData) error {
 	// Regular expression for golden error lines: "// errors: "regex" "regex" ..."
-	errLineRegex := regexp.MustCompile(`^>\s*errors\s*(.*)$`)
+	errLineRegex := gare(`errors\s*(.*)$`)
 
 	for i := range lines {
 		matches := errLineRegex.FindStringSubmatch(lines[i])
@@ -137,22 +137,18 @@ func extractGoldenErrors(filePath string, lines []string, gd *goldenData) error 
 	return nil
 }
 
-func ga(line string) string {
-	return goldenAnnotationPrefix + " " + line
-}
-
 // applyGoldenAnnotations processes the embedded golden data in markdown files
 func applyGoldenAnnotations(normalLines []string) []string {
 
 	// Compile regex patterns once
 
-	mutReplaceRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*replace\s*`)
-	mutDeleteRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*delete\s*$`)
-	mutInsertRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*insert\s*`)
-	mutFirstRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*firstline\s*`)
-	mutAppendRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*append\s*`)
-	mutDeleteLastRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*deletelast\s*`)
-	mutErrRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*errors\s*`)
+	mutReplaceRegex := gare(`replace\s*`)
+	mutDeleteRegex := gare(`delete\s*$`)
+	mutInsertRegex := gare(`insert\s*`)
+	mutFirstRegex := gare(`firstline\s*`)
+	mutAppendRegex := gare(`append\s*`)
+	mutDeleteLastRegex := gare(`deletelast\s*`)
+	mutErrRegex := gare(`errors\s*`)
 
 	var transformedLines []string
 	var beginningLines []string
