@@ -11,24 +11,11 @@ Currently, our system test architecture relies on separate golden files (with `_
 Example:
 ```markdown
 `~REQ001~`
-// golden: `~REQ001~`covered✅
+> replace `~REQ001~`covered✅
 
 Some other content
-// golden: Some other expected content
+> replace Some other expected content
 ```
-
-More examples:
-
-- `> delete`: Remove the previous non-golden line
-- `> insert: text`: Add a line after the previous non-golden line
-  - Multiple statements are allowed and processed in order
-- `> replace: text`: Replace the previous non-golden line
-- `> firstline: text`: Insert a line at the beginning of the file
-  - Multiple statements are allowed and processed in order
-- `> append: text`: Append a line at the end of the file
-  - Multiple statements are allowed and processed in order
-- `> deletelast`: Remove the last line of the file
-  - Multiple statements are allowed and processed in order
 
 ## Addessed issues
 

@@ -145,11 +145,11 @@ func applyGoldenAnnotations(normalLines []string) []string {
 
 	// Compile regex patterns once
 
-	mutReplaceRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*replace:\s*`)
+	mutReplaceRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*replace\s*`)
 	mutDeleteRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*delete\s*$`)
-	mutInsertRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*insert:\s*`)
-	mutFirstRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*firstline:\s*`)
-	mutAppendRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*append:\s*`)
+	mutInsertRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*insert\s*`)
+	mutFirstRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*firstline\s*`)
+	mutAppendRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*append\s*`)
 	mutDeleteLastRegex := regexp.MustCompile(goldenAnnotationPrefix + `\s*deletelast\s*`)
 
 	var transformedLines []string
