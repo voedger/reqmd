@@ -46,9 +46,9 @@ File structure:
 ```ebnf
 WS               = { " " | "\t" } .
 Body             = { NormalLine | GoldenAnnotation } .
-GoldenAnnotation = "//" {WS} (GoldenErrors | LineMutation) .
+GoldenAnnotation = ">" {WS} (GoldenErrors | LineMutation) .
 GoldenErrors     = "errors:" {WS} {"""" ErrRegex """" {WS}} .
-LineMutation       = ("line" | "line-" | "line+" | "line" | "line>>") [{WS} ":" Content] .
+LineMutation       = ("replace" | "delete" | "insert" | "firstline" | "lastilne" ) [{WS} ":" Content] .
 ```
 
 Specification:
@@ -70,13 +70,14 @@ This line is expected to be removed
 // line-
 ```
 
-Golden annotation syntax:
+LineMutations:
 
-- `// line-`: Remove the previous non-GoldenAnnotation line
-- `// line+`: Add a line after the previous non-GoldenAnnotation line
+- `delete`: Delete the previous non-GoldenAnnotation line
+- `deletelast`: Delete the last non-GoldenAnnotation line
+- `insert`: Add a line after the previous non-GoldenAnnotation line
   - Multiple statements are allowed and processed in order
-- `// line`: Replace the previous non-GoldenAnnotation line
-- `// line1`: Insert a line at the beginning of the file
+- `replace`: Replace the previous non-GoldenAnnotation line
+- `firstline`: Insert a line at the beginning of the file
   - Multiple statements are allowed and processed in order
-- `// line>>`: Append a line at the end of the file
+- `append`: Append a line at the end of the file
   - Multiple statements are allowed and processed in order

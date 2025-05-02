@@ -19,13 +19,15 @@ Some other content
 
 More examples:
 
-- `// golden-`: Remove the previous non-golden line
-- `// golden+`: Add a line after the previous non-golden line
+- `> delete`: Remove the previous non-golden line
+- `> insert: text`: Add a line after the previous non-golden line
   - Multiple statements are allowed and processed in order
-- `// golden`: Replace the previous non-golden line
-- `// golden1`: Insert a line at the beginning of the file
+- `> replace: text`: Replace the previous non-golden line
+- `> firstline: text`: Insert a line at the beginning of the file
   - Multiple statements are allowed and processed in order
-- `// golden>>`: Append a line at the end of the file
+- `> append: text`: Append a line at the end of the file
+  - Multiple statements are allowed and processed in order
+- `> deletelast`: Remove the last line of the file
   - Multiple statements are allowed and processed in order
 
 ## Addessed issues
