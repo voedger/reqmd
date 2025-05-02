@@ -1,11 +1,13 @@
 # Tracing
 
+This document describes the basic tracing functionality of the reqmd tool. Optional features are described in separate documents.
+
 ## Functional design
 
 ### SYNOPSIS
 
 ```bash
-reqmd [-v] trace [ (-e | --extensions) <extensions>] [--dry-run | -n] <paths>...
+reqmd [-v] trace [ (-e | --extensions) <extensions>] [--dry-run | -n] <path>...
 ```
 
 ### DESCRIPTION
@@ -35,7 +37,7 @@ General processing rules:
 
 ### ARGUMENTS
 
-- `<paths>`:
+- `<path>`:
   - One or more paths to process. Each path can contain both markdown requirement files and source code with coverage tags
   - At least one path must be provided
   - When multiple paths are provided, they are processed in sequence

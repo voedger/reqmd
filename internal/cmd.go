@@ -64,6 +64,7 @@ func prepareRootCmd(use, short string, args []string, ver string, cmds ...*cobra
 func newTraceCmd() *cobra.Command {
 	var extensions string
 	var dryRun bool
+	var ignoreLines []string
 
 	cmd := &cobra.Command{
 		Use:           "trace [flags] <paths>...",
@@ -82,7 +83,11 @@ func newTraceCmd() *cobra.Command {
 				}
 			}
 
-			scanner := NewScanner(extensions)
+			patterns, err := preparePatterns(ignoreLines)
+			if err != nil {
+				return err
+			}
+			scanner := NewScanner(extensions, patterns)
 			analyzer := NewAnalyzer()
 			applier := NewApplier(dryRun)
 
@@ -94,5 +99,6 @@ func newTraceCmd() *cobra.Command {
 
 	cmd.Flags().StringVarP(&extensions, "extensions", "e", "", "Comma-separated list of source file extensions to process (e.g. .go,.ts,.js)")
 	cmd.Flags().BoolVarP(&dryRun, "dry-run", "n", false, "Show what would be done, but make no changes to files")
+	cmd.Flags().StringArrayVar(&ignoreLines, "ignore-lines", nil, "Regular expression pattern for lines to ignore. Can be specified multiple times.")
 	return cmd
 }

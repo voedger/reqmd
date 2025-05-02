@@ -5,9 +5,11 @@ package systrun
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -49,20 +51,22 @@ func parseGoldenData(reqFolderPaths []string) (*goldenData, error) {
 			normalizedPath := getNormalizedPath(relPath)
 
 			// Load file contents
-			lines, err := loadFileLines(path)
+			normalLines, err := loadFileLines(path)
 			if err != nil {
 				return fmt.Errorf("loading file %s: %v", path, err)
 			}
 
+			normalLines = applyGoldenAnnotations(normalLines)
+
 			// Only store lines for markdown files we need to check for errors
 			// and golden files we need to compare against
 			if isGoldenFile(path) || !hasGoldenCounterpart(path) {
-				gd.lines[normalizedPath] = lines
+				gd.lines[normalizedPath] = normalLines
 			}
 
 			// Process markdown files for golden errors
 			if strings.HasSuffix(strings.ToLower(path), ".md") && !isGoldenFile(path) {
-				if err := extractGoldenErrors(relPath, lines, gd); err != nil {
+				if err := extractGoldenErrors(relPath, normalLines, gd); err != nil {
 					return fmt.Errorf("extracting golden errors from %s: %v", relPath, err)
 				}
 			}
@@ -96,7 +100,7 @@ func isGoldenFile(path string) bool {
 // extractGoldenErrors extracts error patterns from markdown files
 func extractGoldenErrors(filePath string, lines []string, gd *goldenData) error {
 	// Regular expression for golden error lines: "// errors: "regex" "regex" ..."
-	errLineRegex := regexp.MustCompile(`^\s*//\s*errors:\s*(.*)$`)
+	errLineRegex := gare(`errors\s*(.*)$`)
 
 	for i := range lines {
 		matches := errLineRegex.FindStringSubmatch(lines[i])
@@ -131,6 +135,92 @@ func extractGoldenErrors(filePath string, lines []string, gd *goldenData) error 
 	}
 
 	return nil
+}
+
+// applyGoldenAnnotations processes the embedded golden data in markdown files
+func applyGoldenAnnotations(normalLines []string) []string {
+
+	// Compile regex patterns once
+
+	mutReplaceRegex := gare(`replace\s*`)
+	mutDeleteRegex := gare(`delete\s*$`)
+	mutInsertRegex := gare(`insert\s*`)
+	mutFirstRegex := gare(`firstline\s*`)
+	mutAppendRegex := gare(`append\s*`)
+	mutDeleteLastRegex := gare(`deletelast\s*`)
+	mutErrRegex := gare(`errors\s*`)
+
+	var transformedLines []string
+	var beginningLines []string
+	var endLines []string
+	deletedLastLines := 0
+
+	// First pass: collect transformed lines and handle directives
+	for _, line := range normalLines {
+		// Skip processing if the line is a GoldenAnnotation
+		isGoldenAnnotation := strings.HasPrefix(strings.TrimSpace(line), goldenAnnotationPrefix)
+
+		if isGoldenAnnotation {
+			// Process directives
+			switch {
+			case mutReplaceRegex.MatchString(line):
+				// Replace the last non-annotation line
+				if lastNA := findLastNonAnnotationLine(transformedLines); lastNA >= 0 {
+					transformedLines[lastNA] = mutReplaceRegex.ReplaceAllString(line, "")
+				}
+			case mutDeleteRegex.MatchString(line):
+				// Remove the last non-annotation line
+				if lastNA := findLastNonAnnotationLine(transformedLines); lastNA >= 0 {
+					transformedLines = slices.Delete(transformedLines, lastNA, lastNA+1)
+				}
+			case mutInsertRegex.MatchString(line):
+				// Add a line after the last non-annotation line
+				if lastNA := findLastNonAnnotationLine(transformedLines); lastNA >= 0 {
+					contentToAdd := mutInsertRegex.ReplaceAllString(line, "")
+					transformedLines = append(transformedLines[:lastNA+1], append([]string{contentToAdd}, transformedLines[lastNA+1:]...)...)
+				}
+			case mutFirstRegex.MatchString(line):
+				// Collect lines to be added at the beginning
+				beginningLines = append(beginningLines, mutFirstRegex.ReplaceAllString(line, ""))
+			case mutAppendRegex.MatchString(line):
+				// Collect lines to be added at the end
+				endLines = append(endLines, mutAppendRegex.ReplaceAllString(line, ""))
+			case mutDeleteLastRegex.MatchString(line):
+				deletedLastLines++
+			case mutErrRegex.MatchString(line):
+				// Ignore error lines here
+			default:
+				log.Panicf("extractGoldenEmbedding: unknown directive: `%s`", line)
+			}
+		}
+		transformedLines = append(transformedLines, line)
+	}
+
+	// Apply beginning lines (prepend)
+	if len(beginningLines) > 0 {
+		transformedLines = append(beginningLines, transformedLines...)
+	}
+
+	// Delete last lines (remove from the end)
+	if deletedLastLines > 0 {
+		transformedLines = transformedLines[:len(transformedLines)-deletedLastLines]
+	}
+
+	// Apply end lines (append)
+	if len(endLines) > 0 {
+		transformedLines = append(transformedLines, endLines...)
+	}
+
+	return transformedLines
+}
+
+func findLastNonAnnotationLine(lines []string) int {
+	for i := len(lines) - 1; i >= 0; i-- {
+		if !strings.HasPrefix(strings.TrimSpace(lines[i]), goldenAnnotationPrefix) {
+			return i
+		}
+	}
+	return -1
 }
 
 // extractErrorRegexes parses a string containing quoted regex patterns

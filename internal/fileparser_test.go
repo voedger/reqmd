@@ -111,6 +111,87 @@ func TestFileParser_src(t *testing.T) {
 	}
 }
 
+func TestFileParser_IgnoreLines(t *testing.T) {
+	// Create a temporary file for testing
+	content := []byte(`---
+reqmd.package: com.example
+---
+This is a normal line. ` + "`~REQ001~`" + `
+// line: ` + "`~REQ002~`" + `uncvrd[^2]❓
+This is another normal line. ` + "`~REQ003~`" + `
+Prefix comment // ` + "`~REQ004~`" + `
+`)
+	tmpfile := filepath.Join(t.TempDir(), "test.md")
+	require.NoError(t, os.WriteFile(tmpfile, content, 0644))
+
+	// Create markdown context with ignore pattern
+	mctx := &ParsingContext{
+		IgnorePatterns: []*regexp.Regexp{
+			regexp.MustCompile(`^// line:`),
+		},
+	}
+
+	// Parse the file
+	structure, errs, err := parseFile(mctx, tmpfile)
+	require.NoError(t, err)
+	assert.Empty(t, errs)
+
+	// Check that REQ001 and REQ003 are found, but REQ002 is ignored
+	assert.Equal(t, 3, len(structure.Requirements), "Should have found 3 requirements (REQ001, REQ003, and REQ004)")
+
+	// Find each requirement
+	req001 := findRequirement(structure.Requirements, "REQ001")
+	req002 := findRequirement(structure.Requirements, "REQ002")
+	req003 := findRequirement(structure.Requirements, "REQ003")
+	req004 := findRequirement(structure.Requirements, "REQ004")
+
+	assert.NotNil(t, req001, "REQ001 should be found")
+	assert.Nil(t, req002, "REQ002 should be ignored")
+	assert.NotNil(t, req003, "REQ003 should be found")
+	assert.NotNil(t, req004, "REQ004 should be found")
+}
+
+func TestFileParser_MultipleIgnorePatterns(t *testing.T) {
+	// Create a temporary file for testing
+	content := []byte(`---
+reqmd.package: com.example
+---
+This is a normal line. ` + "`~REQ001~`" + `
+// line: ` + "`~REQ002~`" + `uncvrd[^2]❓
+This is another normal line. ` + "`~REQ003~`" + `
+DEBUG: ` + "`~REQ004~`" + `
+`)
+	tmpfile := filepath.Join(t.TempDir(), "test.md")
+	require.NoError(t, os.WriteFile(tmpfile, content, 0644))
+
+	// Create markdown context with multiple ignore patterns
+	mctx := &ParsingContext{
+		IgnorePatterns: []*regexp.Regexp{
+			regexp.MustCompile(`^// line:`),
+			regexp.MustCompile(`^DEBUG:`),
+		},
+	}
+
+	// Parse the file
+	structure, errs, err := parseFile(mctx, tmpfile)
+	require.NoError(t, err)
+	assert.Empty(t, errs)
+
+	// Check that only REQ001 and REQ003 are found, REQ002 and REQ004 are ignored
+	assert.Equal(t, 2, len(structure.Requirements), "Should have found 2 requirements (REQ001 and REQ003)")
+
+	// Find each requirement
+	req001 := findRequirement(structure.Requirements, "REQ001")
+	req002 := findRequirement(structure.Requirements, "REQ002")
+	req003 := findRequirement(structure.Requirements, "REQ003")
+	req004 := findRequirement(structure.Requirements, "REQ004")
+
+	assert.NotNil(t, req001, "REQ001 should be found")
+	assert.Nil(t, req002, "REQ002 should be ignored")
+	assert.NotNil(t, req003, "REQ003 should be found")
+	assert.Nil(t, req004, "REQ004 should be ignored")
+}
+
 // Helper function to find requirement by name
 func findRequirement(reqs []RequirementSite, name RequirementName) *RequirementSite {
 	for _, req := range reqs {
@@ -121,8 +202,8 @@ func findRequirement(reqs []RequirementSite, name RequirementName) *RequirementS
 	return nil
 }
 
-func newMdCtx() *MarkdownContext {
-	return &MarkdownContext{}
+func newMdCtx() *ParsingContext {
+	return &ParsingContext{}
 }
 
 func TestParseRequirements_invalid_coverage_status(t *testing.T) {
@@ -201,7 +282,7 @@ func TestParseRequirements_table(t *testing.T) {
 
 func TestParseCoverageFootnote(t *testing.T) {
 	line := "[^~REQ002~]: `[~com.example.basic/REQ002~impl]`[folder1/filename1:line1:impl](https://example.com/pkg1/filename1#L11), [folder2/filename2:line2:test](https://example.com/pkg2/filename2#L22)"
-	ctx := &MarkdownContext{}
+	ctx := &ParsingContext{}
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 
@@ -217,7 +298,7 @@ func TestParseCoverageFootnote(t *testing.T) {
 
 func TestParseCoverageFootnote2(t *testing.T) {
 	line := "[^~VVMLeader.def~]: `[~server.design.orch/VVMLeader.def~]` [apps/app.go:80:impl](https://example.com/pkg1/filename1#L80)"
-	ctx := &MarkdownContext{}
+	ctx := &ParsingContext{}
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 
@@ -230,7 +311,7 @@ func TestParseCoverageFootnote2(t *testing.T) {
 
 func TestParseCoverageFootnote_JustFootnote(t *testing.T) {
 	line := "[^12]:"
-	ctx := &MarkdownContext{}
+	ctx := &ParsingContext{}
 	note := ParseCoverageFootnote(ctx, "", line, 1, nil)
 	require.NotNil(t, note)
 	assert.Equal(t, CoverageFootnoteId("12"), note.CoverageFootnoteId)

@@ -15,7 +15,9 @@ var (
 	codeBlockMarkerRegex = regexp.MustCompile(`^\s*` + "```")
 )
 
-type MarkdownContext struct {
+type ParsingContext struct {
+	// IgnorePatterns contains compiled regular expressions that match lines to be ignored
+	IgnorePatterns []*regexp.Regexp
 }
 
 // isCodeBlockMarker checks if a line is a code block marker, handling indentation
@@ -72,7 +74,7 @@ func parseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 	return requirements
 }
 
-func ParseCoverageFootnote(mctx *MarkdownContext, filePath string, line string, lineNum int, errs *[]ProcessingError) (footnote *CoverageFootnote) {
+func ParseCoverageFootnote(mctx *ParsingContext, filePath string, line string, lineNum int, errs *[]ProcessingError) (footnote *CoverageFootnote) {
 
 	matches := CoverageFootnoteRegex.FindStringSubmatch(line)
 	if len(matches) > 0 {

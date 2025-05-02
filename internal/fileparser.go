@@ -13,7 +13,7 @@ import (
 
 // parseFile processes a file as both markdown and source file
 // It combines the logic of ParseMarkdownFile and ParseSourceFile into a single pass
-func parseFile(mctx *MarkdownContext, filePath string) (*FileStructure, []ProcessingError, error) {
+func parseFile(pctx *ParsingContext, filePath string) (*FileStructure, []ProcessingError, error) {
 	if IsVerbose {
 		Verbose("parseFile", filePath)
 	}
@@ -48,6 +48,14 @@ func parseFile(mctx *MarkdownContext, filePath string) (*FileStructure, []Proces
 	for scanner.Scan() {
 		lineNum++
 		line := scanner.Text()
+
+		// Check if the line should be ignored based on ignore patterns
+		if shouldIgnoreLine(pctx, line) {
+			if IsVerbose {
+				Verbose("parseFile: ignoring line", "line", lineNum, "file", filePath)
+			}
+			continue
+		}
 
 		// Source file parsing - always parse coverage tags regardless of file type
 		if !inCodeBlock {
@@ -104,7 +112,7 @@ func parseFile(mctx *MarkdownContext, filePath string) (*FileStructure, []Proces
 				structure.Requirements = append(structure.Requirements, requirements...)
 
 				// Parse coverage footnotes
-				footnote := ParseCoverageFootnote(mctx, filePath, line, lineNum, &errors)
+				footnote := ParseCoverageFootnote(pctx, filePath, line, lineNum, &errors)
 				if footnote != nil {
 					structure.CoverageFootnotes = append(structure.CoverageFootnotes, *footnote)
 				}
@@ -145,4 +153,22 @@ func parseCoverageTags(filePath string, line string, lineNum int) []CoverageTag 
 		}
 	}
 	return tags
+}
+
+// shouldIgnoreLine checks if a line should be ignored based on the ignore patterns
+// in the MarkdownContext. Returns true if the line should be ignored.
+func shouldIgnoreLine(pctx *ParsingContext, line string) bool {
+	// If no ignore patterns are defined, process all lines
+	if pctx == nil || len(pctx.IgnorePatterns) == 0 {
+		return false
+	}
+
+	// Check if the line matches any of the ignore patterns
+	for _, pattern := range pctx.IgnorePatterns {
+		if pattern.MatchString(line) {
+			return true
+		}
+	}
+
+	return false
 }
