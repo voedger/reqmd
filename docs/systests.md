@@ -46,9 +46,9 @@ File structure:
 ```ebnf
 WS               = { " " | "\t" } .
 Body             = { NormalLine | GoldenAnnotation } .
-GoldenAnnotation = ">" {WS} (GoldenErrors | LineMutation) .
+GoldenAnnotation = "@" {WS} (GoldenErrors | LineMutation) .
 GoldenErrors     = "errors" {WS} {"""" ErrRegex """" {WS}} .
-LineMutation       = ("replace" | "delete" | "insert" | "firstline" | "lastilne" ) [{WS} ":" Content] .
+LineMutation       = ("replace" | "delete" | "deletelast" |"insert" | "firstline" | "append" ) [{WS} Content] .
 ```
 
 Specification:
@@ -64,10 +64,10 @@ Instead of maintaining separate golden files (with `_` suffix), golden data can 
 
 ```markdown
 `~REQ001~`
-// line: `~REQ001~`covered✅
+@ replace `~REQ001~`covered✅
 
-This line is expected to be removed
-// line-
+This line is expected to be deleted
+@ delete 
 ```
 
 LineMutations:
