@@ -31,10 +31,11 @@ Ref. [ebnf.md](ebnf.md)
 
 ---
 
-## Non-functional
+## Technical requirements
 
 - [System tests](systests.md)
   - [Golden data embedding to avoid separate .md_ files](20250501-nf-golden-data-embedding.md)
+- [High-volume file processing test](../tasks/T0022.md)  
 
 ## Processing requirements
 

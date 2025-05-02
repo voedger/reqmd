@@ -116,7 +116,7 @@ Markdown files are updated with:
 
 ## Design
 
-Refer to [design.md](docs/design.md) for detailed design decisions and architecture.
+Refer to [design.md](docs/architecture.md) for detailed design decisions and architecture.
 
 ## Requirements & dependencies
 

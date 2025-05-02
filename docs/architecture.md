@@ -1,6 +1,4 @@
-# Design
-
-Design of the reqmd tool.
+# Architecture
 
 ## Overview
 
@@ -50,7 +48,7 @@ The system is designed using SOLID principles:
 
 ---
 
-## File structure
+## Key files and their responsibilities
 
 ```text
 .
@@ -72,7 +70,7 @@ The system is designed using SOLID principles:
     └── main.go
 ```
 
-Summary of responsibilities
+Responsibilities:
 
 - **main.go** (root): CLI entry point, argument parsing, package initialization
 - **internal/main.go**: Internal CLI orchestration, implementation details for commands
@@ -216,11 +214,7 @@ Process ActionFootnotes:
 
 ---
 
----
 
-## High-volume file processing test
-
-[Ref.](../tasks/T0022.md)
 
 ## Implementation details
 
