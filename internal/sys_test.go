@@ -20,6 +20,10 @@ func Test_systest_errors_syn(t *testing.T) {
 	runSysTest(t, "errors_syn")
 }
 
+func Test_systest_errors_synreqtype(t *testing.T) {
+	runSysTestEx(t, "errors_synreqtype", []string{"--types", "expectedtype1, expectedtype2"})
+}
+
 func Test_systest_errors_sem(t *testing.T) {
 	runSysTest(t, "errors_sem")
 }
@@ -40,4 +44,8 @@ func Test_systest_reqsrc(t *testing.T) {
 
 func runSysTest(t *testing.T, testID string) {
 	systrun.RunSysTest(t, sysTestsDir, testID, ExecRootCmd, Version)
+}
+
+func runSysTestEx(t *testing.T, testID string, options []string) {
+	systrun.RunSysTestEx(t, sysTestsDir, testID, ExecRootCmd, options, Version)
 }

@@ -15,9 +15,10 @@ var (
 	codeBlockMarkerRegex = regexp.MustCompile(`^\s*` + "```")
 )
 
-type ParsingContext struct {
+type ScannerContext struct {
 	// IgnorePatterns contains compiled regular expressions that match lines to be ignored
 	IgnorePatterns []*regexp.Regexp
+	TypeRegistry   *TypeRegistry
 }
 
 // isCodeBlockMarker checks if a line is a code block marker, handling indentation
@@ -26,6 +27,11 @@ func isCodeBlockMarker(line string) bool {
 }
 
 func parseRequirements(filePath string, line string, lineNum int, errors *[]ProcessingError) []RequirementSite {
+	sctx := &ScannerContext{}
+	return parseRequirementsEx(sctx, filePath, line, lineNum, errors)
+}
+
+func parseRequirementsEx(sctx *ScannerContext, filePath string, line string, lineNum int, errors *[]ProcessingError) []RequirementSite {
 	var requirements []RequirementSite
 
 	matches := RequirementSiteRegex.FindAllStringSubmatch(line, -1)
@@ -61,6 +67,15 @@ func parseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 			HasAnnotationRef:    match[3] != "",
 		}
 
+		if sctx.TypeRegistry != nil {
+			// Validate requirement type
+			reqType := ExtractTypeFromRequirement(string(req.RequirementName))
+			_, exists := sctx.TypeRegistry.Type(reqType)
+			if !exists {
+				*errors = append(*errors, NewErrReqType(filePath, lineNum, sctx.TypeRegistry.Identifiers, req.RequirementName))
+			}
+		}
+
 		// TODO syntax error to match CoverageStatusEmoji and CoverageStatusWord
 
 		if req.HasAnnotationRef && covStatus == "" {
@@ -74,7 +89,7 @@ func parseRequirements(filePath string, line string, lineNum int, errors *[]Proc
 	return requirements
 }
 
-func ParseCoverageFootnote(mctx *ParsingContext, filePath string, line string, lineNum int, errs *[]ProcessingError) (footnote *CoverageFootnote) {
+func ParseCoverageFootnote(mctx *ScannerContext, filePath string, line string, lineNum int, errs *[]ProcessingError) (footnote *CoverageFootnote) {
 
 	matches := CoverageFootnoteRegex.FindStringSubmatch(line)
 	if len(matches) > 0 {

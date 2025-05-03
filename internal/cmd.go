@@ -65,6 +65,7 @@ func newTraceCmd() *cobra.Command {
 	var extensions string
 	var dryRun bool
 	var ignoreLines []string
+	var typeList string
 
 	cmd := &cobra.Command{
 		Use:           "trace [flags] <paths>...",
@@ -87,7 +88,20 @@ func newTraceCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			scanner := NewScanner(extensions, patterns)
+
+			scfg := &ScannerConfig{
+				Extensions:     extensions,
+				IgnorePatterns: patterns,
+			}
+			if typeList != "" {
+				types, err := ParseTypeList(typeList)
+				if err != nil {
+					return err
+				}
+				scfg.TypeRegistry = NewTypeRegistry(types)
+			}
+
+			scanner := NewScanner(scfg)
 			analyzer := NewAnalyzer()
 			applier := NewApplier(dryRun)
 
@@ -97,8 +111,11 @@ func newTraceCmd() *cobra.Command {
 		},
 	}
 
+	// git/gh style of the usage string
 	cmd.Flags().StringVarP(&extensions, "extensions", "e", "", "Comma-separated list of source file extensions to process (e.g. .go,.ts,.js)")
 	cmd.Flags().BoolVarP(&dryRun, "dry-run", "n", false, "Show what would be done, but make no changes to files")
 	cmd.Flags().StringArrayVar(&ignoreLines, "ignore-lines", nil, "Regular expression pattern for lines to ignore. Can be specified multiple times.")
+	cmd.Flags().StringVar(&typeList, "types", "", "Comma-separated list of requirement types (e.g. it,cmp,utest)")
+
 	return cmd
 }

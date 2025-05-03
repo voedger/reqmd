@@ -33,10 +33,14 @@ type T interface {
 // ExecRootCmdFunc defines the signature for the main execRootCmd function
 type ExecRootCmdFunc func(args []string, version string) error
 
-// RunSysTest executes a system test with the given parameters
+func RunSysTest(t T, testsDir string, testId string, rootCmd ExecRootCmdFunc, version string) {
+	RunSysTestEx(t, testsDir, testId, rootCmd, []string{}, version)
+}
+
+// RunSysTestEx executes a system test with the given parameters
 // If testId contains no subfoldersthen a single git repo is created and reqmd receives a single folder as an argument
 // Otherwise, each subfolder is treated as a separate path and separate git repos are created for each subfolder
-func RunSysTest(t T, testsDir string, testId string, rootCmd ExecRootCmdFunc, version string) {
+func RunSysTestEx(t T, testsDir string, testId string, rootCmd ExecRootCmdFunc, options []string, version string) {
 
 	t.Helper()
 
@@ -67,6 +71,7 @@ func RunSysTest(t T, testsDir string, testId string, rootCmd ExecRootCmdFunc, ve
 
 	var allTempFolders []string
 	var testArgs []string = []string{"reqmd", "trace", "--ignore-lines", goldenAnnotationRegexpPrefix}
+	testArgs = append(testArgs, options...)
 
 	commitHashes := make(map[string]string)
 
