@@ -46,16 +46,16 @@ func ExtractTypeFromRequirement(requirementName string) string {
 	return strings.Split(requirementName, ".")[0]
 }
 
-func ParseTypeList(typeList string) ([]string, error) {
+func ParseTypeList(typeList string) ([]RequirementType, error) {
 	if typeList == "" {
 		return nil, nil
 	}
 
 	types := strings.Split(typeList, ",")
 	uniqueTypes := make(map[string]bool)
-	var result []string
+	var result []RequirementType
 
-	for _, t := range types {
+	for i, t := range types {
 		t = strings.TrimSpace(t)
 		if t == "" {
 			continue
@@ -71,7 +71,10 @@ func ParseTypeList(typeList string) ([]string, error) {
 		}
 
 		uniqueTypes[t] = true
-		result = append(result, t)
+		result = append(result, RequirementType{
+			Identifier: t,
+			OrderNo:    i, // Use the position in the list as the order number
+		})
 	}
 
 	return result, nil
