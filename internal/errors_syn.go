@@ -71,6 +71,6 @@ func NewErrReqType(filePath string, line int, typeIdentifiers []string, reqName 
 		Code:     "reqtype",
 		FilePath: filePath,
 		Line:     line,
-		Message:  fmt.Sprintf("Requirement type must be one of %v: %v", typeIdentifiers, reqName),
+		Message:  fmt.Sprintf("requirement type must be one of %v: %v", typeIdentifiers, reqName),
 	}
 }

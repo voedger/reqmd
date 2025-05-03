@@ -115,7 +115,7 @@ func newTraceCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&extensions, "extensions", "e", "", "Comma-separated list of source file extensions to process (e.g. .go,.ts,.js)")
 	cmd.Flags().BoolVarP(&dryRun, "dry-run", "n", false, "Show what would be done, but make no changes to files")
 	cmd.Flags().StringArrayVar(&ignoreLines, "ignore-lines", nil, "Regular expression pattern for lines to ignore. Can be specified multiple times.")
-	cmd.Flags().StringVar(&typeList, "types", "types", "Comma-separated list of requirement types (e.g. it,cmp,utest)")
+	cmd.Flags().StringVar(&typeList, "types", "", "Comma-separated list of requirement types (e.g. it,cmp,utest)")
 
 	return cmd
 }

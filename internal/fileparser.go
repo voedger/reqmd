@@ -108,7 +108,7 @@ func parseFile(pctx *ScannerContext, filePath string) (*FileStructure, []Process
 			// Only parse requirements and footnotes when not in a code block
 			if !inCodeBlock {
 				// Parse requirements
-				requirements := parseRequirements(filePath, line, lineNum, &errors)
+				requirements := parseRequirementsEx(pctx, filePath, line, lineNum, &errors)
 				structure.Requirements = append(structure.Requirements, requirements...)
 
 				// Parse coverage footnotes

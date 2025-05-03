@@ -71,6 +71,7 @@ func RunSysTestEx(t T, testsDir string, testId string, rootCmd ExecRootCmdFunc, 
 
 	var allTempFolders []string
 	var testArgs []string = []string{"reqmd", "trace", "--ignore-lines", goldenAnnotationRegexpPrefix}
+	testArgs = append(testArgs, options...)
 
 	commitHashes := make(map[string]string)
 
