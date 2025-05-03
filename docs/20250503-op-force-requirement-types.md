@@ -40,7 +40,7 @@ The RequirementType of the RequirementSite is determined by the first segment of
 ```go
 type RequirementType struct {
     Identifier string // The prefix that identifies this type (e.g., "it", "cmp", "utest")
-    Priority   int    // Priority for ordering in reports and coverage analysis
+    OrderNo   int     // For ordering in reports and coverage analysis
 }
 
 type TypeRegistry struct {
@@ -52,10 +52,6 @@ type TypeRegistry struct {
 - `NewTypeRegistry(typeDefs []RequirementType) *TypeRegistry`
   - Creates a new registry with the specified requirement types
   - Validates that no duplicate identifiers exist
-
-- `(r *TypeRegistry) RegisterType(typeDef RequirementType) error`
-  - Adds a new requirement type to the registry
-  - Returns an error if the type identifier already exists
 
 - `(r *TypeRegistry) Type(identifier string) (RequirementType, bool)`
   - Retrieves a requirement type by its identifier
