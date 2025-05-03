@@ -64,3 +64,13 @@ func NewErrUnmatchedFence(filePath string, openFenceLine int) ProcessingError {
 		Message:  fmt.Sprintf("opening code block fence at line %d has no matching closing fence", openFenceLine),
 	}
 }
+
+// Requirement type must be one of %v: %v`
+func NewErrReqType(filePath string, line int, typeIdentifiers []string, reqName RequirementName) ProcessingError {
+	return ProcessingError{
+		Code:     "reqtype",
+		FilePath: filePath,
+		Line:     line,
+		Message:  fmt.Sprintf("Requirement type must be one of %v: %v", typeIdentifiers, reqName),
+	}
+}

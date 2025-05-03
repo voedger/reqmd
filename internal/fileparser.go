@@ -13,7 +13,7 @@ import (
 
 // parseFile processes a file as both markdown and source file
 // It combines the logic of ParseMarkdownFile and ParseSourceFile into a single pass
-func parseFile(pctx *ParsingContext, filePath string) (*FileStructure, []ProcessingError, error) {
+func parseFile(pctx *ScannerContext, filePath string) (*FileStructure, []ProcessingError, error) {
 	if IsVerbose {
 		Verbose("parseFile", filePath)
 	}
@@ -157,7 +157,7 @@ func parseCoverageTags(filePath string, line string, lineNum int) []CoverageTag 
 
 // shouldIgnoreLine checks if a line should be ignored based on the ignore patterns
 // in the MarkdownContext. Returns true if the line should be ignored.
-func shouldIgnoreLine(pctx *ParsingContext, line string) bool {
+func shouldIgnoreLine(pctx *ScannerContext, line string) bool {
 	// If no ignore patterns are defined, process all lines
 	if pctx == nil || len(pctx.IgnorePatterns) == 0 {
 		return false

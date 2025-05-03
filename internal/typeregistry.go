@@ -11,14 +11,14 @@ type RequirementType struct {
 }
 
 type TypeRegistry struct {
-	Types map[string]RequirementType // Map of type identifiers to their definitions
-	Order []string                   // Ordered list of type identifiers
+	Types       map[string]RequirementType // Map of type identifiers to their definitions
+	Identifiers []string                   // Ordered list of type identifiers
 }
 
 func NewTypeRegistry(typeDefs []RequirementType) *TypeRegistry {
 	registry := &TypeRegistry{
-		Types: make(map[string]RequirementType),
-		Order: make([]string, len(typeDefs)),
+		Types:       make(map[string]RequirementType),
+		Identifiers: make([]string, len(typeDefs)),
 	}
 
 	// Add types to registry and build order list
@@ -30,7 +30,7 @@ func NewTypeRegistry(typeDefs []RequirementType) *TypeRegistry {
 		}
 
 		registry.Types[typeDef.Identifier] = typeDef
-		registry.Order[i] = typeDef.Identifier
+		registry.Identifiers[i] = typeDef.Identifier
 	}
 
 	return registry

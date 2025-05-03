@@ -87,7 +87,13 @@ func newTraceCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			scanner := NewScanner(extensions, patterns)
+
+			scfg := &ScannerConfig{
+				Extensions:     extensions,
+				IgnorePatterns: patterns,
+			}
+
+			scanner := NewScanner(scfg)
 			analyzer := NewAnalyzer()
 			applier := NewApplier(dryRun)
 

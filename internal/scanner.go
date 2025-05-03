@@ -42,13 +42,19 @@ func preparePatterns(patterns []string) ([]*regexp.Regexp, error) {
 	return compiledPatterns, nil
 }
 
-func NewScanner(extensions string, ignorePatterns []*regexp.Regexp) IScanner {
+type ScannerConfig struct {
+	Extensions     string
+	IgnorePatterns []*regexp.Regexp
+	TypeRegistry   *TypeRegistry
+}
+
+func NewScanner(scfg *ScannerConfig) IScanner {
 	s := &scanner{
 		sourceExtensions: make(map[string]bool),
-		ignorePatterns:   ignorePatterns,
+		ignorePatterns:   scfg.IgnorePatterns,
 	}
 	// Use provided extensions or fallback to defaults
-	exts := extensions
+	exts := scfg.Extensions
 	if exts == "" {
 		exts = defaultSourceExtensions
 	}
@@ -122,7 +128,7 @@ func ByteCountSI(b int64) string {
 }
 
 // scanFile handles both markdown and source files in a unified way
-func (s *scanner) scanFile(filePath string, pctx *ParsingContext, igit IVCS) error {
+func (s *scanner) scanFile(filePath string, pctx *ScannerContext, igit IVCS) error {
 	filePath = filepath.ToSlash(filePath)
 	ext := strings.ToLower(filepath.Ext(filePath))
 
@@ -227,7 +233,7 @@ func (s *scanner) folderProcessor(folderPath string, igit IVCS) (FileProcessor, 
 	}
 
 	// Initialize markdown context for this folder
-	pctx := &ParsingContext{}
+	pctx := &ScannerContext{}
 	pctx.IgnorePatterns = s.ignorePatterns
 
 	return func(filePath string) error {
