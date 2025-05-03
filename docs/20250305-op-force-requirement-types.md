@@ -2,13 +2,13 @@
 
 ## Problem
 
-Currently there is a lack of the requirement type system.
+The current system lacks a structured requirement type system, making it difficult to categorize and filter requirements by their intended purpose.
 
 ## Proposal
 
 `~nf/ForceRequirementTypes~`: reqmd trace --types <type list>
 
-Requirement type is specified by the first part of the RequirementName
+Requirement type is determined by the first segment of the RequirementName. Examples of requirement types:
 
 - `~it.TestQueryProcessor2_CDocs~`: Integration Test
 - `~cmp.cdocsHandler~`: Component
