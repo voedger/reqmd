@@ -6,7 +6,9 @@ The current system lacks a structured requirement type system, making it difficu
 
 ## Proposal
 
-`~nf/ForceRequirementTypes~`: reqmd trace --types <type list>
+- `~nf/ForceRequirementTypes~`: `reqmd trace --types <type list>`
+  - Example: `reqmd trace --types it,cmp,utest`
+  - Order is important and will be used to track coverage and generate reports
 
 Requirement type is determined by the first segment of the RequirementName. Examples of requirement types:
 

@@ -1,4 +1,4 @@
-# reqmd Documentation
+# reqmd documentation
 
 This directory contains detailed documentation for the reqmd tool, covering requirements, design, syntax specifications, and usage guidelines.
 
