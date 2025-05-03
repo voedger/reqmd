@@ -44,8 +44,8 @@ type RequirementType struct {
 }
 
 type TypeRegistry struct {
-    Types map[string]RequirementType // Map of type identifiers to their definitions
-    Order []string                   // Ordered list of type identifiers
+    Types map[string]RequirementType  // Map of type identifiers to their definitions
+    Identifiers []string              // Ordered list of type identifiers
 }
 ```
 
