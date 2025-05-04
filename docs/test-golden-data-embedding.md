@@ -11,10 +11,10 @@ Currently, our system test architecture relies on separate golden files (with `_
 Example:
 ```markdown
 `~REQ001~`
-> replace `~REQ001~`covered✅
+@ replace `~REQ001~`covered✅
 
 Some other content
-> replace Some other expected content
+@ replace Some other expected content
 ```
 
 ## Addessed issues

@@ -83,7 +83,7 @@ reqmd trace -v docs/ src/ tests/
 `requirements.md`
 
 ```markdown
-- APIv2 implementation shall provide a handler for POST requests. `~Post.handler~`coverage[^~Post.handler~].
+- APIv2 implementation shall provide a handler for POST requests. `~Post.handler~`covrd[^~Post.handler~].
 ```
 
 `handler.go`
@@ -103,10 +103,6 @@ Generated coverage footnote for `requirements.md`:
 
 ## Output files
 
-### reqmdfiles.json
-
-This file is created or updated in each directory containing markdown files when FileURLs are present. It maps FileURLs to their git hashes.
-
 ### Markdown files
 
 Markdown files are updated with:
@@ -114,13 +110,13 @@ Markdown files are updated with:
 - Coverage annotations for requirement sites
 - Coverage footnotes linking requirements to implementations
 
-## Design
+## Technical documentation
 
-Refer to [design.md](docs/architecture.md) for detailed design decisions and architecture.
+Refer to [docs/README.md](docs/docs.md) for detailed technical documentation.
 
 ## Requirements & dependencies
 
-- Go 1.23+
+- Go 1.24+
 
 ## Contributing
 
@@ -144,4 +140,4 @@ reqmd is released under the Apache 2.0 license. See [LICENSE.txt](LICENSE.txt)
 
 ## Acknowledgments
 
-Notation is inspired by [OpenFastTrace](https://github.com/itsallcode/openfasttrace).
+- Notation is inspired by [OpenFastTrace](https://github.com/itsallcode/openfasttrace).
