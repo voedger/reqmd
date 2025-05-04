@@ -214,8 +214,6 @@ Process ActionFootnotes:
 
 ---
 
-
-
 ## Implementation details
 
 - SSH URLs (e.g., git@github.com:org/repo.git) are not supported
