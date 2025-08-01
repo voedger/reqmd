@@ -167,7 +167,7 @@ func (s *scanner) scanFile(filePath string, pctx *ScannerContext, igit IVCS) err
 	if err != nil {
 		// Skip untracked files
 		if IsVerbose {
-			Verbose("scanFile: skipping untracked file" + filePath + ", error: " + err.Error())
+			Verbose("scanFile: skipping untracked file", "path", filePath, "error", err.Error())
 		}
 		return nil
 	}
