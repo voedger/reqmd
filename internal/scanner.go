@@ -24,7 +24,7 @@ const (
 	defaultMaxErrQueueSize = 50
 
 	// Default source file extensions
-	defaultSourceExtensions = ".go,.js,.ts,.jsx,.tsx,.java,.cs,.cpp,.c,.h,.hpp,.py,.rb,.php,.rs,.kt,.scala,.m,.swift,.fs,.md,.sql,.vsql,.dart"
+	defaultSourceExtensions = ".c,.cpp,.cs,.dart,.fs,.go,.h,.hpp,.java,.js,.jsx,.kt,.m,.md,.php,.py,.rb,.rs,.scala,.sql,.swift,.ts,.tsx,.vsql,.yaml,.yml"
 
 	// Maximum file size for processing
 	maxFileSize = 128 * 1024 // 128KB
